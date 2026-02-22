@@ -24,7 +24,7 @@ function discoverPages(rootDir) {
 export default defineConfig({
   plugins: [react()],
   // ⚠️ Change this to match your GitHub repo name
-  base: "/minmax/",
+  base: "/",
   build: {
     rollupOptions: {
       input: discoverPages(__dirname),
