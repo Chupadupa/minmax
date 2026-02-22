@@ -4,7 +4,7 @@ A collection of little toys and experiments. Built with React + Vite, auto-deplo
 
 ## Toys
 
-- **[Big Number Namer](./big-number-namer/)** — Explore the names of ridiculously large numbers, up to a millinillion.
+- **[Big Number Namer](./big-number-namer/)** — Explore the names of ridiculously large numbers, up to a millinillinillinillinillion.
 
 ## Setup
 

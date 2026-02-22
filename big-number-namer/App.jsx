@@ -9,12 +9,12 @@ const STANDARD_ILLIONS = [
 const ONES_PREFIX = ["", "un", "duo", "tre", "quattuor", "quin", "sex", "septen", "octo", "novem"];
 const TENS_PREFIX = ["", "deci", "viginti", "triginta", "quadraginta", "quinquaginta", "sexaginta", "septuaginta", "octoginta", "nonaginta"];
 const HUNDREDS_PREFIX = ["", "centi", "ducenti", "trecenti", "quadringenti", "quingenti", "sescenti", "septingenti", "octingenti", "nongenti"];
+const ILLION_ROOTS = ["", "m", "b", "tr", "quadr", "quint", "sext", "sept", "oct", "non", "dec"];
 
-function getIllionName(n, useDashes = false) {
+function getGroupPrefix(n, useDashes) {
   if (n <= 0) return "";
-  if (n <= 10) return STANDARD_ILLIONS[n];
-  if (n === 1000) return useDashes ? "millin-illion" : "millinillion";
-  const ones = n % 10, tens = Math.floor(n / 10) % 10, hundreds = Math.floor(n / 100) % 10;
+  if (n <= 10) return ILLION_ROOTS[n];
+  const ones = n % 10, tens = Math.floor(n / 10) % 10, hundreds = Math.floor(n / 100);
   const parts = [];
   if (ones > 0) parts.push(ONES_PREFIX[ones]);
   if (tens > 0) parts.push(TENS_PREFIX[tens]);
@@ -24,8 +24,24 @@ function getIllionName(n, useDashes = false) {
     if (last.endsWith("i") || last.endsWith("a")) last = last.slice(0, -1);
     parts[parts.length - 1] = last;
   }
+  return parts.join(useDashes ? "-" : "");
+}
+
+function getIllionPrefix(n, useDashes) {
+  if (n <= 0) return "";
+  if (n <= 999) return getGroupPrefix(n, useDashes);
   const sep = useDashes ? "-" : "";
-  return parts.join(sep) + (useDashes ? "-illion" : "illion");
+  const q = Math.floor(n / 1000), r = n % 1000;
+  let result = getIllionPrefix(q, useDashes) + sep + "illin";
+  if (r > 0) result += sep + getGroupPrefix(r, useDashes);
+  return result;
+}
+
+function getIllionName(n, useDashes = false) {
+  if (n <= 0) return "";
+  if (n <= 10) return STANDARD_ILLIONS[n];
+  const sep = useDashes ? "-" : "";
+  return getIllionPrefix(n, useDashes) + sep + "illion";
 }
 
 function getNumberName(zeros, useDashes = false) {
@@ -37,7 +53,6 @@ function getNumberName(zeros, useDashes = false) {
   if (zeros === 5) return "one hundred thousand";
   const illionIndex = Math.floor(zeros / 3) - 1;
   const remainder = zeros % 3;
-  if (illionIndex > 1000) return "beyond millinillion!";
   const illionName = getIllionName(illionIndex, useDashes);
   let prefix = "one ";
   if (remainder === 1) prefix = "ten ";
@@ -58,7 +73,7 @@ const NB_SOLID = {
   "5": "#3A8FDE", "6": "#9B59B6", "7": "#6E3FA0", "8": "#F472B6", "9": "#8E8E93",
 };
 
-const MAX_ZEROS = 3003;
+const MAX_ZEROS = 3000000000003;
 
 function getZerosFontSize(count) {
   if (count <= 10) return 20;
@@ -72,7 +87,10 @@ function getZerosFontSize(count) {
 function getFunFact(zeros) {
   if (zeros === 100) return "✨ This is a googol! ✨";
   if (zeros === 303) return "🎉 One centillion! That's a LOT of zeros!";
-  if (zeros === 3003) return "🚀 Millinillion! The biggest named number here!";
+  if (zeros === 3003) return "🚀 Millinillion! A thousand illions!";
+  if (zeros === 6003) return "🌟 Billinillion! Two thousand illions!";
+  if (zeros === 3000003) return "🔥 Millinillinillion! A million illions!";
+  if (zeros === 3000000000003) return "🏆 Millinillinillinillinillion! The biggest named number here!";
   return null;
 }
 
@@ -153,7 +171,7 @@ function SettingsOverlay({ show, onClose, useDashes, setUseDashes }) {
         <p style={settingsStyles.aboutText}>
           This was made for my son, who absolutely loves numbers.
           He wanted to know the names of really, really big numbers — so we built
-          this toy together so he could explore them all the way up to a millinillion.
+          this toy together so he could explore them all the way up to a millinillinillinillinillion.
         </p>
 
         {/* Divider */}
@@ -315,7 +333,7 @@ export default function BigNumberNamer() {
     if (atMax) return;
     const next = input + d;
     const val = parseInt(next, 10);
-    if (val > 9999) return;
+    if (next.length > 13) return;
     if (val > MAX_ZEROS) {
       setInput(String(MAX_ZEROS));
     } else {
@@ -453,7 +471,10 @@ export default function BigNumberNamer() {
 
       {/* Display Area */}
       <div style={styles.displayCard}>
-        <div style={styles.bigNumber}>{zeros.toLocaleString()}</div>
+        <div style={{
+          ...styles.bigNumber,
+          fontSize: zeros.toLocaleString().length <= 5 ? 42 : zeros.toLocaleString().length <= 9 ? 32 : zeros.toLocaleString().length <= 13 ? 24 : 18,
+        }}>{zeros.toLocaleString()}</div>
         <div style={styles.secondaryRow}>
           <span style={styles.zerosLabel}>zeros</span>
           <span style={styles.notationDot}>·</span>
