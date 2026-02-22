@@ -60,6 +60,19 @@ function getNumberName(zeros, useDashes = false) {
   return prefix + illionName;
 }
 
+function formatZerosWithCommas(zerosCount) {
+  if (zerosCount === 0) return "";
+  const totalDigits = 1 + zerosCount;
+  const firstGroupLen = ((totalDigits - 1) % 3) + 1;
+  const zerosInFirstGroup = firstGroupLen - 1;
+  const fullGroups = Math.floor((zerosCount - zerosInFirstGroup) / 3);
+  const parts = [];
+  if (zerosInFirstGroup > 0) parts.push("0".repeat(zerosInFirstGroup));
+  for (let i = 0; i < fullGroups; i++) parts.push("000");
+  if (zerosInFirstGroup > 0) return parts.join(",");
+  return parts.length > 0 ? "," + parts.join(",") : "";
+}
+
 // ── Colors ────────────────────────────────────────────────────────────────────
 
 const NB_COLORS = {
@@ -80,11 +93,19 @@ const MIN_ZEROS_FONT = 3.8;
 
 function useAutoFitFontSize(containerRef, contentRef, charCount) {
   const [fontSize, setFontSize] = useState(MAX_ZEROS_FONT);
+  const ceilingRef = useRef(MAX_ZEROS_FONT);
+  const prevCharCountRef = useRef(0);
 
-  const fit = useCallback(() => {
+  const fit = useCallback((currentCharCount) => {
     const container = containerRef.current;
     const content = contentRef.current;
     if (!container || !content) return;
+
+    // If char count decreased (or reset), allow font to grow again
+    if (currentCharCount < prevCharCountRef.current) {
+      ceilingRef.current = MAX_ZEROS_FONT;
+    }
+    prevCharCountRef.current = currentCharCount;
 
     const style = getComputedStyle(container);
     const padV = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
@@ -92,9 +113,9 @@ function useAutoFitFontSize(containerRef, contentRef, charCount) {
     const availW = container.clientWidth - padH;
     const availH = container.clientHeight - padV;
 
-    // Binary search for the largest font size that fits
+    // Binary search for the largest font size that fits, capped by ceiling
     let lo = MIN_ZEROS_FONT;
-    let hi = MAX_ZEROS_FONT;
+    let hi = Math.min(MAX_ZEROS_FONT, ceilingRef.current);
     while (hi - lo > 0.25) {
       const mid = (lo + hi) / 2;
       content.style.fontSize = mid + "px";
@@ -105,18 +126,25 @@ function useAutoFitFontSize(containerRef, contentRef, charCount) {
         hi = mid;
       }
     }
+
+    // Update ceiling so font only stays same or shrinks for increasing chars
+    ceilingRef.current = lo;
+
     content.style.fontSize = lo + "px";
     content.style.lineHeight = lo >= 14 ? "1.6" : "1.15";
     setFontSize(lo);
   }, [containerRef, contentRef]);
 
   useLayoutEffect(() => {
-    fit();
+    fit(charCount);
   }, [charCount, fit]);
 
-  // Also re-fit on resize
+  // Also re-fit on resize (reset ceiling since container changed)
   useEffect(() => {
-    const onResize = () => fit();
+    const onResize = () => {
+      ceilingRef.current = MAX_ZEROS_FONT;
+      fit(prevCharCountRef.current);
+    };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, [fit]);
@@ -178,7 +206,7 @@ function FunFactToast({ text }) {
 
 // ── Settings Overlay ──────────────────────────────────────────────────────────
 
-function SettingsOverlay({ show, onClose, useDashes, setUseDashes }) {
+function SettingsOverlay({ show, onClose, useDashes, setUseDashes, useCommas, setUseCommas }) {
   if (!show) return null;
 
   return (
@@ -201,6 +229,21 @@ function SettingsOverlay({ show, onClose, useDashes, setUseDashes }) {
         </label>
         <p style={settingsStyles.toggleHint}>
           e.g. {useDashes ? "un-vigint-illion" : "unvigintillion"} → {!useDashes ? "un-vigint-illion" : "unvigintillion"}
+        </p>
+
+        {/* Commas toggle */}
+        <label style={{ ...settingsStyles.toggle, marginTop: 16 }}>
+          <div style={{
+            ...settingsStyles.checkbox,
+            background: useCommas ? "#4AAF4E" : "rgba(255,255,255,0.15)",
+            borderColor: useCommas ? "#4AAF4E" : "rgba(255,255,255,0.25)",
+          }} onClick={() => setUseCommas(c => !c)}>
+            {useCommas && <span style={settingsStyles.checkmark}>✓</span>}
+          </div>
+          <span style={settingsStyles.toggleLabel}>Show commas in number display</span>
+        </label>
+        <p style={settingsStyles.toggleHint}>
+          e.g. {useCommas ? "1,000,000" : "1000000"} → {!useCommas ? "1,000,000" : "1000000"}
         </p>
 
         {/* Divider */}
@@ -331,6 +374,7 @@ export default function BigNumberNamer() {
   const [nameFlash, setNameFlash] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [useDashes, setUseDashes] = useState(true);
+  const [useCommas, setUseCommas] = useState(true);
   const zerosOuterRef = useRef(null);
   const zerosInnerRef = useRef(null);
 
@@ -420,8 +464,9 @@ export default function BigNumberNamer() {
   };
 
   const displayZeroCount = Math.min(zeros, 3003);
-  const zerosString = "0".repeat(displayZeroCount);
-  const zerosFontSize = useAutoFitFontSize(zerosOuterRef, zerosInnerRef, displayZeroCount);
+  const zerosString = useCommas ? formatZerosWithCommas(displayZeroCount) : "0".repeat(displayZeroCount);
+  const displayCharCount = 1 + displayZeroCount + (useCommas ? Math.floor(displayZeroCount / 3) : 0);
+  const zerosFontSize = useAutoFitFontSize(zerosOuterRef, zerosInnerRef, displayCharCount);
 
   return (
     <div style={styles.container}>
@@ -509,6 +554,8 @@ export default function BigNumberNamer() {
         onClose={() => setShowSettings(false)}
         useDashes={useDashes}
         setUseDashes={setUseDashes}
+        useCommas={useCommas}
+        setUseCommas={setUseCommas}
       />
 
       {/* Display Area */}
