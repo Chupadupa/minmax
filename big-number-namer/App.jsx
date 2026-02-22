@@ -577,7 +577,7 @@ export default function BigNumberNamer() {
 const styles = {
   container: {
     minHeight: "100vh",
-    background: "linear-gradient(150deg, #0F0C29 0%, #1B1464 40%, #302B63 70%, #24243E 100%)",
+    background: "linear-gradient(150deg, #0F0C29 0%, #1B1464 30%, #302B63 50%, #24243E 70%, #000000 100%)",
     display: "flex", flexDirection: "column", alignItems: "center",
     padding: "24px 16px 40px", fontFamily: "'Fredoka', sans-serif",
     position: "relative", overflow: "hidden", color: "#fff",
