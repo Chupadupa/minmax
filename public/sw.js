@@ -1,4 +1,7 @@
-const CACHE_NAME = "doodads-v2";
+// __BUILD_ID__ is replaced with a timestamp (e.g. 20260222T153045) by the
+// swCacheBustPlugin in vite.config.js at build time. During local dev the
+// placeholder stays as-is, which is fine — the service worker still works.
+const CACHE_NAME = "doodads-__BUILD_ID__";
 
 // On install, cache the shell — the rest gets cached on first visit
 self.addEventListener("install", (event) => {

@@ -93,6 +93,14 @@ The app is installable as a Progressive Web App:
 - `public/sw.js` — service worker with network-first caching strategy
 - Root `index.html` registers the service worker
 
+### Service Worker Cache Versioning
+
+The service worker cache version is **auto-generated at build time** — no manual version bumps needed. The `swCacheBustPlugin` in `vite.config.js` replaces the `__BUILD_ID__` placeholder in `sw.js` with a UTC timestamp (e.g. `doodads-20260222T153045`) during `npm run build`. This means every deploy produces a byte-different `sw.js`, which triggers browsers to install the new service worker and purge the old cache via the `activate` handler.
+
+- **Production**: `__BUILD_ID__` → `20260222T153045` (automatic, no action needed)
+- **Local dev**: `__BUILD_ID__` stays as-is (harmless — the service worker still functions)
+- **No manual version bumps**: If you change any code and deploy, the cache updates automatically
+
 ## CI/CD
 
 `.github/workflows/deploy.yml` deploys to GitHub Pages on every push to `main`:
