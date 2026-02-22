@@ -1,4 +1,4 @@
-const CACHE_NAME = "doodads-v1";
+const CACHE_NAME = "doodads-v2";
 
 // On install, cache the shell — the rest gets cached on first visit
 self.addEventListener("install", (event) => {
