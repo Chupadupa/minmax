@@ -516,6 +516,11 @@ export default function BigNumberNamer() {
           100% { opacity: 1; }
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html { min-height: 100%; background: #000; }
+        body {
+          min-height: 100vh; min-height: 100dvh;
+          background: linear-gradient(150deg, #0F0C29 0%, #1B1464 30%, #302B63 50%, #24243E 70%, #000000 100%);
+        }
         body, #root { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
         .nb-btn {
           width: 100%; aspect-ratio: 1.4; border-radius: 18px; border: none;
@@ -554,7 +559,7 @@ export default function BigNumberNamer() {
 
       {/* Header */}
       <div style={styles.header}>
-        <a href="../" style={styles.backBtn} aria-label="Back to home">‹</a>
+        <a href="../" style={styles.backBtn} aria-label="Back to home">⬅️</a>
         <button style={styles.gearBtn} onClick={() => setShowSettings(true)}>⚙</button>
         <h1 style={styles.title}>Big Number Namer</h1>
         <p style={styles.subtitle}>How many zeros?</p>
@@ -677,8 +682,7 @@ export default function BigNumberNamer() {
 
 const styles = {
   container: {
-    minHeight: "100vh",
-    background: "linear-gradient(150deg, #0F0C29 0%, #1B1464 30%, #302B63 50%, #24243E 70%, #000000 100%)",
+    minHeight: "100dvh",
     display: "flex", flexDirection: "column", alignItems: "center",
     padding: "24px 16px 40px", fontFamily: "'Fredoka', sans-serif",
     position: "relative", overflow: "hidden", color: "#fff",
@@ -692,7 +696,7 @@ const styles = {
   backBtn: {
     position: "absolute", top: 2, left: 0,
     background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)",
-    color: "rgba(255,255,255,0.6)", fontSize: 22,
+    fontSize: 18,
     width: 36, height: 36, borderRadius: 12,
     cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
     transition: "background 0.15s ease",
