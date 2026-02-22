@@ -511,7 +511,7 @@ export default function BigNumberNamer() {
 
 const styles = {
   container: {
-    minHeight: "100dvh",
+    minHeight: "var(--app-height, 100dvh)",
     display: "flex", flexDirection: "column", alignItems: "center",
     padding: "calc(24px + var(--safe-top)) calc(16px + var(--safe-right)) calc(40px + var(--safe-bottom)) calc(16px + var(--safe-left))",
     position: "relative", overflow: "hidden",
