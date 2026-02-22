@@ -40,6 +40,7 @@ There are no test, lint, or format commands.
 │   ├── icon.svg                # App icon
 │   ├── icon-maskable.svg       # PWA maskable icon
 │   ├── manifest.json           # Web app manifest (PWA)
+│   ├── pwa-init.js             # Shared PWA bootstrap (viewport fix + SW registration)
 │   └── sw.js                   # Service worker for offline caching
 ├── vite.config.js              # Auto-discovers toy directories as entry points
 ├── package.json
@@ -97,7 +98,7 @@ Split across a few files, with most UI kept together in `App.jsx`:
 The app is installable as a Progressive Web App:
 - `public/manifest.json` — app manifest
 - `public/sw.js` — service worker with network-first caching strategy
-- Root `index.html` registers the service worker
+- `public/pwa-init.js` — shared bootstrap script included via `<script src="/pwa-init.js"></script>` in every page's `<head>`. Handles the iOS standalone viewport height fix (`--app-height`) and service worker registration with auto-reload on update. Every toy's `index.html` should include this script.
 
 ### Service Worker Cache Versioning
 
@@ -119,7 +120,8 @@ The service worker cache version is **auto-generated at build time** — no manu
 
 1. Create a new directory at the project root (e.g., `my-new-toy/`)
 2. Add an `index.html` inside it (Vite auto-discovers it)
-3. Add a card link in the root `index.html` grid
-4. **Import `shared/base.css`** — either via `<link rel="stylesheet" href="shared/base.css" />` in HTML, or `import '../shared/base.css'` in a JS/JSX entry point. This gives you fonts, resets, background, animations, and utility classes. Skip this import if you want a fully custom look.
-5. **Include a back button** in the header linking to `../` (required for PWA navigation — see UI Conventions above). Use the `.back-btn` CSS class from `base.css`.
-6. The toy will be built and deployed automatically
+3. **Include `<script src="/pwa-init.js"></script>`** in the `<head>` — this handles the iOS viewport fix and service worker registration automatically.
+4. Add a card link in the root `index.html` grid
+5. **Import `shared/base.css`** — either via `<link rel="stylesheet" href="shared/base.css" />` in HTML, or `import '../shared/base.css'` in a JS/JSX entry point. This gives you fonts, resets, background, animations, and utility classes. Skip this import if you want a fully custom look.
+6. **Include a back button** in the header linking to `../` (required for PWA navigation — see UI Conventions above). Use the `.back-btn` CSS class from `base.css`.
+7. The toy will be built and deployed automatically
