@@ -14,30 +14,11 @@
   <meta property="og:title" content="Big Number Namer" />
   <meta property="og:description" content="How many zeros can you name? Explore numbers up to a millinillinillinillinillion!" />
   <!-- Styles loaded via shared/base.css in main.jsx -->
-  <script>
-    // Fix iOS PWA viewport height: 100dvh is wrong on initial load in standalone mode
-    (function(){
-      function setHeight(){
-        document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
-      }
-      setHeight();
-      window.addEventListener('resize', setHeight);
-    })();
-  </script>
+  <script src="/pwa-init.js"></script>
 </head>
 <body>
   <div id="root"></div>
   <script type="module" src="./main.jsx"></script>
-  <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js");
-      if (navigator.serviceWorker.controller) {
-        let refreshing = false;
-        navigator.serviceWorker.addEventListener("controllerchange", () => {
-          if (!refreshing) { refreshing = true; window.location.reload(); }
-        });
-      }
-    }
-  </script>
+
 </body>
 </html>
