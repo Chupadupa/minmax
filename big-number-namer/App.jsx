@@ -95,6 +95,7 @@ function useAutoFitFontSize(containerRef, contentRef, charCount) {
   const [fontSize, setFontSize] = useState(MAX_ZEROS_FONT);
   const ceilingRef = useRef(MAX_ZEROS_FONT);
   const prevCharCountRef = useRef(0);
+  const stableHeightRef = useRef(0);
 
   const fit = useCallback((currentCharCount) => {
     const container = containerRef.current;
@@ -104,6 +105,7 @@ function useAutoFitFontSize(containerRef, contentRef, charCount) {
     // If char count decreased (or reset), allow font to grow again
     if (currentCharCount < prevCharCountRef.current) {
       ceilingRef.current = MAX_ZEROS_FONT;
+      stableHeightRef.current = 0;
     }
     prevCharCountRef.current = currentCharCount;
 
@@ -111,7 +113,15 @@ function useAutoFitFontSize(containerRef, contentRef, charCount) {
     const padV = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
     const padH = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
     const availW = container.clientWidth - padH;
-    const availH = container.clientHeight - padV;
+    const measuredH = container.clientHeight - padV;
+
+    // Track the peak container height so that if the name label grows
+    // (shrinking this container via flex), we keep using the original
+    // larger height. Content that overflows gets clipped.
+    if (measuredH > stableHeightRef.current) {
+      stableHeightRef.current = measuredH;
+    }
+    const availH = stableHeightRef.current;
 
     // Binary search for the largest font size that fits, capped by ceiling
     let lo = MIN_ZEROS_FONT;
@@ -139,10 +149,11 @@ function useAutoFitFontSize(containerRef, contentRef, charCount) {
     fit(charCount);
   }, [charCount, fit]);
 
-  // Also re-fit on resize (reset ceiling since container changed)
+  // Also re-fit on resize (reset ceiling and stable height since container changed)
   useEffect(() => {
     const onResize = () => {
       ceilingRef.current = MAX_ZEROS_FONT;
+      stableHeightRef.current = 0;
       fit(prevCharCountRef.current);
     };
     window.addEventListener("resize", onResize);
