@@ -372,8 +372,8 @@ export default function BigNumberNamer() {
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         html {
           min-height: 100%;
-          background-color: #0F0C29;
-          background-image: linear-gradient(150deg, #0F0C29 0%, #0F0C29 5%, #1B1464 32%, #302B63 50%, #24243E 68%, #0F0C29 95%, #0F0C29 100%);
+          background-color: #000;
+          background-image: linear-gradient(150deg, #000 0%, #000 5%, #1B1464 32%, #302B63 50%, #24243E 68%, #000 95%, #000 100%);
         }
         body {
           min-height: 100vh; min-height: 100dvh;

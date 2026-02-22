@@ -4,8 +4,8 @@
   "description": "Little toys and experiments",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0F0C29",
-  "theme_color": "#1B1464",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "icons": [
     {
       "src": "/icon.svg",
