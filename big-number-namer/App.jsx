@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useLayoutEffect, useCallback } from "react";
 
 // ── Naming Logic ──────────────────────────────────────────────────────────────
 
@@ -75,13 +75,53 @@ const NB_SOLID = {
 
 const MAX_ZEROS = 3000000000003;
 
-function getZerosFontSize(count) {
-  if (count <= 10) return 20;
-  if (count <= 30) return 14;
-  if (count <= 80) return 10;
-  if (count <= 200) return 7;
-  if (count <= 500) return 5;
-  return 3.8;
+const MAX_ZEROS_FONT = 20;
+const MIN_ZEROS_FONT = 3.8;
+
+function useAutoFitFontSize(containerRef, contentRef, charCount) {
+  const [fontSize, setFontSize] = useState(MAX_ZEROS_FONT);
+
+  const fit = useCallback(() => {
+    const container = containerRef.current;
+    const content = contentRef.current;
+    if (!container || !content) return;
+
+    const style = getComputedStyle(container);
+    const padV = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+    const padH = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+    const availW = container.clientWidth - padH;
+    const availH = container.clientHeight - padV;
+
+    // Binary search for the largest font size that fits
+    let lo = MIN_ZEROS_FONT;
+    let hi = MAX_ZEROS_FONT;
+    while (hi - lo > 0.25) {
+      const mid = (lo + hi) / 2;
+      content.style.fontSize = mid + "px";
+      content.style.lineHeight = mid >= 14 ? "1.6" : "1.15";
+      if (content.scrollWidth <= availW && content.scrollHeight <= availH) {
+        lo = mid;
+      } else {
+        hi = mid;
+      }
+    }
+    content.style.fontSize = lo + "px";
+    content.style.lineHeight = lo >= 14 ? "1.6" : "1.15";
+    setFontSize(lo);
+  }, [containerRef, contentRef]);
+
+  useLayoutEffect(() => {
+    fit();
+  }, [charCount, fit]);
+
+  // Also re-fit on resize
+  useEffect(() => {
+    const onResize = () => fit();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [fit]);
+
+  return fontSize;
 }
 
 function getFunFact(zeros) {
@@ -291,6 +331,8 @@ export default function BigNumberNamer() {
   const [nameFlash, setNameFlash] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [useDashes, setUseDashes] = useState(true);
+  const zerosOuterRef = useRef(null);
+  const zerosInnerRef = useRef(null);
 
   // Stable background dots - generated once
   const bgDots = useMemo(() =>
@@ -379,7 +421,7 @@ export default function BigNumberNamer() {
 
   const displayZeroCount = Math.min(zeros, 3003);
   const zerosString = "0".repeat(displayZeroCount);
-  const zerosFontSize = getZerosFontSize(zeros);
+  const zerosFontSize = useAutoFitFontSize(zerosOuterRef, zerosInnerRef, displayZeroCount);
 
   return (
     <div style={styles.container}>
@@ -481,11 +523,11 @@ export default function BigNumberNamer() {
           <span style={styles.sciNotation}>10<sup>{zeros.toLocaleString()}</sup></span>
         </div>
 
-        <div style={styles.numberDisplayOuter}>
-          <div style={{
+        <div ref={zerosOuterRef} style={styles.numberDisplayOuter}>
+          <div ref={zerosInnerRef} style={{
             ...styles.numberDisplayInner,
             fontSize: zerosFontSize,
-            lineHeight: zeros <= 10 ? 1.6 : 1.15,
+            lineHeight: zerosFontSize >= 14 ? 1.6 : 1.15,
           }}>
             <span style={{
               fontWeight: 700, color: "#E41E20",
