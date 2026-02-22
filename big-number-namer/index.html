@@ -24,6 +24,12 @@
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js");
+      if (navigator.serviceWorker.controller) {
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener("controllerchange", () => {
+          if (!refreshing) { refreshing = true; window.location.reload(); }
+        });
+      }
     }
   </script>
 </body>
