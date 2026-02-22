@@ -554,6 +554,7 @@ export default function BigNumberNamer() {
 
       {/* Header */}
       <div style={styles.header}>
+        <a href="../" style={styles.backBtn} aria-label="Back to home">‹</a>
         <button style={styles.gearBtn} onClick={() => setShowSettings(true)}>⚙</button>
         <h1 style={styles.title}>Big Number Namer</h1>
         <p style={styles.subtitle}>How many zeros?</p>
@@ -687,6 +688,15 @@ const styles = {
     textAlign: "center", marginBottom: 16, animation: "popIn 0.5s ease-out",
     position: "relative", zIndex: 1,
     width: "100%", maxWidth: 380,
+  },
+  backBtn: {
+    position: "absolute", top: 2, left: 0,
+    background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)",
+    color: "rgba(255,255,255,0.6)", fontSize: 22,
+    width: 36, height: 36, borderRadius: 12,
+    cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+    transition: "background 0.15s ease",
+    textDecoration: "none", lineHeight: 1,
   },
   gearBtn: {
     position: "absolute", top: 2, right: 0,
