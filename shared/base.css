@@ -65,6 +65,12 @@ body {
   color: var(--color-text);
 }
 
+/* In standalone PWA mode, fix the background to the viewport so the gradient
+   always covers the full screen regardless of content height. */
+html.pwa-standalone {
+  background-attachment: fixed;
+}
+
 /* ── Shared Animations ──────────────────────────────────────────────────────── */
 @keyframes popIn {
   0%   { transform: scale(0.8); opacity: 0; }

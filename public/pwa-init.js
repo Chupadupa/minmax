@@ -11,6 +11,14 @@
   }
   setHeight();
   window.addEventListener("resize", setHeight);
+
+  // Mark standalone PWA mode so CSS can target it
+  if (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.navigator.standalone
+  ) {
+    document.documentElement.classList.add("pwa-standalone");
+  }
 })();
 
 // Register service worker and auto-reload when a new version takes over
