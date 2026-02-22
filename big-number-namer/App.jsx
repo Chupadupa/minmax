@@ -272,7 +272,7 @@ export default function BigNumberNamer() {
   const [bounce, setBounce] = useState(null);
   const [nameFlash, setNameFlash] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [useDashes, setUseDashes] = useState(false);
+  const [useDashes, setUseDashes] = useState(true);
 
   // Stable background dots - generated once
   const bgDots = useMemo(() =>
