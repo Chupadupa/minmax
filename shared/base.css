@@ -53,6 +53,7 @@ html {
   min-height: var(--app-height, 100%);
   background-color: var(--bg-color);
   background-image: var(--bg-gradient);
+  background-attachment: fixed;
 }
 
 body {
@@ -63,12 +64,6 @@ body {
   background: transparent;
   font-family: var(--font-heading);
   color: var(--color-text);
-}
-
-/* In standalone PWA mode, fix the background to the viewport so the gradient
-   always covers the full screen regardless of content height. */
-html.pwa-standalone {
-  background-attachment: fixed;
 }
 
 /* ── Shared Animations ──────────────────────────────────────────────────────── */
