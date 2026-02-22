@@ -1,0 +1,157 @@
+/* ── Shared Base Stylesheet ───────────────────────────────────────────────────
+ *  Import this in any toy to get the Doodads look & feel for free.
+ *  Override any CSS variable on :root or scope overrides under your own class.
+ *  Or skip the import entirely for a completely custom look.
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/* ── Fonts ──────────────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Outfit:wght@300;400;500&display=swap');
+
+/* ── Design Tokens ──────────────────────────────────────────────────────────── */
+:root {
+  /* Background */
+  --bg-color: #000;
+  --bg-gradient: linear-gradient(180deg, #000 0%, #0F0C29 3%, #1B1464 30%, #302B63 50%, #24243E 70%, #0F0C29 97%, #000 100%);
+
+  /* Typography */
+  --font-heading: 'Fredoka', sans-serif;
+  --font-body: 'Outfit', sans-serif;
+  --color-text: #fff;
+  --color-text-muted: rgba(255, 255, 255, 0.5);
+
+  /* Rainbow gradient (title text, accents) */
+  --gradient-rainbow: linear-gradient(135deg, #E41E20, #FF8C1A, #FFD030, #4AAF4E, #3A8FDE, #9B59B6, #F472B6);
+
+  /* Frosted glass */
+  --glass-bg: rgba(255, 255, 255, 0.07);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-border-light: rgba(255, 255, 255, 0.12);
+  --glass-blur: 20px;
+
+  /* Buttons (header-style pill buttons) */
+  --btn-bg: rgba(255, 255, 255, 0.1);
+  --btn-border: 1px solid rgba(255, 255, 255, 0.12);
+  --btn-size: 36px;
+  --btn-radius: 12px;
+
+  /* Safe-area insets */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+/* ── Global Reset ───────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Page Background ────────────────────────────────────────────────────────── */
+html {
+  min-height: 100%;
+  background-color: var(--bg-color);
+  background-image: var(--bg-gradient);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: transparent;
+  font-family: var(--font-heading);
+  color: var(--color-text);
+}
+
+/* ── Shared Animations ──────────────────────────────────────────────────────── */
+@keyframes popIn {
+  0%   { transform: scale(0.8); opacity: 0; }
+  60%  { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%      { transform: translateY(-8px); }
+}
+
+@keyframes flash {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+
+/* ── Utility: Gradient Text ─────────────────────────────────────────────────── */
+.gradient-text {
+  background: var(--gradient-rainbow);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ── Utility: Frosted Glass Card ────────────────────────────────────────────── */
+.frosted-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+}
+
+/* ── Utility: Page Header Layout ────────────────────────────────────────────── */
+.page-header {
+  text-align: center;
+  position: relative;
+  z-index: 1;
+  animation: popIn 0.5s ease-out;
+}
+
+/* ── Utility: Back Button ───────────────────────────────────────────────────── */
+.back-btn {
+  position: absolute;
+  top: 2px;
+  left: 0;
+  width: var(--btn-size);
+  height: var(--btn-size);
+  border-radius: var(--btn-radius);
+  background: var(--btn-bg);
+  border: var(--btn-border);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+  text-decoration: none;
+  line-height: 1;
+}
+
+/* ── Utility: Gear / Action Button (top-right) ──────────────────────────────── */
+.gear-btn {
+  position: absolute;
+  top: 2px;
+  right: 0;
+  width: var(--btn-size);
+  height: var(--btn-size);
+  border-radius: var(--btn-radius);
+  background: var(--btn-bg);
+  border: var(--btn-border);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+/* ── Utility: Safe-Area Container ───────────────────────────────────────────── */
+.safe-area-container {
+  padding-top: calc(24px + var(--safe-top));
+  padding-right: calc(16px + var(--safe-right));
+  padding-bottom: calc(40px + var(--safe-bottom));
+  padding-left: calc(16px + var(--safe-left));
+}

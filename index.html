@@ -10,55 +10,41 @@
   <link rel="icon" href="/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/icon-180.png" />
   <title>Doodads</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared/base.css" />
   <style>
-    *, *::before, *::after { box-sizing: border-box; }
-    html {
-      min-height: 100%;
-      background-color: #000;
-      background-image: linear-gradient(180deg, #000 0%, #0F0C29 3%, #1B1464 30%, #302B63 50%, #24243E 70%, #0F0C29 97%, #000 100%);
-    }
     body {
-      margin: 0; min-height: 100vh; min-height: 100dvh;
-      background: transparent;
-      font-family: 'Fredoka', sans-serif; color: #fff;
       display: flex; flex-direction: column; align-items: center;
-      padding: calc(60px + env(safe-area-inset-top, 0px)) calc(20px + env(safe-area-inset-right, 0px)) calc(40px + env(safe-area-inset-bottom, 0px)) calc(20px + env(safe-area-inset-left, 0px));
+      padding: calc(60px + var(--safe-top)) calc(20px + var(--safe-right)) calc(40px + var(--safe-bottom)) calc(20px + var(--safe-left));
     }
     h1 {
       font-size: 36px; font-weight: 700; margin: 0 0 8px;
-      background: linear-gradient(135deg, #E41E20, #FF8C1A, #FFD030, #4AAF4E, #3A8FDE, #9B59B6, #F472B6);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
     p.sub {
-      font-family: 'Outfit', sans-serif; font-weight: 300;
-      color: rgba(255,255,255,0.5); margin: 0 0 40px; font-size: 15px;
+      font-family: var(--font-body); font-weight: 300;
+      color: var(--color-text-muted); margin: 0 0 40px; font-size: 15px;
     }
     .grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
       gap: 20px; width: 100%; max-width: 700px;
     }
     a.card {
-      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 20px; padding: 28px 24px;
-      text-decoration: none; color: #fff;
+      padding: 28px 24px;
+      text-decoration: none; color: var(--color-text);
       transition: transform 0.15s ease, background 0.15s ease;
     }
     a.card:hover { transform: translateY(-4px); background: rgba(255,255,255,0.1); }
     .card h2 { margin: 0 0 6px; font-size: 20px; font-weight: 600; }
     .card p {
-      margin: 0; font-size: 13px; color: rgba(255,255,255,0.5);
-      font-family: 'Outfit', sans-serif; line-height: 1.5;
+      margin: 0; font-size: 13px; color: var(--color-text-muted);
+      font-family: var(--font-body); line-height: 1.5;
     }
   </style>
 </head>
 <body>
-  <h1>Doodads</h1>
+  <h1 class="gradient-text">Doodads</h1>
   <p class="sub">Little toys and experiments</p>
   <div class="grid">
-    <a class="card" href="./big-number-namer/">
+    <a class="card frosted-card" href="./big-number-namer/">
       <h2>Big Number Namer</h2>
       <p>Explore the names of ridiculously large numbers, all the way up to a millinillinillinillinillion.</p>
     </a>
