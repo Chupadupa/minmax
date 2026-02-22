@@ -34,6 +34,7 @@ There are no test, lint, or format commands.
 │   ├── App.jsx                 # Components, UI, and state (~635 lines)
 │   └── numberNaming.js         # Pure naming logic (reusable, no React dependency)
 ├── shared/
+│   ├── base.css                # Shared stylesheet: tokens, resets, fonts, animations, utilities
 │   └── useAutoFitFontSize.js   # Generic auto-fit font hook (reusable across toys)
 ├── public/
 │   ├── icon.svg                # App icon
@@ -66,18 +67,23 @@ Split across a few files, with most UI kept together in `App.jsx`:
 
 ### Shared Utilities (`shared/`)
 
+- **`base.css`** — Shared stylesheet providing design tokens (CSS custom properties), global resets, font loading (Fredoka & Outfit via Google Fonts), dark gradient background, shared keyframe animations (`popIn`, `fadeIn`, `float`, `flash`), and utility CSS classes (`.gradient-text`, `.frosted-card`, `.back-btn`, `.gear-btn`, `.page-header`, `.safe-area-container`). Toys import this to get the Doodads look for free, override CSS variables for tweaks, or skip the import entirely for a custom look.
+
 - **`useAutoFitFontSize.js`** — Binary search algorithm for dynamic font scaling within a container, with oscillation prevention via ceiling tracking. Accepts `{ maxFont, minFont }` options. Available for use by any toy.
 
 ## Coding Conventions
 
-- **All styling is inline** via JavaScript style objects — no CSS files, no CSS modules
+- **Shared base styles** live in `shared/base.css` — design tokens (CSS custom properties), global resets, font loading, background, shared animations, and utility classes. Import it in new toys to inherit the Doodads look. Override CSS variables for tweaks, or skip the import entirely for a custom look.
+- **Toy-specific styling is inline** via JavaScript style objects for dynamic/component-specific styles
+- **Use CSS variables** (`var(--font-heading)`, `var(--glass-bg)`, etc.) instead of hardcoding shared values
+- **Use shared CSS classes** (`.gradient-text`, `.back-btn`, `.gear-btn`, `.page-header`, `.frosted-card`) for common UI patterns instead of duplicating inline styles
 - **Section delimiters**: `// ── Section Name ──` with box-drawing characters
 - **Constants**: `UPPER_SNAKE_CASE` for arrays/objects
 - **Functions/variables**: `camelCase`
 - **React hooks**: Standard hooks (`useState`, `useRef`, `useEffect`, `useLayoutEffect`, `useMemo`, `useCallback`) used extensively
 - **Component structure**: Functional components only, no class components
-- **Fonts**: Fredoka (headings/buttons) and Outfit (body text), loaded via Google Fonts
-- **Animations**: CSS `@keyframes` defined in a `<style>` tag within the component JSX
+- **Fonts**: Fredoka (headings/buttons) and Outfit (body text), loaded via `shared/base.css`
+- **Animations**: Shared animations (`popIn`, `fadeIn`, `float`, `flash`) live in `base.css`; toy-specific `@keyframes` are defined in a `<style>` tag within the component JSX
 - **No external utility libraries** — vanilla JS throughout
 - **Mobile-first**: Touch-friendly button sizes, viewport meta tags, responsive grid layouts with `maxWidth` constraints
 
@@ -114,5 +120,6 @@ The service worker cache version is **auto-generated at build time** — no manu
 1. Create a new directory at the project root (e.g., `my-new-toy/`)
 2. Add an `index.html` inside it (Vite auto-discovers it)
 3. Add a card link in the root `index.html` grid
-4. **Include a back button** in the header linking to `../` (required for PWA navigation — see UI Conventions above)
-5. The toy will be built and deployed automatically
+4. **Import `shared/base.css`** — either via `<link rel="stylesheet" href="shared/base.css" />` in HTML, or `import '../shared/base.css'` in a JS/JSX entry point. This gives you fonts, resets, background, animations, and utility classes. Skip this import if you want a fully custom look.
+5. **Include a back button** in the header linking to `../` (required for PWA navigation — see UI Conventions above). Use the `.back-btn` CSS class from `base.css`.
+6. The toy will be built and deployed automatically

@@ -58,7 +58,7 @@ function FunFactToast({ text }) {
       border: "1px solid rgba(255, 208, 48, 0.5)",
       boxShadow: "0 4px 20px rgba(0,0,0,0.4), 0 0 15px rgba(255,208,48,0.15)",
       fontSize: 14, textAlign: "center", color: "#FFD030",
-      fontFamily: "'Fredoka', sans-serif", fontWeight: 600,
+      fontFamily: "var(--font-heading)", fontWeight: 600,
       whiteSpace: "nowrap", zIndex: 5,
       animation: display.phase === "enter"
         ? "factPop 0.35s ease-out forwards"
@@ -176,7 +176,7 @@ const settingsStyles = {
     boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
     position: "relative",
     maxHeight: "85vh", overflowY: "auto",
-    fontFamily: "'Fredoka', sans-serif", color: "#fff",
+    fontFamily: "var(--font-heading)", color: "#fff",
     animation: "popIn 0.3s ease-out",
   },
   closeBtn: {
@@ -185,7 +185,7 @@ const settingsStyles = {
     color: "rgba(255,255,255,0.7)", fontSize: 16,
     width: 32, height: 32, borderRadius: 10,
     cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-    fontFamily: "'Fredoka', sans-serif",
+    fontFamily: "var(--font-heading)",
   },
   heading: {
     fontSize: 22, fontWeight: 700, margin: "0 0 20px",
@@ -206,11 +206,11 @@ const settingsStyles = {
   },
   toggleLabel: {
     fontSize: 15, color: "rgba(255,255,255,0.85)",
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "var(--font-body)",
   },
   toggleHint: {
     fontSize: 12, color: "rgba(255,255,255,0.35)", margin: "6px 0 0 40px",
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "var(--font-body)",
   },
   divider: {
     height: 1, background: "rgba(255,255,255,0.08)",
@@ -223,7 +223,7 @@ const settingsStyles = {
   aboutText: {
     fontSize: 14, lineHeight: 1.6, margin: "0 0 10px",
     color: "rgba(255,255,255,0.55)",
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "var(--font-body)",
   },
   link: {
     color: "#48DBFB", textDecoration: "none",
@@ -336,21 +336,6 @@ export default function BigNumberNamer() {
   return (
     <div style={styles.container}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Outfit:wght@300;400;500&display=swap');
-        @keyframes popIn {
-          0% { transform: scale(0.8); opacity: 0; }
-          60% { transform: scale(1.1); }
-          100% { transform: scale(1); opacity: 1; }
-        }
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-8px); }
-        }
-        @keyframes flash {
-          0% { transform: scale(1); }
-          50% { transform: scale(1.03); }
-          100% { transform: scale(1); }
-        }
         @keyframes btnPress {
           0% { transform: scale(1); }
           50% { transform: scale(0.88); }
@@ -365,24 +350,10 @@ export default function BigNumberNamer() {
           0% { transform: translateX(-50%) scale(1); opacity: 1; }
           100% { transform: translateX(-50%) scale(0.7); opacity: 0; }
         }
-        @keyframes fadeIn {
-          0% { opacity: 0; }
-          100% { opacity: 1; }
-        }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        html {
-          min-height: 100%;
-          background-color: #000;
-          background-image: linear-gradient(180deg, #000 0%, #0F0C29 3%, #1B1464 30%, #302B63 50%, #24243E 70%, #0F0C29 97%, #000 100%);
-        }
-        body {
-          min-height: 100vh; min-height: 100dvh;
-          background: transparent;
-        }
         body, #root { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
         .nb-btn {
           width: 100%; aspect-ratio: 1.4; border-radius: 18px; border: none;
-          font-size: 30px; font-weight: 700; font-family: 'Fredoka', sans-serif;
+          font-size: 30px; font-weight: 700; font-family: var(--font-heading);
           color: #fff; cursor: pointer; display: flex; align-items: center;
           justify-content: center; user-select: none; -webkit-user-select: none;
           transition: transform 0.1s ease, opacity 0.15s ease;
@@ -392,7 +363,7 @@ export default function BigNumberNamer() {
         .nb-btn[disabled] { cursor: default; }
         .pm-btn {
           border-radius: 16px; border: none; font-size: 26px; font-weight: 700;
-          font-family: 'Fredoka', sans-serif; color: #fff; cursor: pointer;
+          font-family: var(--font-heading); color: #fff; cursor: pointer;
           display: flex; align-items: center; justify-content: center;
           user-select: none; -webkit-user-select: none; transition: transform 0.1s ease;
           padding: 12px 0; text-shadow: 0 2px 4px rgba(0,0,0,0.25);
@@ -416,10 +387,10 @@ export default function BigNumberNamer() {
       </div>
 
       {/* Header */}
-      <div style={styles.header}>
-        <a href="../" style={styles.backBtn} aria-label="Back to home">⬅️</a>
-        <button style={styles.gearBtn} onClick={() => setShowSettings(true)}>⚙</button>
-        <h1 style={styles.title}>Big Number Namer</h1>
+      <div className="page-header" style={styles.header}>
+        <a href="../" className="back-btn" aria-label="Back to home">⬅️</a>
+        <button className="gear-btn" onClick={() => setShowSettings(true)}>⚙</button>
+        <h1 className="gradient-text" style={styles.title}>Big Number Namer</h1>
         <p style={styles.subtitle}>How many zeros?</p>
       </div>
 
@@ -542,47 +513,27 @@ const styles = {
   container: {
     minHeight: "100dvh",
     display: "flex", flexDirection: "column", alignItems: "center",
-    padding: "calc(24px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-right, 0px)) calc(40px + env(safe-area-inset-bottom, 0px)) calc(16px + env(safe-area-inset-left, 0px))",
-    fontFamily: "'Fredoka', sans-serif",
-    position: "relative", overflow: "hidden", color: "#fff",
+    padding: "calc(24px + var(--safe-top)) calc(16px + var(--safe-right)) calc(40px + var(--safe-bottom)) calc(16px + var(--safe-left))",
+    position: "relative", overflow: "hidden",
   },
   bgDots: { position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" },
   header: {
-    textAlign: "center", marginBottom: 16, animation: "popIn 0.5s ease-out",
-    position: "relative", zIndex: 1,
+    marginBottom: 16,
     width: "100%", maxWidth: 380,
-  },
-  backBtn: {
-    position: "absolute", top: 2, left: 0,
-    background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)",
-    fontSize: 18,
-    width: 36, height: 36, borderRadius: 12,
-    cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-    transition: "background 0.15s ease",
-    textDecoration: "none", lineHeight: 1,
-  },
-  gearBtn: {
-    position: "absolute", top: 2, right: 0,
-    background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)",
-    color: "rgba(255,255,255,0.6)", fontSize: 18,
-    width: 36, height: 36, borderRadius: 12,
-    cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-    transition: "background 0.15s ease",
   },
   title: {
     fontSize: 28, fontWeight: 700, margin: 0,
-    background: "linear-gradient(135deg, #E41E20, #FF8C1A, #FFD030, #4AAF4E, #3A8FDE, #9B59B6, #F472B6)",
-    WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", letterSpacing: "-0.5px",
+    letterSpacing: "-0.5px",
   },
   subtitle: {
     fontSize: 14, color: "rgba(255,255,255,0.5)", margin: "4px 0 0",
-    fontFamily: "'Outfit', sans-serif", fontWeight: 300,
+    fontFamily: "var(--font-body)", fontWeight: 300,
   },
   displayCard: {
-    background: "rgba(255,255,255,0.07)", backdropFilter: "blur(20px)",
+    background: "var(--glass-bg)", backdropFilter: "blur(var(--glass-blur))",
     borderRadius: 20, padding: "14px 16px",
     width: "100%", maxWidth: 380, height: 260,
-    border: "1px solid rgba(255,255,255,0.1)",
+    border: "1px solid var(--glass-border)",
     position: "relative", zIndex: 1,
     display: "flex", flexDirection: "column",
   },
@@ -596,12 +547,12 @@ const styles = {
   },
   zerosLabel: {
     fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5,
-    color: "rgba(255,255,255,0.4)", fontFamily: "'Outfit', sans-serif",
+    color: "rgba(255,255,255,0.4)", fontFamily: "var(--font-body)",
   },
   notationDot: { color: "rgba(255,255,255,0.2)", fontSize: 12 },
   sciNotation: {
     fontSize: 12, color: "rgba(255,255,255,0.35)",
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "var(--font-body)",
   },
   numberDisplayOuter: {
     flex: 1, minHeight: 0,
