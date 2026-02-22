@@ -11,6 +11,16 @@
   <link rel="apple-touch-icon" href="/icon-180.png" />
   <title>Doodads</title>
   <link rel="stylesheet" href="shared/base.css" />
+  <script>
+    // Fix iOS PWA viewport height: 100dvh is wrong on initial load in standalone mode
+    (function(){
+      function setHeight(){
+        document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
+      }
+      setHeight();
+      window.addEventListener('resize', setHeight);
+    })();
+  </script>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center;
