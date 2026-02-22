@@ -370,10 +370,13 @@ export default function BigNumberNamer() {
           100% { opacity: 1; }
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        html { min-height: 100%; background: #000; }
+        html {
+          min-height: 100%; background: #0F0C29;
+          background: linear-gradient(150deg, #0F0C29 0%, #1B1464 30%, #302B63 50%, #24243E 70%, #0F0C29 100%);
+        }
         body {
           min-height: 100vh; min-height: 100dvh;
-          background: linear-gradient(150deg, #0F0C29 0%, #1B1464 30%, #302B63 50%, #24243E 70%, #000000 100%);
+          background: transparent;
         }
         body, #root { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
         .nb-btn {
@@ -538,7 +541,8 @@ const styles = {
   container: {
     minHeight: "100dvh",
     display: "flex", flexDirection: "column", alignItems: "center",
-    padding: "24px 16px 40px", fontFamily: "'Fredoka', sans-serif",
+    padding: "calc(24px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-right, 0px)) calc(40px + env(safe-area-inset-bottom, 0px)) calc(16px + env(safe-area-inset-left, 0px))",
+    fontFamily: "'Fredoka', sans-serif",
     position: "relative", overflow: "hidden", color: "#fff",
   },
   bgDots: { position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" },
