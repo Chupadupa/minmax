@@ -31,14 +31,19 @@ There are no test, lint, or format commands.
 ├── big-number-namer/           # Primary toy
 │   ├── index.html              # Entry HTML
 │   ├── main.jsx                # React mount point
-│   ├── App.jsx                 # Components, UI, and state (~635 lines)
+│   ├── App.jsx                 # Components, UI, and state (~590 lines)
 │   └── numberNaming.js         # Pure naming logic (reusable, no React dependency)
 ├── shared/
 │   ├── base.css                # Shared stylesheet: tokens, resets, fonts, animations, utilities
 │   └── useAutoFitFontSize.js   # Generic auto-fit font hook (reusable across toys)
 ├── public/
-│   ├── icon.svg                # App icon
-│   ├── icon-maskable.svg       # PWA maskable icon
+│   ├── icon.svg                # App icon (SVG source)
+│   ├── icon-180.png            # Apple touch icon
+│   ├── icon-192.png            # PWA icon (192×192)
+│   ├── icon-512.png            # PWA icon (512×512)
+│   ├── icon-maskable.svg       # PWA maskable icon (SVG source)
+│   ├── icon-maskable-192.png   # PWA maskable icon (192×192)
+│   ├── icon-maskable-512.png   # PWA maskable icon (512×512)
 │   ├── manifest.json           # Web app manifest (PWA)
 │   ├── pwa-init.js             # Shared PWA bootstrap (viewport fix + SW registration)
 │   └── sw.js                   # Service worker for offline caching
@@ -90,13 +95,13 @@ Split across a few files, with most UI kept together in `App.jsx`:
 
 ### UI Conventions
 
-- **Every toy must include a back button** in its header that links to the hub (`../`). This is critical for PWA navigation where there is no browser chrome. Use an `<a>` tag (not a button) with `href="../"`, styled as a 36x36 rounded pill in the top-left corner with a `‹` character. See `big-number-namer/App.jsx` `styles.backBtn` for the reference implementation.
+- **Every toy must include a back button** in its header that links to the hub (`../`). This is critical for PWA navigation where there is no browser chrome. Use an `<a>` tag (not a button) with `href="../"` and the `.back-btn` CSS class from `base.css` (36×36 rounded pill in the top-left corner with a `‹` character).
 - **Header layout**: Back button (top-left), settings gear if needed (top-right), centered title and subtitle.
 
 ## PWA Support
 
 The app is installable as a Progressive Web App:
-- `public/manifest.json` — app manifest
+- `public/manifest.json` — app manifest with icons in multiple sizes (SVG + PNG at 180, 192, 512)
 - `public/sw.js` — service worker with network-first caching strategy
 - `public/pwa-init.js` — shared bootstrap script included via `<script src="/pwa-init.js"></script>` in every page's `<head>`. Handles the iOS standalone viewport height fix (`--app-height`) and service worker registration with auto-reload on update. Every toy's `index.html` should include this script.
 
