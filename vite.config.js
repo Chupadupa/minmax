@@ -12,7 +12,10 @@ function discoverPages(rootDir) {
     if (
       statSync(entryPath).isDirectory() &&
       !entry.startsWith(".") &&
-      !entry.startsWith("node_modules") &&
+      entry !== "node_modules" &&
+      entry !== "dist" &&
+      entry !== "shared" &&
+      entry !== "public" &&
       existsSync(resolve(entryPath, "index.html"))
     ) {
       pages[entry] = resolve(entryPath, "index.html");
