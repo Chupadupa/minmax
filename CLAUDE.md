@@ -31,7 +31,10 @@ There are no test, lint, or format commands.
 ├── big-number-namer/           # Primary toy
 │   ├── index.html              # Entry HTML
 │   ├── main.jsx                # React mount point
-│   └── App.jsx                 # All components and logic (~766 lines)
+│   ├── App.jsx                 # Components, UI, and state (~635 lines)
+│   └── numberNaming.js         # Pure naming logic (reusable, no React dependency)
+├── shared/
+│   └── useAutoFitFontSize.js   # Generic auto-fit font hook (reusable across toys)
 ├── public/
 │   ├── icon.svg                # App icon
 │   ├── icon-maskable.svg       # PWA maskable icon
@@ -48,25 +51,22 @@ There are no test, lint, or format commands.
 
 `vite.config.js` auto-discovers any subdirectory containing an `index.html` as a separate page entry. To add a new toy, create a new directory with its own `index.html` — no config changes needed.
 
-### Big Number Namer (`big-number-namer/App.jsx`)
+### Big Number Namer
 
-Everything lives in a single file organized with section comment headers (`// ── Section Name ──`):
+Split across a few files, with most UI kept together in `App.jsx`:
 
-1. **Naming Logic** (top of file) — Pure functions that convert a zero count into a written number name using Latin prefix composition. Key functions:
-   - `getGroupPrefix()` / `getIllionPrefix()` — Recursive Latin prefix construction
-   - `getNumberName(zeros, useDashes)` — Main conversion function
-   - `formatZerosWithCommas(zerosCount)` — Comma-formatted number display
+- **`numberNaming.js`** — Pure functions (no React dependency) that convert a zero count into a written number name using Latin prefix composition. Key exports:
+  - `getNumberName(zeros, useDashes)` — Main conversion function
+  - `formatZerosWithCommas(zerosCount)` — Comma-formatted number display
 
-2. **Constants** — `NB_COLORS`, `NB_SOLID` (Numberblocks-inspired button colors), `MAX_ZEROS` (3,000,000,000,003)
+- **`App.jsx`** — All React components, state, and styles:
+  1. **Constants** — `NB_COLORS`, `NB_SOLID` (Numberblocks-inspired button colors), `MAX_ZEROS` (3,000,000,000,003)
+  2. **Components**: `FunFactToast`, `SettingsOverlay`, `BigNumberNamer` (main)
+  3. **Styles** — Inline style objects at bottom of file (`styles`, `settingsStyles`)
 
-3. **Custom Hook** — `useAutoFitFontSize()` — Binary search algorithm for dynamic font scaling within a container, with oscillation prevention via ceiling tracking
+### Shared Utilities (`shared/`)
 
-4. **Components**:
-   - `FunFactToast` — Animated toast for milestone numbers (googol, centillion, etc.)
-   - `SettingsOverlay` — Modal with toggles for dashes and commas
-   - `BigNumberNamer` — Main component with header (back button + settings gear), numpad, display, state management
-
-5. **Styles** — Inline style objects at bottom of file (`styles`, `settingsStyles`)
+- **`useAutoFitFontSize.js`** — Binary search algorithm for dynamic font scaling within a container, with oscillation prevention via ceiling tracking. Accepts `{ maxFont, minFont }` options. Available for use by any toy.
 
 ## Coding Conventions
 
