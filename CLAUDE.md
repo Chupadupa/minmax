@@ -64,7 +64,7 @@ Everything lives in a single file organized with section comment headers (`// �
 4. **Components**:
    - `FunFactToast` — Animated toast for milestone numbers (googol, centillion, etc.)
    - `SettingsOverlay` — Modal with toggles for dashes and commas
-   - `BigNumberNamer` — Main component with numpad, display, state management
+   - `BigNumberNamer` — Main component with header (back button + settings gear), numpad, display, state management
 
 5. **Styles** — Inline style objects at bottom of file (`styles`, `settingsStyles`)
 
@@ -80,6 +80,11 @@ Everything lives in a single file organized with section comment headers (`// �
 - **Animations**: CSS `@keyframes` defined in a `<style>` tag within the component JSX
 - **No external utility libraries** — vanilla JS throughout
 - **Mobile-first**: Touch-friendly button sizes, viewport meta tags, responsive grid layouts with `maxWidth` constraints
+
+### UI Conventions
+
+- **Every toy must include a back button** in its header that links to the hub (`../`). This is critical for PWA navigation where there is no browser chrome. Use an `<a>` tag (not a button) with `href="../"`, styled as a 36x36 rounded pill in the top-left corner with a `‹` character. See `big-number-namer/App.jsx` `styles.backBtn` for the reference implementation.
+- **Header layout**: Back button (top-left), settings gear if needed (top-right), centered title and subtitle.
 
 ## PWA Support
 
@@ -101,4 +106,5 @@ The app is installable as a Progressive Web App:
 1. Create a new directory at the project root (e.g., `my-new-toy/`)
 2. Add an `index.html` inside it (Vite auto-discovers it)
 3. Add a card link in the root `index.html` grid
-4. The toy will be built and deployed automatically
+4. **Include a back button** in the header linking to `../` (required for PWA navigation — see UI Conventions above)
+5. The toy will be built and deployed automatically
