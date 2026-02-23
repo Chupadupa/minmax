@@ -54,17 +54,6 @@ html {
   background-color: var(--bg-color);
 }
 
-/* Fixed gradient layer — uses a pseudo-element instead of background-attachment: fixed
-   because iOS Safari/WebKit ignores background-attachment: fixed entirely. */
-html::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image: var(--bg-gradient);
-  z-index: -1;
-  pointer-events: none;
-}
-
 body {
   margin: 0;
   min-height: 100vh;
@@ -73,6 +62,19 @@ body {
   background: transparent;
   font-family: var(--font-heading);
   color: var(--color-text);
+}
+
+/* Fixed gradient layer — uses a pseudo-element on body instead of
+   background-attachment: fixed (which iOS Safari/WebKit ignores entirely).
+   On html::before, iOS WebKit may skip the initial paint of position: fixed
+   pseudo-elements with negative z-index; body::before renders reliably. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: var(--bg-gradient);
+  z-index: -1;
+  pointer-events: none;
 }
 
 /* ── Shared Animations ──────────────────────────────────────────────────────── */
