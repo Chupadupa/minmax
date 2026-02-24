@@ -230,6 +230,8 @@ function AnalogClock({ hours, minutes, dragging, onDragStart, onDragMove, onDrag
   const hRad = ((hAngle - 90) * Math.PI) / 180;
   const mEnd = { x: CX + minuteLen * Math.cos(mRad), y: CY + minuteLen * Math.sin(mRad) };
   const hEnd = { x: CX + hourLen * Math.cos(hRad), y: CY + hourLen * Math.sin(hRad) };
+  // Hour hand hit area starts offset from center so near-center grabs favor minute hand
+  const hHitStart = { x: CX + 22 * Math.cos(hRad), y: CY + 22 * Math.sin(hRad) };
 
   return (
     <svg
@@ -256,15 +258,6 @@ function AnalogClock({ hours, minutes, dragging, onDragStart, onDragMove, onDrag
         strokeLinecap="round"
         style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.3))" }}
       />
-      {/* Hour hand hit area (invisible, wider for easy grabbing) */}
-      <line
-        x1={CX} y1={CY} x2={hEnd.x} y2={hEnd.y}
-        stroke="transparent"
-        strokeWidth={30}
-        strokeLinecap="round"
-        style={{ cursor: "grab", touchAction: "none" }}
-        onPointerDown={(e) => handlePointerDown("hour", e)}
-      />
 
       {/* Minute hand (longer, thinner) */}
       <line
@@ -274,7 +267,9 @@ function AnalogClock({ hours, minutes, dragging, onDragStart, onDragMove, onDrag
         strokeLinecap="round"
         style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.3))" }}
       />
-      {/* Minute hand hit area */}
+
+      {/* Hit areas — hour hand on top so it wins when overlapping,
+           but offset from center so middle-area grabs favor minute */}
       <line
         x1={CX} y1={CY} x2={mEnd.x} y2={mEnd.y}
         stroke="transparent"
@@ -282,6 +277,15 @@ function AnalogClock({ hours, minutes, dragging, onDragStart, onDragMove, onDrag
         strokeLinecap="round"
         style={{ cursor: "grab", touchAction: "none" }}
         onPointerDown={(e) => handlePointerDown("minute", e)}
+      />
+      <line
+        x1={hHitStart.x} y1={hHitStart.y}
+        x2={hEnd.x} y2={hEnd.y}
+        stroke="transparent"
+        strokeWidth={30}
+        strokeLinecap="round"
+        style={{ cursor: "grab", touchAction: "none" }}
+        onPointerDown={(e) => handlePointerDown("hour", e)}
       />
 
       {/* Center dot */}
@@ -295,8 +299,8 @@ function AnalogClock({ hours, minutes, dragging, onDragStart, onDragMove, onDrag
 
 function DigitalDisplay({ hours, minutes, isAM, use24Hour, editMode, digitBuffer, onTap }) {
   if (editMode) {
-    // Show the digit buffer as __:__ with typed digits filling in
-    const buf = digitBuffer.padEnd(4, "_");
+    // Right-aligned: digits fill from 1s place (like a microwave)
+    const buf = digitBuffer.padStart(4, "_");
     const displayStr = `${buf[0]}${buf[1]}:${buf[2]}${buf[3]}`;
     return (
       <div style={styles.digitalCard} onClick={onTap}>
@@ -521,26 +525,23 @@ export default function ClockToy() {
   }, [editMode]);
 
   const applyDigitBuffer = useCallback((buf) => {
-    const h = parseInt(buf.slice(0, 2), 10);
-    const m = parseInt(buf.slice(2, 4), 10);
+    // Right-align: "230" → "0230", "5" → "0005"
+    const padded = buf.padStart(4, "0");
+    let h = parseInt(padded.slice(0, 2), 10);
+    let m = parseInt(padded.slice(2, 4), 10);
+
+    // Clamp to valid ranges instead of rejecting
+    m = Math.min(m, 59);
 
     if (use24Hour) {
-      if (h > 23 || m > 59) {
-        setShake(true);
-        setTimeout(() => setShake(false), 400);
-        return;
-      }
+      h = Math.min(h, 23);
       const newIsAM = h < 12;
       const newHour = h >= 12 ? h - 12 : h;
       setHours(newHour);
       setMinutes(m);
       setIsAM(newIsAM);
     } else {
-      if (h < 1 || h > 12 || m > 59) {
-        setShake(true);
-        setTimeout(() => setShake(false), 400);
-        return;
-      }
+      h = Math.max(1, Math.min(h, 12));
       setHours(h === 12 ? 0 : h);
       setMinutes(m);
     }
@@ -570,9 +571,13 @@ export default function ClockToy() {
   }, []);
 
   const handleExitEdit = useCallback(() => {
-    setEditMode(false);
-    setDigitBuffer("");
-  }, []);
+    if (digitBuffer.length > 0) {
+      applyDigitBuffer(digitBuffer);
+    } else {
+      setEditMode(false);
+      setDigitBuffer("");
+    }
+  }, [digitBuffer, applyDigitBuffer]);
 
   // Close edit mode when clicking outside
   useEffect(() => {
