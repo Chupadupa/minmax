@@ -95,7 +95,7 @@ Split across a few files, with most UI kept together in `App.jsx`:
 
 ### UI Conventions
 
-- **Every toy must include a back button** in its header that links to the hub (`../`). This is critical for PWA navigation where there is no browser chrome. Use an `<a>` tag (not a button) with `href="../"` and the `.back-btn` CSS class from `base.css` (36×36 rounded pill in the top-left corner with a `‹` character).
+- **Every toy must include a back button** in its header that links to the hub (`../`). This is critical for PWA navigation where there is no browser chrome. Use an `<a>` tag (not a button) with `href="../"` and the `.back-btn` CSS class from `base.css` (36×36 rounded pill in the top-left corner with the `⬅️` emoji).
 - **Header layout**: Back button (top-left), settings gear if needed (top-right), centered title and subtitle.
 
 ## PWA Support
