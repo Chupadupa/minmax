@@ -21,6 +21,7 @@ const HOUR_COLORS = {
 
 const MINUTE_HAND_COLOR = "#3A8FDE";
 const HOUR_HAND_COLOR = "#E41E20";
+const SECOND_HAND_COLOR = "#FF8C1A";
 const CENTER_DOT_COLOR = "#FFD030";
 
 // ── Settings Overlay ─────────────────────────────────────────────────────────
@@ -130,7 +131,7 @@ const CX = SVG_SIZE / 2;
 const CY = SVG_SIZE / 2;
 const CLOCK_R = 130;
 
-function AnalogClock({ hours, minutes, dragging, onDragStart, onDragMove, onDragEnd }) {
+function AnalogClock({ hours, minutes, seconds, dragging, onDragStart, onDragMove, onDragEnd }) {
   const svgRef = useRef(null);
 
   const hAngle = hourAngle(hours, minutes);
@@ -233,6 +234,14 @@ function AnalogClock({ hours, minutes, dragging, onDragStart, onDragMove, onDrag
   // Hour hand hit area starts offset from center so near-center grabs favor minute hand
   const hHitStart = { x: CX + 22 * Math.cos(hRad), y: CY + 22 * Math.sin(hRad) };
 
+  // Second hand endpoint (longest, thinnest)
+  const secondLen = CLOCK_R - 18;
+  const secondTailLen = 18;
+  const sAngle = (seconds * 6) % 360;
+  const sRad = ((sAngle - 90) * Math.PI) / 180;
+  const sEnd = { x: CX + secondLen * Math.cos(sRad), y: CY + secondLen * Math.sin(sRad) };
+  const sTail = { x: CX - secondTailLen * Math.cos(sRad), y: CY - secondTailLen * Math.sin(sRad) };
+
   return (
     <svg
       ref={svgRef}
@@ -266,6 +275,15 @@ function AnalogClock({ hours, minutes, dragging, onDragStart, onDragMove, onDrag
         strokeWidth={4.5}
         strokeLinecap="round"
         style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.3))" }}
+      />
+
+      {/* Second hand (longest, thinnest — no hit area, not selectable) */}
+      <line
+        x1={sTail.x} y1={sTail.y} x2={sEnd.x} y2={sEnd.y}
+        stroke={SECOND_HAND_COLOR}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.2))" }}
       />
 
       {/* Hit areas — hour hand on top so it wins when overlapping,
@@ -443,6 +461,7 @@ export default function ClockToy() {
   const [digitBuffer, setDigitBuffer] = useState("");
   const [use24Hour, setUse24Hour] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [seconds, setSeconds] = useState(() => new Date().getSeconds());
   const [shake, setShake] = useState(false);
 
   const prevAngleRef = useRef(null);
@@ -460,11 +479,42 @@ export default function ClockToy() {
     })), []
   );
 
+  // ── Second Hand Tick ──────────────────────────────────────────────────────
+
+  const advanceMinute = useCallback(() => {
+    setMinutes((prev) => {
+      const next = (prev + 1) % 60;
+      if (next === 0) {
+        setHours((h) => {
+          const nextH = (h + 1) % 12;
+          if (nextH === 0) setIsAM((am) => !am);
+          return nextH;
+        });
+      }
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (dragging || editMode) return;
+    const id = setInterval(() => {
+      setSeconds((prev) => {
+        if (prev >= 59) {
+          advanceMinute();
+          return 0;
+        }
+        return prev + 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [dragging, editMode, advanceMinute]);
+
   // ── Drag Handlers ────────────────────────────────────────────────────────
 
   const handleDragStart = useCallback((hand, angle) => {
     setDragging(hand);
     prevAngleRef.current = angle;
+    setSeconds(0);
     if (editMode) {
       setEditMode(false);
       setDigitBuffer("");
@@ -523,6 +573,7 @@ export default function ClockToy() {
 
   const handleDigitalTap = useCallback(() => {
     if (editMode) return;
+    setSeconds(0);
     setEditMode(true);
     setDigitBuffer("");
   }, [editMode]);
@@ -549,6 +600,7 @@ export default function ClockToy() {
       setMinutes(m);
     }
 
+    setSeconds(0);
     setEditMode(false);
     setDigitBuffer("");
   }, [use24Hour]);
@@ -651,6 +703,7 @@ export default function ClockToy() {
         <AnalogClock
           hours={hours}
           minutes={minutes}
+          seconds={seconds}
           dragging={dragging}
           onDragStart={handleDragStart}
           onDragMove={handleDragMove}
