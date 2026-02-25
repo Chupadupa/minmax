@@ -432,9 +432,12 @@ function AmPmToggle({ isAM, onToggle, use24Hour }) {
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 export default function ClockToy() {
-  const [hours, setHours] = useState(10);     // 0–11
-  const [minutes, setMinutes] = useState(10);  // 0–59
-  const [isAM, setIsAM] = useState(true);
+  const [hours, setHours] = useState(() => {   // 0–11
+    const h = new Date().getHours();
+    return h >= 12 ? h - 12 : h;
+  });
+  const [minutes, setMinutes] = useState(() => new Date().getMinutes());  // 0–59
+  const [isAM, setIsAM] = useState(() => new Date().getHours() < 12);
   const [dragging, setDragging] = useState(null); // null | "hour" | "minute"
   const [editMode, setEditMode] = useState(false);
   const [digitBuffer, setDigitBuffer] = useState("");
@@ -631,7 +634,7 @@ export default function ClockToy() {
       <div className="page-header" style={styles.header}>
         <a href="../" className="back-btn" aria-label="Back to home">⬅️</a>
         <button className="gear-btn" onClick={() => setShowSettings(true)}>⚙</button>
-        <h1 className="gradient-text" style={styles.title}>Clock</h1>
+        <h1 className="gradient-text" style={styles.title}>Time Teller</h1>
         <p style={styles.subtitle}>Set the time!</p>
       </div>
 
@@ -745,7 +748,7 @@ const styles = {
     alignSelf: "flex-end", paddingBottom: 4,
   },
   digitalHint: {
-    position: "absolute", bottom: 4, right: 12,
+    position: "absolute", top: 4, right: 12,
     fontSize: 10, color: "rgba(255,255,255,0.25)",
     fontFamily: "var(--font-body)",
   },
