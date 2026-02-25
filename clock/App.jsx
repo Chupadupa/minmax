@@ -26,7 +26,7 @@ const CENTER_DOT_COLOR = "#FFD030";
 
 // ── Settings Overlay ─────────────────────────────────────────────────────────
 
-function SettingsOverlay({ show, onClose, use24Hour, setUse24Hour }) {
+function SettingsOverlay({ show, onClose, use24Hour, setUse24Hour, secondDraggable, setSecondDraggable }) {
   if (!show) return null;
 
   return (
@@ -50,6 +50,24 @@ function SettingsOverlay({ show, onClose, use24Hour, setUse24Hour }) {
         </label>
         <p style={settingsStyles.toggleHint}>
           e.g. {use24Hour ? "14:30" : "2:30 PM"} → {!use24Hour ? "14:30" : "2:30 PM"}
+        </p>
+
+        <div style={{ height: 16 }} />
+        <label style={settingsStyles.toggle}>
+          <div
+            style={{
+              ...settingsStyles.checkbox,
+              background: secondDraggable ? "#4AAF4E" : "rgba(255,255,255,0.15)",
+              borderColor: secondDraggable ? "#4AAF4E" : "rgba(255,255,255,0.25)",
+            }}
+            onClick={() => setSecondDraggable((v) => !v)}
+          >
+            {secondDraggable && <span style={settingsStyles.checkmark}>✓</span>}
+          </div>
+          <span style={settingsStyles.toggleLabel}>Draggable second hand</span>
+        </label>
+        <p style={settingsStyles.toggleHint}>
+          {secondDraggable ? "Drag the orange circle to set seconds" : "Second hand ticks automatically"}
         </p>
 
         <div style={settingsStyles.divider} />
@@ -131,7 +149,7 @@ const CX = SVG_SIZE / 2;
 const CY = SVG_SIZE / 2;
 const CLOCK_R = 130;
 
-function AnalogClock({ hours, minutes, seconds, dragging, onDragStart, onDragMove, onDragEnd }) {
+function AnalogClock({ hours, minutes, seconds, dragging, onDragStart, onDragMove, onDragEnd, secondDraggable }) {
   const svgRef = useRef(null);
 
   const hAngle = hourAngle(hours, minutes);
@@ -235,7 +253,7 @@ function AnalogClock({ hours, minutes, seconds, dragging, onDragStart, onDragMov
   const hHitStart = { x: CX + 22 * Math.cos(hRad), y: CY + 22 * Math.sin(hRad) };
 
   // Second hand endpoint (longest, thinnest)
-  const secondLen = CLOCK_R - 18;
+  const secondLen = CLOCK_R - 5;
   const secondTailLen = 18;
   const sAngle = (seconds * 6) % 360;
   const sRad = ((sAngle - 90) * Math.PI) / 180;
@@ -309,6 +327,16 @@ function AnalogClock({ hours, minutes, seconds, dragging, onDragStart, onDragMov
       {/* Center dot */}
       <circle cx={CX} cy={CY} r={7} fill={CENTER_DOT_COLOR} />
       <circle cx={CX} cy={CY} r={3.5} fill="rgba(0,0,0,0.3)" />
+
+      {/* Handle circles — visible knobs at hand endpoints */}
+      <circle cx={hEnd.x} cy={hEnd.y} r={6} fill={HOUR_HAND_COLOR} stroke="rgba(255,255,255,0.5)" strokeWidth={1.5} style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.4))" }} />
+      <circle cx={mEnd.x} cy={mEnd.y} r={5.5} fill={MINUTE_HAND_COLOR} stroke="rgba(255,255,255,0.5)" strokeWidth={1.5} style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.4))" }} />
+      {secondDraggable && <circle cx={sEnd.x} cy={sEnd.y} r={4.5} fill={SECOND_HAND_COLOR} stroke="rgba(255,255,255,0.5)" strokeWidth={1.5} style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.4))" }} />}
+
+      {/* Circle hit areas — on top of everything for click priority */}
+      <circle cx={hEnd.x} cy={hEnd.y} r={14} fill="transparent" style={{ cursor: "grab", touchAction: "none" }} onPointerDown={(e) => handlePointerDown("hour", e)} />
+      <circle cx={mEnd.x} cy={mEnd.y} r={13} fill="transparent" style={{ cursor: "grab", touchAction: "none" }} onPointerDown={(e) => handlePointerDown("minute", e)} />
+      {secondDraggable && <circle cx={sEnd.x} cy={sEnd.y} r={11} fill="transparent" style={{ cursor: "grab", touchAction: "none" }} onPointerDown={(e) => handlePointerDown("second", e)} />}
     </svg>
   );
 }
@@ -463,6 +491,7 @@ export default function ClockToy() {
   const [showSettings, setShowSettings] = useState(false);
   const [seconds, setSeconds] = useState(() => new Date().getSeconds());
   const [shake, setShake] = useState(false);
+  const [secondDraggable, setSecondDraggable] = useState(true);
 
   const prevAngleRef = useRef(null);
 
@@ -495,6 +524,20 @@ export default function ClockToy() {
     });
   }, []);
 
+  const retreatMinute = useCallback(() => {
+    setMinutes((prev) => {
+      const next = (prev - 1 + 60) % 60;
+      if (prev === 0) {
+        setHours((h) => {
+          const nextH = (h - 1 + 12) % 12;
+          if (h === 0) setIsAM((am) => !am);
+          return nextH;
+        });
+      }
+      return next;
+    });
+  }, []);
+
   useEffect(() => {
     if (dragging || editMode) return;
     const id = setInterval(() => {
@@ -514,7 +557,7 @@ export default function ClockToy() {
   const handleDragStart = useCallback((hand, angle) => {
     setDragging(hand);
     prevAngleRef.current = angle;
-    setSeconds(0);
+    if (hand !== "second") setSeconds(0);
     if (editMode) {
       setEditMode(false);
       setDigitBuffer("");
@@ -559,14 +602,29 @@ export default function ClockToy() {
         }
         return newHour;
       });
+    } else if (dragging === "second") {
+      const newSec = angleToMinutes(angle);
+      const wrap = detectWrap(prevAngle, angle);
+      if (wrap === 1) advanceMinute();
+      else if (wrap === -1) retreatMinute();
+      setSeconds(newSec);
     }
 
     prevAngleRef.current = angle;
-  }, [dragging]);
+  }, [dragging, advanceMinute, retreatMinute]);
 
   const handleDragEnd = useCallback(() => {
     setDragging(null);
     prevAngleRef.current = null;
+  }, []);
+
+  const handleResetToNow = useCallback(() => {
+    const now = new Date();
+    const h = now.getHours();
+    setHours(h >= 12 ? h - 12 : h);
+    setMinutes(now.getMinutes());
+    setSeconds(now.getSeconds());
+    setIsAM(h < 12);
   }, []);
 
   // ── Keypad Handlers ──────────────────────────────────────────────────────
@@ -696,6 +754,8 @@ export default function ClockToy() {
         onClose={() => setShowSettings(false)}
         use24Hour={use24Hour}
         setUse24Hour={setUse24Hour}
+        secondDraggable={secondDraggable}
+        setSecondDraggable={setSecondDraggable}
       />
 
       {/* Analog Clock */}
@@ -708,8 +768,20 @@ export default function ClockToy() {
           onDragStart={handleDragStart}
           onDragMove={handleDragMove}
           onDragEnd={handleDragEnd}
+          secondDraggable={secondDraggable}
         />
       </div>
+
+      {/* Reset to current time */}
+      {!editMode && (
+        <button
+          className="clock-btn"
+          style={styles.resetBtn}
+          onClick={handleResetToNow}
+        >
+          Now
+        </button>
+      )}
 
       {/* Digital Display + AM/PM Toggle */}
       <div style={styles.digitalRow}>
@@ -837,5 +909,15 @@ const styles = {
     background: "linear-gradient(135deg, #4AAF4E, #3A8FDE)",
     boxShadow: "0 4px 12px rgba(74,175,78,0.3), inset 0 2px 0 rgba(255,255,255,0.2)",
     fontSize: 18,
+  },
+  resetBtn: {
+    padding: "6px 20px", borderRadius: 12,
+    background: "rgba(255,255,255,0.1)",
+    border: "1px solid rgba(255,255,255,0.12)",
+    fontSize: 14, fontWeight: 600,
+    color: "rgba(255,255,255,0.6)",
+    marginTop: 8, zIndex: 1,
+    boxShadow: "none",
+    textShadow: "none",
   },
 };
