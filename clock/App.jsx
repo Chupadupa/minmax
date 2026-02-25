@@ -398,7 +398,7 @@ function TimeKeypad({ digitBuffer, onDigit, onBackspace, onClear, disabled }) {
 function AmPmToggle({ isAM, onToggle, use24Hour }) {
   if (use24Hour) return null;
   return (
-    <div style={styles.ampmRow}>
+    <div style={styles.ampmCol}>
       <button
         className="clock-btn"
         style={{
@@ -602,8 +602,8 @@ export default function ClockToy() {
         }
         body, #root { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
         .clock-btn {
-          border-radius: 16px; border: none;
-          font-size: 26px; font-weight: 700; font-family: var(--font-heading);
+          border-radius: 14px; border: none;
+          font-size: 22px; font-weight: 700; font-family: var(--font-heading);
           color: #fff; cursor: pointer; display: flex; align-items: center;
           justify-content: center; user-select: none; -webkit-user-select: none;
           transition: transform 0.1s ease, opacity 0.15s ease;
@@ -629,7 +629,7 @@ export default function ClockToy() {
 
       {/* Header */}
       <div className="page-header" style={styles.header}>
-        <a href="../" className="back-btn" aria-label="Back to home">‹</a>
+        <a href="../" className="back-btn" aria-label="Back to home">⬅️</a>
         <button className="gear-btn" onClick={() => setShowSettings(true)}>⚙</button>
         <h1 className="gradient-text" style={styles.title}>Clock</h1>
         <p style={styles.subtitle}>Set the time!</p>
@@ -655,30 +655,23 @@ export default function ClockToy() {
         />
       </div>
 
-      {/* Digital Display */}
-      <DigitalDisplay
-        hours={hours}
-        minutes={minutes}
-        isAM={isAM}
-        use24Hour={use24Hour}
-        editMode={editMode}
-        digitBuffer={digitBuffer}
-        onTap={handleDigitalTap}
-      />
-
-      {/* AM/PM Toggle */}
-      <AmPmToggle isAM={isAM} onToggle={setIsAM} use24Hour={use24Hour} />
+      {/* Digital Display + AM/PM Toggle */}
+      <div style={styles.digitalRow}>
+        <DigitalDisplay
+          hours={hours}
+          minutes={minutes}
+          isAM={isAM}
+          use24Hour={use24Hour}
+          editMode={editMode}
+          digitBuffer={digitBuffer}
+          onTap={handleDigitalTap}
+        />
+        <AmPmToggle isAM={isAM} onToggle={setIsAM} use24Hour={use24Hour} />
+      </div>
 
       {/* Keypad (shown when edit mode active) */}
       {editMode && (
         <div style={styles.keypadArea}>
-          <TimeKeypad
-            digitBuffer={digitBuffer}
-            onDigit={handleDigit}
-            onBackspace={handleBackspace}
-            onClear={handleClear}
-            disabled={keypadFull}
-          />
           <button
             className="clock-btn"
             style={styles.doneBtn}
@@ -686,6 +679,13 @@ export default function ClockToy() {
           >
             Done
           </button>
+          <TimeKeypad
+            digitBuffer={digitBuffer}
+            onDigit={handleDigit}
+            onBackspace={handleBackspace}
+            onClear={handleClear}
+            disabled={keypadFull}
+          />
         </div>
       )}
     </div>
@@ -728,11 +728,10 @@ const styles = {
     background: "var(--glass-bg)",
     backdropFilter: "blur(var(--glass-blur))",
     borderRadius: 20, padding: "16px 24px",
-    width: "100%", maxWidth: 300,
+    flex: 1, minWidth: 0,
     border: "1px solid var(--glass-border)",
     display: "flex", alignItems: "center", justifyContent: "center",
     gap: 10, cursor: "pointer", position: "relative",
-    marginTop: 12, zIndex: 1,
     transition: "transform 0.15s ease",
   },
   digitalTime: {
@@ -750,31 +749,37 @@ const styles = {
     fontSize: 10, color: "rgba(255,255,255,0.25)",
     fontFamily: "var(--font-body)",
   },
-  ampmRow: {
-    display: "flex", gap: 10, width: "100%", maxWidth: 300,
-    marginTop: 10, zIndex: 1,
+  digitalRow: {
+    display: "flex", alignItems: "center", gap: 10,
+    width: "100%", maxWidth: 340,
+    marginTop: 12, zIndex: 1,
+    justifyContent: "center",
+  },
+  ampmCol: {
+    display: "flex", flexDirection: "column", gap: 6, flexShrink: 0,
+    zIndex: 1,
   },
   ampmBtn: {
-    flex: 1, padding: "10px 0", borderRadius: 14,
-    fontSize: 18, fontWeight: 700, border: "none",
+    padding: "8px 14px", borderRadius: 12,
+    fontSize: 16, fontWeight: 700, border: "none",
     transition: "all 0.15s ease",
   },
   keypadArea: {
-    marginTop: 12, width: "100%", maxWidth: 300,
-    display: "flex", flexDirection: "column", alignItems: "center", gap: 10,
+    marginTop: 12, width: "100%", maxWidth: 260,
+    display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
     animation: "popIn 0.25s ease-out", zIndex: 1,
   },
   keypad: {
-    display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8,
+    display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6,
     width: "100%",
   },
   keypadBtn: {
-    width: "100%", aspectRatio: "1.5", borderRadius: 16,
+    width: "100%", aspectRatio: "1.4", borderRadius: 14,
   },
   doneBtn: {
-    width: "100%", padding: "12px 0", borderRadius: 14,
+    width: "100%", padding: "10px 0", borderRadius: 14,
     background: "linear-gradient(135deg, #4AAF4E, #3A8FDE)",
     boxShadow: "0 4px 12px rgba(74,175,78,0.3), inset 0 2px 0 rgba(255,255,255,0.2)",
-    fontSize: 20,
+    fontSize: 18,
   },
 };
