@@ -23,6 +23,8 @@ const FUNC_SOLID = "#3A8FDE";
 
 const EQUALS_COLOR = "linear-gradient(135deg, #E41E20, #FF8C1A, #FFD030, #4AAF4E, #3A8FDE, #9B59B6)";
 
+const OP_SYMBOLS = { "+": "+", "-": "−", "*": "×", "/": "÷" };
+
 // ── Button Layout ─────────────────────────────────────────────────────────────
 
 const BUTTONS = [
@@ -63,11 +65,27 @@ export default function Calculator() {
   const [justEvaluated, setJustEvaluated] = useState(false);
   const [lastOp, setLastOp] = useState(null);
   const [lastOperand, setLastOperand] = useState(null);
+  const [historyEquation, setHistoryEquation] = useState("");
+
+  // ── Equation Display ──
+
+  const activeEquation = useMemo(() => {
+    if (justEvaluated) return null;
+    if (pendingOp && !waitingForOperand) {
+      return formatDisplay(accumulator) + OP_SYMBOLS[pendingOp] + displayValue;
+    }
+    if (pendingOp && waitingForOperand) {
+      return formatDisplay(accumulator) + OP_SYMBOLS[pendingOp];
+    }
+    return null;
+  }, [pendingOp, waitingForOperand, accumulator, displayValue, justEvaluated]);
+
+  const mainDisplayText = activeEquation || displayValue;
 
   const displayOuterRef = useRef(null);
   const displayInnerRef = useRef(null);
   const displayFontSize = useAutoFitFontSize(
-    displayOuterRef, displayInnerRef, displayValue.length,
+    displayOuterRef, displayInnerRef, mainDisplayText.length,
     { maxFont: 72, minFont: 24 },
   );
 
@@ -112,6 +130,7 @@ export default function Calculator() {
       setAccumulator(0);
       setJustEvaluated(false);
       setActiveOp(null);
+      setHistoryEquation("");
       return;
     }
     // Don't exceed max digits (ignoring decimal point and minus sign)
@@ -147,6 +166,7 @@ export default function Calculator() {
       setAccumulator(0);
       setJustEvaluated(false);
       setActiveOp(null);
+      setHistoryEquation("");
       return;
     }
     if (displayValue.includes(".")) return;
@@ -176,6 +196,7 @@ export default function Calculator() {
     setJustEvaluated(false);
     setLastOp(null);
     setLastOperand(null);
+    setHistoryEquation("");
   }, [displayValue, pendingOp, waitingForOperand, justEvaluated, accumulator, triggerBounce]);
 
   const handleEquals = useCallback(() => {
@@ -186,6 +207,7 @@ export default function Calculator() {
       const result = compute(accumulator, pendingOp, current);
       const display = formatDisplay(result);
       setDisplayValue(display);
+      setHistoryEquation(formatDisplay(accumulator) + OP_SYMBOLS[pendingOp] + formatDisplay(current));
       setLastOp(pendingOp);
       setLastOperand(current);
       setAccumulator(display === "Error" ? 0 : result);
@@ -194,6 +216,7 @@ export default function Calculator() {
       const result = compute(current, lastOp, lastOperand);
       const display = formatDisplay(result);
       setDisplayValue(display);
+      setHistoryEquation(formatDisplay(current) + OP_SYMBOLS[lastOp] + formatDisplay(lastOperand));
       setAccumulator(display === "Error" ? 0 : result);
     }
     setActiveOp(null);
@@ -207,6 +230,7 @@ export default function Calculator() {
       // C — clear entry
       setDisplayValue("0");
       setJustEvaluated(false);
+      setHistoryEquation("");
     } else {
       // AC — all clear
       setPendingOp(null);
@@ -216,6 +240,7 @@ export default function Calculator() {
       setJustEvaluated(false);
       setLastOp(null);
       setLastOperand(null);
+      setHistoryEquation("");
     }
   }, [displayValue, triggerBounce]);
 
@@ -391,12 +416,15 @@ export default function Calculator() {
 
       {/* Display */}
       <div style={styles.displayCard}>
+        {historyEquation && (
+          <div style={styles.historyText}>{historyEquation}</div>
+        )}
         <div ref={displayOuterRef} style={styles.displayOuter}>
           <div ref={displayInnerRef} style={{
             ...styles.displayText,
             fontSize: displayFontSize,
           }}>
-            {displayValue}
+            {mainDisplayText}
           </div>
         </div>
       </div>
@@ -448,7 +476,17 @@ const styles = {
     width: "100%", maxWidth: 340,
     minHeight: 100,
     border: "1px solid var(--glass-border)",
-    display: "flex", alignItems: "flex-end", justifyContent: "flex-end",
+    display: "flex", flexDirection: "column", justifyContent: "flex-end",
+  },
+  historyText: {
+    fontSize: 16,
+    color: "rgba(255,255,255,0.45)",
+    textAlign: "right",
+    width: "100%",
+    fontFamily: "var(--font-body)",
+    fontWeight: 300,
+    marginBottom: 4,
+    lineHeight: 1.2,
   },
   displayOuter: {
     width: "100%", height: "100%",
