@@ -447,48 +447,7 @@ export default function BigNumberNamer() {
         <FunFactToast text={funFact} />
       </div>
 
-      {/* Numpad */}
-      <div style={styles.numpad}>
-        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => (
-          <button key={d} className="nb-btn" disabled={atMax} style={{
-            background: NB_COLORS[String(d)],
-            boxShadow: `0 5px 14px ${NB_SOLID[String(d)]}55, inset 0 2px 0 rgba(255,255,255,0.25)`,
-            animation: bounce === String(d) && !atMax ? "btnPress 0.2s ease-out" : "none",
-            opacity: atMax ? 0.35 : 1,
-          }} onClick={() => handleDigit(String(d))}>
-            {d}
-          </button>
-        ))}
-        <button className="nb-btn" disabled={!hasContent} style={{
-          background: "rgba(255,255,255,0.18)",
-          boxShadow: "0 4px 10px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.15)",
-          fontSize: 16, letterSpacing: 1,
-          color: hasContent ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.4)",
-          border: "1px solid rgba(255,255,255,0.12)",
-        }} onClick={handleClear}>
-          CLR
-        </button>
-        <button className="nb-btn" disabled={atMax} style={{
-          background: "#FFFFFF",
-          border: "3px solid #E41E20",
-          boxShadow: "0 5px 14px rgba(228,30,32,0.25), inset 0 2px 0 rgba(255,255,255,0.5)",
-          color: "#E41E20", textShadow: "none",
-          animation: bounce === "0" && !atMax ? "btnPress 0.2s ease-out" : "none",
-          opacity: atMax ? 0.35 : 1,
-        }} onClick={() => handleDigit("0")}>
-          0
-        </button>
-        <button className="nb-btn" disabled={!hasContent} style={{
-          background: "rgba(255,255,255,0.18)",
-          boxShadow: "0 4px 10px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.15)",
-          fontSize: 26,
-          color: hasContent ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.4)",
-          border: "1px solid rgba(255,255,255,0.12)",
-        }} onClick={handleBackspace}>
-          ←
-        </button>
-      </div>
-
+      {/* Plus / Minus row */}
       <div style={styles.pmRow}>
         <button className="pm-btn" disabled={atMin} style={{
           background: "linear-gradient(135deg, #E41E20, #FF8C1A)",
@@ -503,6 +462,55 @@ export default function BigNumberNamer() {
           flex: 1, opacity: atMax ? 0.35 : 1,
         }} onClick={handlePlusOne}>
           + 1
+        </button>
+      </div>
+
+      {/* Clear / Delete row */}
+      <div style={styles.actionRow}>
+        <button className="pm-btn" disabled={!hasContent} style={{
+          background: "rgba(255,255,255,0.18)",
+          boxShadow: "0 4px 10px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.15)",
+          fontSize: 16, letterSpacing: 1,
+          color: hasContent ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.4)",
+          border: "1px solid rgba(255,255,255,0.12)",
+          flex: 1,
+        }} onClick={handleClear}>
+          CLR
+        </button>
+        <button className="pm-btn" disabled={!hasContent} style={{
+          background: "rgba(255,255,255,0.18)",
+          boxShadow: "0 4px 10px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.15)",
+          fontSize: 26,
+          color: hasContent ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.4)",
+          border: "1px solid rgba(255,255,255,0.12)",
+          flex: 1,
+        }} onClick={handleBackspace}>
+          ←
+        </button>
+      </div>
+
+      {/* Numpad */}
+      <div style={styles.numpad}>
+        {[7, 8, 9, 4, 5, 6, 1, 2, 3].map((d) => (
+          <button key={d} className="nb-btn" disabled={atMax} style={{
+            background: NB_COLORS[String(d)],
+            boxShadow: `0 5px 14px ${NB_SOLID[String(d)]}55, inset 0 2px 0 rgba(255,255,255,0.25)`,
+            animation: bounce === String(d) && !atMax ? "btnPress 0.2s ease-out" : "none",
+            opacity: atMax ? 0.35 : 1,
+          }} onClick={() => handleDigit(String(d))}>
+            {d}
+          </button>
+        ))}
+        <button className="nb-btn" disabled={atMax} style={{
+          background: "#FFFFFF",
+          border: "3px solid #E41E20",
+          boxShadow: "0 5px 14px rgba(228,30,32,0.25), inset 0 2px 0 rgba(255,255,255,0.5)",
+          color: "#E41E20", textShadow: "none",
+          animation: bounce === "0" && !atMax ? "btnPress 0.2s ease-out" : "none",
+          opacity: atMax ? 0.35 : 1,
+          gridColumn: 2,
+        }} onClick={() => handleDigit("0")}>
+          0
         </button>
       </div>
     </div>
@@ -581,9 +589,13 @@ const styles = {
   },
   numpad: {
     display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10,
-    width: "100%", maxWidth: 300, position: "relative", zIndex: 1,
+    width: "100%", maxWidth: 300, marginTop: 10, position: "relative", zIndex: 1,
   },
   pmRow: {
+    display: "flex", gap: 10, width: "100%", maxWidth: 300,
+    position: "relative", zIndex: 1,
+  },
+  actionRow: {
     display: "flex", gap: 10, width: "100%", maxWidth: 300,
     marginTop: 10, position: "relative", zIndex: 1,
   },
