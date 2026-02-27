@@ -86,7 +86,7 @@ export default function Calculator() {
   const displayInnerRef = useRef(null);
   const displayFontSize = useAutoFitFontSize(
     displayOuterRef, displayInnerRef, mainDisplayText.length,
-    { maxFont: 72, minFont: 24 },
+    { maxFont: 72, minFont: 14 },
   );
 
   // Background dots (stable)
@@ -474,7 +474,7 @@ const styles = {
     background: "var(--glass-bg)", backdropFilter: "blur(var(--glass-blur))",
     borderRadius: 20, padding: "20px 24px",
     width: "100%", maxWidth: 340,
-    minHeight: 100,
+    minHeight: 140,
     border: "1px solid var(--glass-border)",
     display: "flex", flexDirection: "column", justifyContent: "flex-end",
   },
