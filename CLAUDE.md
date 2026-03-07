@@ -2,7 +2,13 @@
 
 ## Project Overview
 
-**Doodads** is a collection of interactive web toys built with React and Vite. The primary (and currently only) toy is the **Big Number Namer**, which lets users explore the names of large numbers up to a millinillinillinillinillion (3 trillion+ zeros). Built as a personal project for a child who loves numbers.
+**Doodads** is a collection of interactive web toys built with React and Vite. Built as a personal project for a child who loves numbers. Current toys:
+
+- **Big Number Namer** — Explore the names of large numbers up to a millinillinillinillinillion (3 trillion+ zeros)
+- **Time Teller** — Interactive analog clock; drag the hands or type a time to learn to tell time
+- **Calculator** — Colorful calculator with Numberblocks-inspired button colors
+- **Color Mixer** — Tap colors to mix them together and see what you get
+- **Fraction Combiner** — Combine fraction pie pieces to fill a circle; a pie chart game for learning fractions
 
 ## Tech Stack
 
@@ -28,11 +34,29 @@ There are no test, lint, or format commands.
 ```
 /
 ├── index.html                  # Hub/landing page linking to all toys
-├── big-number-namer/           # Primary toy
+├── big-number-namer/           # Big Number Namer toy
 │   ├── index.html              # Entry HTML
 │   ├── main.jsx                # React mount point
-│   ├── App.jsx                 # Components, UI, and state (~590 lines)
+│   ├── App.jsx                 # Components, UI, and state
 │   └── numberNaming.js         # Pure naming logic (reusable, no React dependency)
+├── clock/                      # Time Teller toy
+│   ├── index.html
+│   ├── main.jsx
+│   ├── App.jsx                 # Interactive analog clock components
+│   └── clockUtils.js           # Pure clock math (angles, time parsing, formatting)
+├── calculator/                 # Calculator toy
+│   ├── index.html
+│   ├── main.jsx
+│   ├── App.jsx                 # Calculator UI with Numberblocks-inspired colors
+│   └── calcEngine.js           # Pure calculation logic (display formatting, compute)
+├── color-mixer/                # Color Mixer toy
+│   ├── index.html
+│   ├── main.jsx
+│   └── App.jsx                 # Color mixing UI (tap colors to blend)
+├── fraction-combiner/          # Fraction Combiner toy
+│   ├── index.html
+│   ├── main.jsx
+│   └── App.jsx                 # Fraction pie chart game
 ├── shared/
 │   ├── base.css                # Shared stylesheet: tokens, resets, fonts, animations, utilities
 │   └── useAutoFitFontSize.js   # Generic auto-fit font hook (reusable across toys)
@@ -58,9 +82,7 @@ There are no test, lint, or format commands.
 
 `vite.config.js` auto-discovers any subdirectory containing an `index.html` as a separate page entry. To add a new toy, create a new directory with its own `index.html` — no config changes needed.
 
-### Big Number Namer
-
-Split across a few files, with most UI kept together in `App.jsx`:
+### Big Number Namer (`big-number-namer/`)
 
 - **`numberNaming.js`** — Pure functions (no React dependency) that convert a zero count into a written number name using Latin prefix composition. Key exports:
   - `getNumberName(zeros, useDashes)` — Main conversion function
@@ -70,6 +92,32 @@ Split across a few files, with most UI kept together in `App.jsx`:
   1. **Constants** — `NB_COLORS`, `NB_SOLID` (Numberblocks-inspired button colors), `MAX_ZEROS` (3,000,000,000,003)
   2. **Components**: `FunFactToast`, `SettingsOverlay`, `BigNumberNamer` (main)
   3. **Styles** — Inline style objects at bottom of file (`styles`, `settingsStyles`)
+
+### Time Teller (`clock/`)
+
+Interactive analog clock where kids can drag clock hands or type a time to learn to tell time.
+
+- **`clockUtils.js`** — Pure functions for clock math: angle↔time conversion, time formatting, drag-to-angle, wrap detection
+- **`App.jsx`** — SVG clock face with draggable hour/minute/second hands, 12/24-hour toggle, Numberblocks-inspired hour labels
+
+### Calculator (`calculator/`)
+
+A colorful calculator with big Numberblocks-inspired buttons.
+
+- **`calcEngine.js`** — Pure calculation logic: display formatting, parsing, operator computation, digit limits
+- **`App.jsx`** — Calculator UI with color-coded digit buttons (each digit 1–9 has its own Numberblocks color), operators, and an auto-fit display
+
+### Color Mixer (`color-mixer/`)
+
+Tap colors from a palette to mix them together and see the resulting color name.
+
+- **`App.jsx`** — Single-file toy; additive RGB mixing, named color matching, clear/undo
+
+### Fraction Combiner (`fraction-combiner/`)
+
+A pie chart game for learning fractions. Combine fraction pieces to fill a whole circle.
+
+- **`App.jsx`** — Single-file toy; SVG pie chart, fraction selection (halves through tenths), Numberblocks-inspired colors, LCD-based fraction arithmetic (LCD = 2520 for 1–10)
 
 ### Shared Utilities (`shared/`)
 
