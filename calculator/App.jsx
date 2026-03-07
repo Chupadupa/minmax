@@ -48,9 +48,9 @@ const BUTTONS = [
   { label: "3", type: "digit", action: "3" },
   { label: "+", type: "operator", action: "+" },
 
-  { label: "0", type: "digit", action: "0", span: 2 },
+  { label: "0", type: "digit", action: "0" },
   { label: ".", type: "dot",   action: "." },
-  { label: "=", type: "equals", action: "=" },
+  { label: "=", type: "equals", action: "=", span: 2 },
 ];
 
 // ── Calculator ────────────────────────────────────────────────────────────────
@@ -316,8 +316,6 @@ export default function Calculator() {
           border: "3px solid #E41E20",
           boxShadow: "0 5px 14px rgba(228,30,32,0.25), inset 0 2px 0 rgba(255,255,255,0.5)",
           color: "#E41E20", textShadow: "none",
-          justifyContent: "flex-start", paddingLeft: 28,
-          borderRadius: 999,
         };
       }
       return {
