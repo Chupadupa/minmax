@@ -1,6 +1,6 @@
 // ── Constants ────────────────────────────────────────────────────────────────
 
-export const MAX_DISPLAY_DIGITS = 9;
+export const MAX_DISPLAY_DIGITS = 15;
 
 // ── Display Formatting ───────────────────────────────────────────────────────
 
@@ -28,10 +28,10 @@ export function formatDisplay(value) {
     }
   }
 
-  // Fall back to exponential notation that fits in MAX_DISPLAY_DIGITS chars
-  for (let precision = MAX_DISPLAY_DIGITS - 2; precision >= 1; precision--) {
+  // Fall back to exponential notation that fits
+  for (let precision = Math.min(MAX_DISPLAY_DIGITS - 2, 12); precision >= 1; precision--) {
     const exp = cleaned.toExponential(precision);
-    if (exp.length <= MAX_DISPLAY_DIGITS + 1) return exp;
+    if (exp.replace("-", "").replace(".", "").replace(/e[+-]?\d+/, "").length <= MAX_DISPLAY_DIGITS) return exp;
   }
   return cleaned.toExponential(0);
 }
