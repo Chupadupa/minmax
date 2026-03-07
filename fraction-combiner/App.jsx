@@ -9,11 +9,17 @@ const NB_COLORS = {
   4:  "#4AAF4E",
   5:  "#3A8FDE",
   6:  "#9B59B6",
-  7:  "#6E3FA0",
+  7:  "#6E3FA0",   // representative purple — used for glow/swatch fallback
   8:  "#F472B6",
   9:  "#8E8E93",
-  10: "#48DBFB",
+  10: "#FFFFFF",   // Numberblocks 10 = white
 };
+
+// Rainbow stops for Numberblocks 7
+const NB7_STOPS = [
+  "#E41E20", "#FF8C1A", "#FFD030", "#4AAF4E", "#3A8FDE", "#9B59B6", "#F472B6",
+];
+const NB7_CSS = `linear-gradient(180deg, ${NB7_STOPS.join(", ")})`;
 
 // LCD of 1..10 = 2520
 const LCD = 2520;
@@ -203,9 +209,9 @@ export default function FractionCombiner() {
           0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
           50% { opacity: 1; transform: scale(1) rotate(180deg); }
         }
-        @keyframes pulseBorder {
-          0%, 100% { stroke-opacity: 0.3; }
-          50% { stroke-opacity: 0.8; }
+        @keyframes pulseCyan {
+          0%, 100% { stroke-opacity: 0.4; }
+          50% { stroke-opacity: 0.9; }
         }
         body, #root { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
         .frac-btn {
@@ -237,6 +243,19 @@ export default function FractionCombiner() {
         animation: celebrate ? "celebratePop 0.5s ease-out" : "none",
       }}>
         <svg viewBox="0 0 300 300" style={styles.svg}>
+          <defs>
+            {/* Rainbow gradient for Numberblocks 7 slices */}
+            <linearGradient id="nb7Rainbow" x1="0%" y1="0%" x2="0%" y2="100%">
+              {NB7_STOPS.map((color, i) => (
+                <stop
+                  key={i}
+                  offset={`${(i / (NB7_STOPS.length - 1)) * 100}%`}
+                  stopColor={color}
+                />
+              ))}
+            </linearGradient>
+          </defs>
+
           {/* Background circle */}
           <circle
             cx={CX} cy={CY} r={R}
@@ -245,15 +264,15 @@ export default function FractionCombiner() {
             strokeWidth="2"
           />
 
-          {/* "Needed" highlight when no piece fits */}
+          {/* "Needed" highlight — cyan, not an error */}
           {showNeeded && filledAngle < 360 && (
             <path
               d={arcPath(filledAngle, 360)}
-              fill="rgba(228,30,32,0.15)"
-              stroke="#E41E20"
+              fill="rgba(72,219,251,0.18)"
+              stroke="#48DBFB"
               strokeWidth="2"
               strokeDasharray="6 4"
-              style={{ animation: "pulseBorder 1.5s ease-in-out infinite" }}
+              style={{ animation: "pulseCyan 1.5s ease-in-out infinite" }}
             />
           )}
 
@@ -262,7 +281,7 @@ export default function FractionCombiner() {
             <path
               key={slice.id}
               d={arcPath(slice.startAngle, slice.endAngle)}
-              fill={NB_COLORS[slice.denom]}
+              fill={slice.denom === 7 ? "url(#nb7Rainbow)" : NB_COLORS[slice.denom]}
               stroke="rgba(0,0,0,0.3)"
               strokeWidth="1.5"
               style={{ animation: "popIn 0.3s ease-out" }}
@@ -284,7 +303,7 @@ export default function FractionCombiner() {
                 x={lx} y={ly}
                 textAnchor="middle"
                 dominantBaseline="central"
-                fill="#fff"
+                fill={slice.denom === 10 ? "#E41E20" : "#fff"}
                 fontFamily="var(--font-heading)"
                 fontWeight="700"
                 fontSize={sweep < 30 ? 14 : 18}
@@ -294,31 +313,6 @@ export default function FractionCombiner() {
               </text>
             );
           })}
-
-          {/* "Needed" label */}
-          {showNeeded && remainingFraction && (
-            (() => {
-              const midAngle = (filledAngle + 360) / 2;
-              const labelR = R * 0.6;
-              const rad = ((midAngle - 90) * Math.PI) / 180;
-              const lx = CX + labelR * Math.cos(rad);
-              const ly = CY + labelR * Math.sin(rad);
-              return (
-                <text
-                  x={lx} y={ly}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  fill="#E41E20"
-                  fontFamily="var(--font-heading)"
-                  fontWeight="700"
-                  fontSize="16"
-                  style={{ pointerEvents: "none" }}
-                >
-                  need {remainingFraction.num}/{remainingFraction.den}
-                </text>
-              );
-            })()
-          )}
 
           {/* Celebrate sparkles */}
           {celebrate && (
@@ -347,6 +341,21 @@ export default function FractionCombiner() {
 
         {/* Warning toast */}
         <WarningToast key={warningKey} text={warning} visible={!!warning} />
+      </div>
+
+      {/* Fun fact banner — always reserves space to prevent layout shift */}
+      <div style={styles.funFactRow}>
+        <div style={{
+          ...styles.funFactBadge,
+          visibility: showNeeded && remainingFraction ? "visible" : "hidden",
+        }}>
+          <span>✨ </span>
+          <span>Need </span>
+          <span style={styles.funFactFraction}>
+            {remainingFraction?.num}/{remainingFraction?.den}
+          </span>
+          <span> more to finish!</span>
+        </div>
       </div>
 
       {/* Progress indicator */}
@@ -393,13 +402,17 @@ export default function FractionCombiner() {
         {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((denom) => {
           const fits = canFit(denom);
           const isExactMatch = exactMatchDenom === denom;
+          const is7 = denom === 7;
+          const is10 = denom === 10;
           return (
             <button
               key={denom}
               className="frac-btn"
               disabled={isFull}
               style={{
-                background: NB_COLORS[denom],
+                background: is7 ? NB7_CSS : NB_COLORS[denom],
+                color: is10 ? "#E41E20" : undefined,
+                textShadow: is10 ? "none" : undefined,
                 boxShadow: isExactMatch && !isFull
                   ? `0 0 0 3px #fff, 0 5px 14px ${NB_COLORS[denom]}88`
                   : `0 5px 14px ${NB_COLORS[denom]}55, inset 0 2px 0 rgba(255,255,255,0.25)`,
@@ -411,7 +424,7 @@ export default function FractionCombiner() {
               <span style={{ fontSize: 13, opacity: 0.85 }}>1</span>
               <span style={{
                 width: "60%", height: 2,
-                background: "rgba(255,255,255,0.7)",
+                background: is10 ? "rgba(228,30,32,0.7)" : "rgba(255,255,255,0.7)",
                 borderRadius: 1,
               }} />
               <span style={{ fontSize: 13, opacity: 0.85 }}>{denom}</span>
@@ -431,7 +444,8 @@ export default function FractionCombiner() {
             }}>
               <span style={{
                 width: 12, height: 12, borderRadius: 3,
-                background: NB_COLORS[seg.denom],
+                background: seg.denom === 7 ? NB7_CSS : NB_COLORS[seg.denom],
+                border: seg.denom === 10 ? "1px solid rgba(255,255,255,0.3)" : "none",
                 display: "inline-block", flexShrink: 0,
               }} />
               1/{seg.denom}
@@ -470,11 +484,30 @@ const styles = {
   pieContainer: {
     position: "relative",
     width: "100%", maxWidth: 280,
-    marginBottom: 8,
+    marginBottom: 4,
   },
   svg: {
     width: "100%", height: "auto",
     filter: "drop-shadow(0 4px 20px rgba(0,0,0,0.3))",
+  },
+  funFactRow: {
+    height: 38,
+    display: "flex", alignItems: "center", justifyContent: "center",
+    marginBottom: 6,
+    width: "100%", maxWidth: 340,
+  },
+  funFactBadge: {
+    display: "flex", alignItems: "center", flexWrap: "nowrap",
+    padding: "6px 14px", borderRadius: 20,
+    background: "rgba(72,219,251,0.1)",
+    border: "1px solid rgba(72,219,251,0.25)",
+    fontSize: 14, fontFamily: "var(--font-heading)", fontWeight: 700,
+    color: "rgba(255,255,255,0.85)",
+    whiteSpace: "nowrap",
+  },
+  funFactFraction: {
+    color: "#48DBFB",
+    margin: "0 1px",
   },
   progressRow: {
     display: "flex", alignItems: "center", gap: 10,
@@ -497,7 +530,7 @@ const styles = {
     minWidth: 50, textAlign: "right",
   },
   actionRow: {
-    display: "flex", gap: 10,
+    display: "flex", gap: 10, justifyContent: "center",
     width: "100%", maxWidth: 280,
     marginBottom: 12,
   },
