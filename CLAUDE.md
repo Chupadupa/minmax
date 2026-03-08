@@ -59,7 +59,10 @@ There are no test, lint, or format commands.
 │   └── App.jsx                 # Fraction pie chart game
 ├── shared/
 │   ├── base.css                # Shared stylesheet: tokens, resets, fonts, animations, utilities
-│   └── useAutoFitFontSize.js   # Generic auto-fit font hook (reusable across toys)
+│   ├── useAutoFitFontSize.js   # Generic auto-fit font hook (reusable across toys)
+│   ├── numberblockColors.js    # Shared NB_COLORS, NB_SOLID, NB7_STOPS, NB7_GRADIENT constants
+│   ├── BackgroundDots.jsx      # Floating background dots decoration component
+│   └── SettingsOverlay.jsx     # Reusable settings modal shell with toggle/divider/section helpers
 ├── public/
 │   ├── icon.svg                # App icon (SVG source)
 │   ├── icon-180.png            # Apple touch icon
@@ -89,9 +92,9 @@ There are no test, lint, or format commands.
   - `formatZerosWithCommas(zerosCount)` — Comma-formatted number display
 
 - **`App.jsx`** — All React components, state, and styles:
-  1. **Constants** — `NB_COLORS`, `NB_SOLID` (Numberblocks-inspired button colors), `MAX_ZEROS` (3,000,000,000,003)
-  2. **Components**: `FunFactToast`, `SettingsOverlay`, `BigNumberNamer` (main)
-  3. **Styles** — Inline style objects at bottom of file (`styles`, `settingsStyles`)
+  1. **Constants** — `MAX_ZEROS` (3,000,000,000,003); colors imported from `shared/numberblockColors.js`
+  2. **Components**: `FunFactToast`, `BigNumberSettings` (uses shared `SettingsOverlay`), `BigNumberNamer` (main)
+  3. **Styles** — Inline style objects at bottom of file (`styles`); settings styles from shared module
 
 ### Time Teller (`clock/`)
 
@@ -121,16 +124,37 @@ A pie chart game for learning fractions. Combine fraction pieces to fill a whole
 
 ### Shared Utilities (`shared/`)
 
-- **`base.css`** — Shared stylesheet providing design tokens (CSS custom properties), global resets, font loading (Fredoka & Outfit via Google Fonts), dark gradient background, shared keyframe animations (`popIn`, `fadeIn`, `float`, `flash`), and utility CSS classes (`.gradient-text`, `.frosted-card`, `.back-btn`, `.gear-btn`, `.page-header`, `.safe-area-container`). Toys import this to get the Doodads look for free, override CSS variables for tweaks, or skip the import entirely for a custom look.
+- **`base.css`** — Shared stylesheet providing design tokens (CSS custom properties), global resets, font loading (Fredoka & Outfit via Google Fonts), dark gradient background, shared keyframe animations (`popIn`, `fadeIn`, `float`, `flash`, `btnPress`), utility CSS classes (`.gradient-text`, `.frosted-card`, `.back-btn`, `.gear-btn`, `.page-header`, `.safe-area-container`, `.toy-container`, `.bg-dots`), page header defaults (`.page-header h1`, `.page-header .subtitle`), and global user-select prevention. Toys import this to get the Doodads look for free, override CSS variables for tweaks, or skip the import entirely for a custom look.
 
 - **`useAutoFitFontSize.js`** — Binary search algorithm for dynamic font scaling within a container, with oscillation prevention via ceiling tracking. Accepts `{ maxFont, minFont }` options. Available for use by any toy.
+
+- **`numberblockColors.js`** — Shared Numberblocks-inspired color palette constants. Exports:
+  - `NB_COLORS` — digit-to-color/gradient map (string keys `"1"`–`"9"`, with `"7"` as a rainbow linear-gradient)
+  - `NB_SOLID` — digit-to-solid-hex map (for box-shadows where gradients can't be used)
+  - `NB7_STOPS` — array of rainbow gradient stop colors for Numberblocks 7
+  - `NB7_GRADIENT` — the rainbow CSS linear-gradient string for Numberblocks 7
+
+- **`BackgroundDots.jsx`** — Renders random floating circle decorations using the `float` animation and `.bg-dots` class. Accepts a `count` prop (default 20). Used by big-number-namer, clock, and calculator.
+
+- **`SettingsOverlay.jsx`** — Reusable settings modal shell with composition pattern. Exports:
+  - `SettingsOverlay({ show, onClose, title?, children })` — backdrop, panel, close button, gradient heading
+  - `SettingsToggle({ checked, onChange, label, hint? })` — checkbox toggle row
+  - `SettingsDivider` — horizontal rule
+  - `SettingsSection({ title, children })` — subheading + content block
+  - `SettingsAboutText({ children })` — styled paragraph for about/credits text
+  - `SettingsLink({ href, children })` — styled external link
 
 ## Coding Conventions
 
 - **Shared base styles** live in `shared/base.css` — design tokens (CSS custom properties), global resets, font loading, background, shared animations, and utility classes. Import it in new toys to inherit the Doodads look. Override CSS variables for tweaks, or skip the import entirely for a custom look.
 - **Toy-specific styling is inline** via JavaScript style objects for dynamic/component-specific styles
 - **Use CSS variables** (`var(--font-heading)`, `var(--glass-bg)`, etc.) instead of hardcoding shared values
-- **Use shared CSS classes** (`.gradient-text`, `.back-btn`, `.gear-btn`, `.page-header`, `.frosted-card`) for common UI patterns instead of duplicating inline styles
+- **Use shared CSS classes** (`.gradient-text`, `.back-btn`, `.gear-btn`, `.page-header`, `.frosted-card`, `.toy-container`, `.bg-dots`) for common UI patterns instead of duplicating inline styles
+- **Use `.toy-container`** class on the outermost div of every toy for consistent layout and safe-area padding. Add toy-specific overrides (e.g. `justifyContent`, `gap`) as inline styles.
+- **Use `<BackgroundDots />`** component for floating dot decorations instead of defining the useMemo + render pattern inline
+- **Use `.frosted-card`** class for frosted glass card displays instead of redefining `background`, `backdropFilter`, `border`, `borderRadius` inline
+- **Use the shared `SettingsOverlay`** shell for settings modals; pass toy-specific toggles and about content as children
+- **Import Numberblocks colors from `shared/numberblockColors.js`** instead of redefining the palette in each toy
 - **Section delimiters**: `// ── Section Name ──` with box-drawing characters
 - **Constants**: `UPPER_SNAKE_CASE` for arrays/objects
 - **Functions/variables**: `camelCase`
@@ -177,4 +201,5 @@ The service worker cache version is **auto-generated at build time** — no manu
 4. Add a card link in the root `index.html` grid
 5. **Import `shared/base.css`** — either via `<link rel="stylesheet" href="shared/base.css" />` in HTML, or `import '../shared/base.css'` in a JS/JSX entry point. This gives you fonts, resets, background, animations, and utility classes. Skip this import if you want a fully custom look.
 6. **Include a back button** in the header linking to `../` (required for PWA navigation — see UI Conventions above). Use the `.back-btn` CSS class from `base.css`.
-7. The toy will be built and deployed automatically
+7. **Use shared resources**: `.toy-container` class for layout, `<BackgroundDots />` for decorations, `numberblockColors.js` for the Numberblocks palette, `<SettingsOverlay>` for settings modals, `.frosted-card` for glass card displays.
+8. The toy will be built and deployed automatically

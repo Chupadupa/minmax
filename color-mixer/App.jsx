@@ -202,7 +202,7 @@ export default function ColorMixer() {
   }, [added]);
 
   return (
-    <div style={styles.container}>
+    <div className="toy-container">
       <style>{`
         @keyframes splatIn {
           0% { transform: scale(0.3); opacity: 0; }
@@ -224,7 +224,6 @@ export default function ColorMixer() {
           60% { opacity: 1; }
           100% { transform: translateY(0); opacity: 1; }
         }
-        body, #root { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
         .color-btn {
           border: none; cursor: pointer;
           border-radius: 18px; font-size: 15px; font-weight: 600;
@@ -240,8 +239,8 @@ export default function ColorMixer() {
       {/* Header */}
       <div className="page-header" style={styles.header}>
         <a href="../" className="back-btn" aria-label="Back to home">⬅️</a>
-        <h1 className="gradient-text" style={styles.title}>Color Mixer</h1>
-        <p style={styles.subtitle}>Tap colors to mix them together!</p>
+        <h1 className="gradient-text">Color Mixer</h1>
+        <p className="subtitle">Tap colors to mix them together!</p>
       </div>
 
       {/* Color swatch display */}
@@ -329,23 +328,9 @@ export default function ColorMixer() {
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const styles = {
-  container: {
-    minHeight: "var(--app-height, 100dvh)",
-    display: "flex", flexDirection: "column", alignItems: "center",
-    padding: "calc(24px + var(--safe-top)) calc(16px + var(--safe-right)) calc(40px + var(--safe-bottom)) calc(16px + var(--safe-left))",
-    position: "relative", overflow: "hidden",
-  },
   header: {
     marginBottom: 16,
     width: "100%", maxWidth: 400,
-  },
-  title: {
-    fontSize: 28, fontWeight: 700, margin: 0,
-    letterSpacing: "-0.5px",
-  },
-  subtitle: {
-    fontSize: 14, color: "rgba(255,255,255,0.5)", margin: "4px 0 0",
-    fontFamily: "var(--font-body)", fontWeight: 300,
   },
   swatchCard: {
     width: "100%", maxWidth: 400, height: 180,
