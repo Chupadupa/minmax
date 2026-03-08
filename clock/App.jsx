@@ -11,118 +11,47 @@ import {
   padTwo,
 } from "./clockUtils.js";
 
+import { NB_SOLID } from "../shared/numberblockColors.js";
+import { BackgroundDots } from "../shared/BackgroundDots.jsx";
+import {
+  SettingsOverlay, SettingsToggle, SettingsDivider,
+  SettingsSection, SettingsAboutText,
+} from "../shared/SettingsOverlay.jsx";
+
 // ── Colors ───────────────────────────────────────────────────────────────────
 
-const HOUR_COLORS = {
-  1: "#E41E20", 2: "#FF8C1A", 3: "#FFD030", 4: "#4AAF4E",
-  5: "#3A8FDE", 6: "#9B59B6", 7: "#6E3FA0", 8: "#F472B6",
-  9: "#8E8E93", 10: "#E41E20", 11: "#FF8C1A", 12: "#FFD030",
-};
+const HOUR_COLORS = Object.fromEntries([
+  ...Object.entries(NB_SOLID).map(([k, v]) => [Number(k), v]),
+  [10, NB_SOLID["1"]], [11, NB_SOLID["2"]], [12, NB_SOLID["3"]],
+]);
 
 const MINUTE_HAND_COLOR = "#3A8FDE";
 const HOUR_HAND_COLOR = "#E41E20";
 const SECOND_HAND_COLOR = "#FF8C1A";
 const CENTER_DOT_COLOR = "#FFD030";
 
-// ── Settings Overlay ─────────────────────────────────────────────────────────
+// ── Settings Content ─────────────────────────────────────────────────────────
 
-function SettingsOverlay({ show, onClose, use24Hour, setUse24Hour }) {
-  if (!show) return null;
-
+function ClockSettings({ show, onClose, use24Hour, setUse24Hour }) {
   return (
-    <div style={settingsStyles.backdrop} onClick={onClose}>
-      <div style={settingsStyles.panel} onClick={(e) => e.stopPropagation()}>
-        <button style={settingsStyles.closeBtn} onClick={onClose}>✕</button>
-        <h2 style={settingsStyles.heading}>Settings</h2>
+    <SettingsOverlay show={show} onClose={onClose}>
+      <SettingsToggle
+        checked={use24Hour}
+        onChange={() => setUse24Hour((v) => !v)}
+        label="Use 24-hour time"
+        hint={`e.g. ${use24Hour ? "14:30" : "2:30 PM"} → ${!use24Hour ? "14:30" : "2:30 PM"}`}
+      />
 
-        <label style={settingsStyles.toggle}>
-          <div
-            style={{
-              ...settingsStyles.checkbox,
-              background: use24Hour ? "#4AAF4E" : "rgba(255,255,255,0.15)",
-              borderColor: use24Hour ? "#4AAF4E" : "rgba(255,255,255,0.25)",
-            }}
-            onClick={() => setUse24Hour((v) => !v)}
-          >
-            {use24Hour && <span style={settingsStyles.checkmark}>✓</span>}
-          </div>
-          <span style={settingsStyles.toggleLabel}>Use 24-hour time</span>
-        </label>
-        <p style={settingsStyles.toggleHint}>
-          e.g. {use24Hour ? "14:30" : "2:30 PM"} → {!use24Hour ? "14:30" : "2:30 PM"}
-        </p>
-
-        <div style={settingsStyles.divider} />
-        <h3 style={settingsStyles.subheading}>About</h3>
-        <p style={settingsStyles.aboutText}>
+      <SettingsDivider />
+      <SettingsSection title="About">
+        <SettingsAboutText>
           An interactive clock toy — drag the hands around or type a time
           to see how analog and digital clocks work together.
-        </p>
-      </div>
-    </div>
+        </SettingsAboutText>
+      </SettingsSection>
+    </SettingsOverlay>
   );
 }
-
-const settingsStyles = {
-  backdrop: {
-    position: "fixed", inset: 0, zIndex: 100,
-    background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)",
-    display: "flex", alignItems: "center", justifyContent: "center",
-    padding: 20, animation: "fadeIn 0.2s ease-out",
-  },
-  panel: {
-    background: "linear-gradient(160deg, #1B1464 0%, #302B63 100%)",
-    borderRadius: 24, padding: "28px 24px",
-    width: "100%", maxWidth: 360,
-    border: "1px solid rgba(255,255,255,0.12)",
-    boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
-    position: "relative", maxHeight: "85vh", overflowY: "auto",
-    fontFamily: "var(--font-heading)", color: "#fff",
-    animation: "popIn 0.3s ease-out",
-  },
-  closeBtn: {
-    position: "absolute", top: 16, right: 16,
-    background: "rgba(255,255,255,0.1)", border: "none",
-    color: "rgba(255,255,255,0.7)", fontSize: 16,
-    width: 32, height: 32, borderRadius: 10,
-    cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-    fontFamily: "var(--font-heading)",
-  },
-  heading: {
-    fontSize: 22, fontWeight: 700, margin: "0 0 20px",
-    background: "linear-gradient(135deg, #FF8C1A, #FFD030, #4AAF4E, #3A8FDE)",
-    WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-  },
-  toggle: {
-    display: "flex", alignItems: "center", gap: 12, cursor: "pointer",
-  },
-  checkbox: {
-    width: 28, height: 28, borderRadius: 8,
-    border: "2px solid", flexShrink: 0,
-    display: "flex", alignItems: "center", justifyContent: "center",
-    cursor: "pointer", transition: "all 0.15s ease",
-  },
-  checkmark: { color: "#fff", fontSize: 16, fontWeight: 700 },
-  toggleLabel: {
-    fontSize: 15, color: "rgba(255,255,255,0.85)",
-    fontFamily: "var(--font-body)",
-  },
-  toggleHint: {
-    fontSize: 12, color: "rgba(255,255,255,0.35)", margin: "6px 0 0 40px",
-    fontFamily: "var(--font-body)",
-  },
-  divider: {
-    height: 1, background: "rgba(255,255,255,0.08)", margin: "20px 0",
-  },
-  subheading: {
-    fontSize: 16, fontWeight: 600, margin: "0 0 8px",
-    color: "rgba(255,255,255,0.7)",
-  },
-  aboutText: {
-    fontSize: 14, lineHeight: 1.6, margin: "0 0 10px",
-    color: "rgba(255,255,255,0.55)", fontFamily: "var(--font-body)",
-  },
-};
 
 // ── Analog Clock ─────────────────────────────────────────────────────────────
 
@@ -331,7 +260,7 @@ function DigitalDisplay({ hours, minutes, isAM, use24Hour, editMode, digitBuffer
     const buf = digitBuffer.padStart(4, "_");
     const displayStr = `${buf[0]}${buf[1]}:${buf[2]}${buf[3]}`;
     return (
-      <div style={styles.digitalCard} onClick={onTap}>
+      <div className="frosted-card" style={styles.digitalCard} onClick={onTap}>
         <span style={{ ...styles.digitalTime, color: "#48DBFB" }}>{displayStr}</span>
         <span style={styles.digitalHint}>type a time</span>
       </div>
@@ -343,7 +272,7 @@ function DigitalDisplay({ hours, minutes, isAM, use24Hour, editMode, digitBuffer
     : formatTime12(hours, minutes, isAM);
 
   return (
-    <div style={styles.digitalCard} onClick={onTap}>
+    <div className="frosted-card" style={styles.digitalCard} onClick={onTap}>
       <span style={styles.digitalTime}>{formatted.display}</span>
       {formatted.period && <span style={styles.digitalPeriod}>{formatted.period}</span>}
       <span style={styles.digitalHint}>tap to type</span>
@@ -475,19 +404,6 @@ export default function ClockToy() {
   const [shake, setShake] = useState(false);
 
   const prevAngleRef = useRef(null);
-
-  // Stable background dots
-  const bgDots = useMemo(() =>
-    Array.from({ length: 16 }, (_, i) => ({
-      w: 8 + Math.random() * 16,
-      h: 8 + Math.random() * 16,
-      hue: Math.random() * 360,
-      left: Math.random() * 100,
-      top: Math.random() * 100,
-      dur: 2 + Math.random() * 3,
-      delay: Math.random() * 2,
-    })), []
-  );
 
   // ── Second Hand Tick ──────────────────────────────────────────────────────
 
@@ -684,7 +600,7 @@ export default function ClockToy() {
   const keypadFull = digitBuffer.length >= 4;
 
   return (
-    <div style={styles.container}>
+    <div className="toy-container">
       <style>{`
         @keyframes clockShake {
           0%, 100% { transform: translateX(0); }
@@ -693,7 +609,6 @@ export default function ClockToy() {
           60% { transform: translateX(-4px); }
           80% { transform: translateX(4px); }
         }
-        body, #root { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
         .clock-btn {
           border-radius: 14px; border: none;
           font-size: 22px; font-weight: 700; font-family: var(--font-heading);
@@ -706,30 +621,18 @@ export default function ClockToy() {
         .clock-btn[disabled] { cursor: default; }
       `}</style>
 
-      {/* Background decorations */}
-      <div style={styles.bgDots}>
-        {bgDots.map((dot, i) => (
-          <div key={i} style={{
-            position: "absolute",
-            width: dot.w, height: dot.h,
-            borderRadius: "50%",
-            background: `hsla(${dot.hue}, 80%, 75%, 0.12)`,
-            left: `${dot.left}%`, top: `${dot.top}%`,
-            animation: `float ${dot.dur}s ease-in-out ${dot.delay}s infinite`,
-          }} />
-        ))}
-      </div>
+      <BackgroundDots count={16} />
 
       {/* Header */}
       <div className="page-header" style={styles.header}>
         <a href="../" className="back-btn" aria-label="Back to home">⬅️</a>
         <button className="gear-btn" onClick={() => setShowSettings(true)}>⚙</button>
-        <h1 className="gradient-text" style={styles.title}>Time Teller</h1>
-        <p style={styles.subtitle}>Set the time!</p>
+        <h1 className="gradient-text">Time Teller</h1>
+        <p className="subtitle">Set the time!</p>
       </div>
 
       {/* Settings overlay */}
-      <SettingsOverlay
+      <ClockSettings
         show={showSettings}
         onClose={() => setShowSettings(false)}
         use24Hour={use24Hour}
@@ -800,25 +703,9 @@ export default function ClockToy() {
 // ── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = {
-  container: {
-    minHeight: "var(--app-height, 100dvh)",
-    display: "flex", flexDirection: "column", alignItems: "center",
-    padding: "calc(24px + var(--safe-top)) calc(16px + var(--safe-right)) calc(40px + var(--safe-bottom)) calc(16px + var(--safe-left))",
-    position: "relative", overflow: "hidden",
-  },
-  bgDots: {
-    position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden",
-  },
   header: {
     marginBottom: 12,
     width: "100%", maxWidth: 380,
-  },
-  title: {
-    fontSize: 28, fontWeight: 700, margin: 0, letterSpacing: "-0.5px",
-  },
-  subtitle: {
-    fontSize: 14, color: "rgba(255,255,255,0.5)", margin: "4px 0 0",
-    fontFamily: "var(--font-body)", fontWeight: 300,
   },
   clockContainer: {
     width: "100%", maxWidth: 320,
@@ -830,11 +717,8 @@ const styles = {
     touchAction: "none",
   },
   digitalCard: {
-    background: "var(--glass-bg)",
-    backdropFilter: "blur(var(--glass-blur))",
-    borderRadius: 20, padding: "16px 24px",
+    padding: "16px 24px",
     flex: 1, minWidth: 0,
-    border: "1px solid var(--glass-border)",
     display: "flex", alignItems: "center", justifyContent: "center",
     gap: 10, cursor: "pointer", position: "relative",
     transition: "transform 0.15s ease",

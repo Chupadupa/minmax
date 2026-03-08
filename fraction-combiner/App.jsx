@@ -1,25 +1,10 @@
 import { useState, useMemo, useCallback } from "react";
+import { NB_SOLID, NB7_STOPS, NB7_GRADIENT } from "../shared/numberblockColors.js";
 
 // ── Colors (Numberblocks-inspired) ───────────────────────────────────────────
 
-const NB_COLORS = {
-  1:  "#E41E20",
-  2:  "#FF8C1A",
-  3:  "#FFD030",
-  4:  "#4AAF4E",
-  5:  "#3A8FDE",
-  6:  "#9B59B6",
-  7:  "#6E3FA0",   // representative purple — used for glow/swatch fallback
-  8:  "#F472B6",
-  9:  "#8E8E93",
-  10: "#FFFFFF",   // Numberblocks 10 = white
-};
-
-// Rainbow stops for Numberblocks 7
-const NB7_STOPS = [
-  "#E41E20", "#FF8C1A", "#FFD030", "#4AAF4E", "#3A8FDE", "#9B59B6", "#F472B6",
-];
-const NB7_CSS = `linear-gradient(180deg, ${NB7_STOPS.join(", ")})`;
+// Extend the shared solid palette with Numberblocks 10 (white)
+const NB_COLORS = { ...NB_SOLID, "10": "#FFFFFF" };
 
 // LCD of 1..10 = 2520
 const LCD = 2520;
@@ -186,7 +171,7 @@ export default function FractionCombiner() {
   const filledAngle = slices.length > 0 ? slices[slices.length - 1].endAngle : 0;
 
   return (
-    <div style={styles.container}>
+    <div className="toy-container">
       <style>{`
         @keyframes warningPop {
           0% { transform: translateX(-50%) scale(0.7); opacity: 0; }
@@ -213,7 +198,6 @@ export default function FractionCombiner() {
           0%, 100% { stroke-opacity: 0.4; }
           50% { stroke-opacity: 0.9; }
         }
-        body, #root { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
         .frac-btn {
           border-radius: 16px; border: none;
           font-size: 17px; font-weight: 700;
@@ -233,8 +217,8 @@ export default function FractionCombiner() {
       {/* Header */}
       <div className="page-header" style={styles.header}>
         <a href="../" className="back-btn" aria-label="Back to home">⬅️</a>
-        <h1 className="gradient-text" style={styles.title}>Fraction Combiner</h1>
-        <p style={styles.subtitle}>Fill the circle with fraction pieces!</p>
+        <h1 className="gradient-text" style={{ fontSize: 26 }}>Fraction Combiner</h1>
+        <p className="subtitle">Fill the circle with fraction pieces!</p>
       </div>
 
       {/* Pie Chart */}
@@ -410,7 +394,7 @@ export default function FractionCombiner() {
               className="frac-btn"
               disabled={isFull}
               style={{
-                background: is7 ? NB7_CSS : NB_COLORS[denom],
+                background: is7 ? NB7_GRADIENT : NB_COLORS[denom],
                 color: is10 ? "#E41E20" : undefined,
                 textShadow: is10 ? "none" : undefined,
                 boxShadow: isExactMatch && !isFull
@@ -444,7 +428,7 @@ export default function FractionCombiner() {
             }}>
               <span style={{
                 width: 12, height: 12, borderRadius: 3,
-                background: seg.denom === 7 ? NB7_CSS : NB_COLORS[seg.denom],
+                background: seg.denom === 7 ? NB7_GRADIENT : NB_COLORS[seg.denom],
                 border: seg.denom === 10 ? "1px solid rgba(255,255,255,0.3)" : "none",
                 display: "inline-block", flexShrink: 0,
               }} />
@@ -463,23 +447,9 @@ export default function FractionCombiner() {
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const styles = {
-  container: {
-    minHeight: "var(--app-height, 100dvh)",
-    display: "flex", flexDirection: "column", alignItems: "center",
-    padding: "calc(24px + var(--safe-top)) calc(16px + var(--safe-right)) calc(40px + var(--safe-bottom)) calc(16px + var(--safe-left))",
-    position: "relative", overflow: "hidden",
-  },
   header: {
     marginBottom: 12,
     width: "100%", maxWidth: 380,
-  },
-  title: {
-    fontSize: 26, fontWeight: 700, margin: 0,
-    letterSpacing: "-0.5px",
-  },
-  subtitle: {
-    fontSize: 14, color: "rgba(255,255,255,0.5)", margin: "4px 0 0",
-    fontFamily: "var(--font-body)", fontWeight: 300,
   },
   pieContainer: {
     position: "relative",

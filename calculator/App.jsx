@@ -1,19 +1,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useAutoFitFontSize } from "../shared/useAutoFitFontSize.js";
 import { formatDisplay, parseDisplay, compute, MAX_DISPLAY_DIGITS } from "./calcEngine.js";
-
-// ── Colors ────────────────────────────────────────────────────────────────────
-
-const DIGIT_COLORS = {
-  "1": "#E41E20", "2": "#FF8C1A", "3": "#FFD030", "4": "#4AAF4E",
-  "5": "#3A8FDE", "6": "#9B59B6",
-  "7": "linear-gradient(135deg, #E41E20, #FF8C1A, #FFD030, #4AAF4E, #3A8FDE, #6E3FA0, #9B59B6)",
-  "8": "#F472B6", "9": "#8E8E93",
-};
-const DIGIT_SOLID = {
-  "1": "#E41E20", "2": "#FF8C1A", "3": "#FFD030", "4": "#4AAF4E",
-  "5": "#3A8FDE", "6": "#9B59B6", "7": "#6E3FA0", "8": "#F472B6", "9": "#8E8E93",
-};
+import { NB_COLORS as DIGIT_COLORS, NB_SOLID as DIGIT_SOLID } from "../shared/numberblockColors.js";
+import { BackgroundDots } from "../shared/BackgroundDots.jsx";
 
 const OP_COLOR = "linear-gradient(135deg, #FF8C1A, #E41E20)";
 const OP_SOLID = "#E41E20";
@@ -87,19 +76,6 @@ export default function Calculator() {
   const displayFontSize = useAutoFitFontSize(
     displayOuterRef, displayInnerRef, mainDisplayText.length,
     { maxFont: 72, minFont: 14 },
-  );
-
-  // Background dots (stable)
-  const bgDots = useMemo(() =>
-    Array.from({ length: 20 }, (_, i) => ({
-      w: 8 + Math.random() * 16,
-      h: 8 + Math.random() * 16,
-      hue: Math.random() * 360,
-      left: Math.random() * 100,
-      top: Math.random() * 100,
-      dur: 2 + Math.random() * 3,
-      delay: Math.random() * 2,
-    })), []
   );
 
   const triggerBounce = useCallback((key) => {
@@ -368,14 +344,8 @@ export default function Calculator() {
   // ── Render ──
 
   return (
-    <div style={styles.container}>
+    <div className="toy-container" style={{ justifyContent: "flex-end", gap: 12 }}>
       <style>{`
-        @keyframes btnPress {
-          0% { transform: scale(1); }
-          50% { transform: scale(0.88); }
-          100% { transform: scale(1); }
-        }
-        body, #root { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
         .calc-btn {
           width: 100%; aspect-ratio: 1; border-radius: 50%; border: none;
           font-size: 28px; font-weight: 700; font-family: var(--font-heading);
@@ -391,29 +361,17 @@ export default function Calculator() {
         }
       `}</style>
 
-      {/* Background decorations */}
-      <div style={styles.bgDots}>
-        {bgDots.map((dot, i) => (
-          <div key={i} style={{
-            position: "absolute",
-            width: dot.w, height: dot.h,
-            borderRadius: "50%",
-            background: `hsla(${dot.hue}, 80%, 75%, 0.12)`,
-            left: `${dot.left}%`, top: `${dot.top}%`,
-            animation: `float ${dot.dur}s ease-in-out ${dot.delay}s infinite`,
-          }} />
-        ))}
-      </div>
+      <BackgroundDots count={20} />
 
       {/* Header */}
       <div className="page-header" style={styles.header}>
         <a href="../" className="back-btn" aria-label="Back to home">⬅️</a>
-        <h1 className="gradient-text" style={styles.title}>Calculator</h1>
-        <p style={styles.subtitle}>Tap away!</p>
+        <h1 className="gradient-text">Calculator</h1>
+        <p className="subtitle">Tap away!</p>
       </div>
 
       {/* Display */}
-      <div style={styles.displayCard}>
+      <div className="frosted-card" style={styles.displayCard}>
         {historyEquation && (
           <div style={styles.historyText}>{historyEquation}</div>
         )}
@@ -448,32 +406,13 @@ export default function Calculator() {
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const styles = {
-  container: {
-    minHeight: "var(--app-height, 100dvh)",
-    display: "flex", flexDirection: "column", alignItems: "center",
-    justifyContent: "flex-end",
-    padding: "calc(24px + var(--safe-top)) calc(16px + var(--safe-right)) calc(40px + var(--safe-bottom)) calc(16px + var(--safe-left))",
-    position: "relative", overflow: "hidden",
-    gap: 12,
-  },
-  bgDots: { position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" },
   header: {
     width: "100%", maxWidth: 340,
   },
-  title: {
-    fontSize: 28, fontWeight: 700, margin: 0,
-    letterSpacing: "-0.5px",
-  },
-  subtitle: {
-    fontSize: 14, color: "rgba(255,255,255,0.5)", margin: "4px 0 0",
-    fontFamily: "var(--font-body)", fontWeight: 300,
-  },
   displayCard: {
-    background: "var(--glass-bg)", backdropFilter: "blur(var(--glass-blur))",
-    borderRadius: 20, padding: "20px 24px",
+    padding: "20px 24px",
     width: "100%", maxWidth: 340,
     minHeight: 140,
-    border: "1px solid var(--glass-border)",
     display: "flex", flexDirection: "column", justifyContent: "flex-end",
   },
   historyText: {

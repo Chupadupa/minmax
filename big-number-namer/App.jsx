@@ -1,19 +1,12 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getNumberName, formatZerosWithCommas } from "./numberNaming.js";
 import { useAutoFitFontSize } from "../shared/useAutoFitFontSize.js";
-
-// ── Colors ────────────────────────────────────────────────────────────────────
-
-const NB_COLORS = {
-  "1": "#E41E20", "2": "#FF8C1A", "3": "#FFD030", "4": "#4AAF4E",
-  "5": "#3A8FDE", "6": "#9B59B6",
-  "7": "linear-gradient(135deg, #E41E20, #FF8C1A, #FFD030, #4AAF4E, #3A8FDE, #6E3FA0, #9B59B6)",
-  "8": "#F472B6", "9": "#8E8E93",
-};
-const NB_SOLID = {
-  "1": "#E41E20", "2": "#FF8C1A", "3": "#FFD030", "4": "#4AAF4E",
-  "5": "#3A8FDE", "6": "#9B59B6", "7": "#6E3FA0", "8": "#F472B6", "9": "#8E8E93",
-};
+import { NB_COLORS, NB_SOLID } from "../shared/numberblockColors.js";
+import { BackgroundDots } from "../shared/BackgroundDots.jsx";
+import {
+  SettingsOverlay, SettingsToggle, SettingsDivider,
+  SettingsSection, SettingsAboutText, SettingsLink,
+} from "../shared/SettingsOverlay.jsx";
 
 const MAX_ZEROS = 3000000000003;
 
@@ -69,77 +62,46 @@ function FunFactToast({ text }) {
   );
 }
 
-// ── Settings Overlay ──────────────────────────────────────────────────────────
+// ── Settings Content ─────────────────────────────────────────────────────────
 
-function SettingsOverlay({ show, onClose, useDashes, setUseDashes, useCommas, setUseCommas }) {
-  if (!show) return null;
-
+function BigNumberSettings({ show, onClose, useDashes, setUseDashes, useCommas, setUseCommas }) {
   return (
-    <div style={settingsStyles.backdrop} onClick={onClose}>
-      <div style={settingsStyles.panel} onClick={e => e.stopPropagation()}>
-        <button style={settingsStyles.closeBtn} onClick={onClose}>✕</button>
+    <SettingsOverlay show={show} onClose={onClose}>
+      <SettingsToggle
+        checked={useDashes}
+        onChange={() => setUseDashes(d => !d)}
+        label="Show dashes between Latin prefixes"
+        hint={`e.g. ${useDashes ? "un-vigint-illion" : "unvigintillion"} → ${!useDashes ? "un-vigint-illion" : "unvigintillion"}`}
+      />
 
-        <h2 style={settingsStyles.heading}>Settings</h2>
+      <div style={{ marginTop: 16 }}>
+        <SettingsToggle
+          checked={useCommas}
+          onChange={() => setUseCommas(c => !c)}
+          label="Show commas in number display"
+          hint={`e.g. ${useCommas ? "1,000,000" : "1000000"} → ${!useCommas ? "1,000,000" : "1000000"}`}
+        />
+      </div>
 
-        {/* Dashes toggle */}
-        <label style={settingsStyles.toggle}>
-          <div style={{
-            ...settingsStyles.checkbox,
-            background: useDashes ? "#4AAF4E" : "rgba(255,255,255,0.15)",
-            borderColor: useDashes ? "#4AAF4E" : "rgba(255,255,255,0.25)",
-          }} onClick={() => setUseDashes(d => !d)}>
-            {useDashes && <span style={settingsStyles.checkmark}>✓</span>}
-          </div>
-          <span style={settingsStyles.toggleLabel}>Show dashes between Latin prefixes</span>
-        </label>
-        <p style={settingsStyles.toggleHint}>
-          e.g. {useDashes ? "un-vigint-illion" : "unvigintillion"} → {!useDashes ? "un-vigint-illion" : "unvigintillion"}
-        </p>
-
-        {/* Commas toggle */}
-        <label style={{ ...settingsStyles.toggle, marginTop: 16 }}>
-          <div style={{
-            ...settingsStyles.checkbox,
-            background: useCommas ? "#4AAF4E" : "rgba(255,255,255,0.15)",
-            borderColor: useCommas ? "#4AAF4E" : "rgba(255,255,255,0.25)",
-          }} onClick={() => setUseCommas(c => !c)}>
-            {useCommas && <span style={settingsStyles.checkmark}>✓</span>}
-          </div>
-          <span style={settingsStyles.toggleLabel}>Show commas in number display</span>
-        </label>
-        <p style={settingsStyles.toggleHint}>
-          e.g. {useCommas ? "1,000,000" : "1000000"} → {!useCommas ? "1,000,000" : "1000000"}
-        </p>
-
-        {/* Divider */}
-        <div style={settingsStyles.divider} />
-
-        {/* About section */}
-        <h3 style={settingsStyles.subheading}>About</h3>
-        <p style={settingsStyles.aboutText}>
+      <SettingsDivider />
+      <SettingsSection title="About">
+        <SettingsAboutText>
           This was made for my son, who absolutely loves numbers.
           He wanted to know the names of really, really big numbers — so we built
           this toy together so he could explore them all the way up to a millinillinillinillinillion.
-        </p>
+        </SettingsAboutText>
+      </SettingsSection>
 
-        {/* Divider */}
-        <div style={settingsStyles.divider} />
-
-        {/* Credits */}
-        <h3 style={settingsStyles.subheading}>Credits</h3>
-        <p style={settingsStyles.aboutText}>
+      <SettingsDivider />
+      <SettingsSection title="Credits">
+        <SettingsAboutText>
           Inspired by{" "}
-          <a
-            href="https://stevemorse.org/misc/illion.html"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={settingsStyles.link}
-          >
+          <SettingsLink href="https://stevemorse.org/misc/illion.html">
             Naming Very Large Numbers in One Step
-          </a>
+          </SettingsLink>
           {" "}by Stephen P. Morse.
-        </p>
-        <p style={settingsStyles.aboutText}>
+        </SettingsAboutText>
+        <SettingsAboutText>
           Number button colors based on the{" "}
           <span style={{ color: "#E41E20" }}>N</span>
           <span style={{ color: "#FF8C1A" }}>u</span>
@@ -154,82 +116,11 @@ function SettingsOverlay({ show, onClose, useDashes, setUseDashes, useCommas, se
           <span style={{ color: "#FFD030" }}>k</span>
           <span style={{ color: "#4AAF4E" }}>s</span>
           {" "}characters.
-        </p>
-      </div>
-    </div>
+        </SettingsAboutText>
+      </SettingsSection>
+    </SettingsOverlay>
   );
 }
-
-const settingsStyles = {
-  backdrop: {
-    position: "fixed", inset: 0, zIndex: 100,
-    background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)",
-    display: "flex", alignItems: "center", justifyContent: "center",
-    padding: 20,
-    animation: "fadeIn 0.2s ease-out",
-  },
-  panel: {
-    background: "linear-gradient(160deg, #1B1464 0%, #302B63 100%)",
-    borderRadius: 24, padding: "28px 24px",
-    width: "100%", maxWidth: 360,
-    border: "1px solid rgba(255,255,255,0.12)",
-    boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
-    position: "relative",
-    maxHeight: "85vh", overflowY: "auto",
-    fontFamily: "var(--font-heading)", color: "#fff",
-    animation: "popIn 0.3s ease-out",
-  },
-  closeBtn: {
-    position: "absolute", top: 16, right: 16,
-    background: "rgba(255,255,255,0.1)", border: "none",
-    color: "rgba(255,255,255,0.7)", fontSize: 16,
-    width: 32, height: 32, borderRadius: 10,
-    cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-    fontFamily: "var(--font-heading)",
-  },
-  heading: {
-    fontSize: 22, fontWeight: 700, margin: "0 0 20px",
-    background: "linear-gradient(135deg, #FF8C1A, #FFD030, #4AAF4E, #3A8FDE)",
-    WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-  },
-  toggle: {
-    display: "flex", alignItems: "center", gap: 12, cursor: "pointer",
-  },
-  checkbox: {
-    width: 28, height: 28, borderRadius: 8,
-    border: "2px solid", flexShrink: 0,
-    display: "flex", alignItems: "center", justifyContent: "center",
-    cursor: "pointer", transition: "all 0.15s ease",
-  },
-  checkmark: {
-    color: "#fff", fontSize: 16, fontWeight: 700,
-  },
-  toggleLabel: {
-    fontSize: 15, color: "rgba(255,255,255,0.85)",
-    fontFamily: "var(--font-body)",
-  },
-  toggleHint: {
-    fontSize: 12, color: "rgba(255,255,255,0.35)", margin: "6px 0 0 40px",
-    fontFamily: "var(--font-body)",
-  },
-  divider: {
-    height: 1, background: "rgba(255,255,255,0.08)",
-    margin: "20px 0",
-  },
-  subheading: {
-    fontSize: 16, fontWeight: 600, margin: "0 0 8px",
-    color: "rgba(255,255,255,0.7)",
-  },
-  aboutText: {
-    fontSize: 14, lineHeight: 1.6, margin: "0 0 10px",
-    color: "rgba(255,255,255,0.55)",
-    fontFamily: "var(--font-body)",
-  },
-  link: {
-    color: "#48DBFB", textDecoration: "none",
-    borderBottom: "1px solid rgba(72,219,251,0.3)",
-  },
-};
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
@@ -242,19 +133,6 @@ export default function BigNumberNamer() {
   const [useCommas, setUseCommas] = useState(true);
   const zerosOuterRef = useRef(null);
   const zerosInnerRef = useRef(null);
-
-  // Stable background dots - generated once
-  const bgDots = useMemo(() =>
-    Array.from({ length: 20 }, (_, i) => ({
-      w: 8 + Math.random() * 16,
-      h: 8 + Math.random() * 16,
-      hue: Math.random() * 360,
-      left: Math.random() * 100,
-      top: Math.random() * 100,
-      dur: 2 + Math.random() * 3,
-      delay: Math.random() * 2,
-    })), []
-  );
 
   const zeros = input === "" ? 0 : Math.min(parseInt(input, 10), MAX_ZEROS);
   const name = getNumberName(zeros, useDashes);
@@ -334,13 +212,8 @@ export default function BigNumberNamer() {
   const zerosFontSize = useAutoFitFontSize(zerosOuterRef, zerosInnerRef, displayCharCount);
 
   return (
-    <div style={styles.container}>
+    <div className="toy-container">
       <style>{`
-        @keyframes btnPress {
-          0% { transform: scale(1); }
-          50% { transform: scale(0.88); }
-          100% { transform: scale(1); }
-        }
         @keyframes factPop {
           0% { transform: translateX(-50%) scale(0.7); opacity: 0; }
           60% { transform: translateX(-50%) scale(1.05); }
@@ -350,7 +223,6 @@ export default function BigNumberNamer() {
           0% { transform: translateX(-50%) scale(1); opacity: 1; }
           100% { transform: translateX(-50%) scale(0.7); opacity: 0; }
         }
-        body, #root { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
         .nb-btn {
           width: 100%; aspect-ratio: 1.4; border-radius: 18px; border: none;
           font-size: 30px; font-weight: 700; font-family: var(--font-heading);
@@ -372,30 +244,18 @@ export default function BigNumberNamer() {
         .pm-btn[disabled] { cursor: default; }
       `}</style>
 
-      {/* Background decorations - stable, no re-render flicker */}
-      <div style={styles.bgDots}>
-        {bgDots.map((dot, i) => (
-          <div key={i} style={{
-            position: "absolute",
-            width: dot.w, height: dot.h,
-            borderRadius: "50%",
-            background: `hsla(${dot.hue}, 80%, 75%, 0.12)`,
-            left: `${dot.left}%`, top: `${dot.top}%`,
-            animation: `float ${dot.dur}s ease-in-out ${dot.delay}s infinite`,
-          }} />
-        ))}
-      </div>
+      <BackgroundDots count={20} />
 
       {/* Header */}
       <div className="page-header" style={styles.header}>
         <a href="../" className="back-btn" aria-label="Back to home">⬅️</a>
         <button className="gear-btn" onClick={() => setShowSettings(true)}>⚙</button>
-        <h1 className="gradient-text" style={styles.title}>Big Number Namer</h1>
-        <p style={styles.subtitle}>How many zeros?</p>
+        <h1 className="gradient-text">Big Number Namer</h1>
+        <p className="subtitle">How many zeros?</p>
       </div>
 
       {/* Settings overlay */}
-      <SettingsOverlay
+      <BigNumberSettings
         show={showSettings}
         onClose={() => setShowSettings(false)}
         useDashes={useDashes}
@@ -405,7 +265,7 @@ export default function BigNumberNamer() {
       />
 
       {/* Display Area */}
-      <div style={styles.displayCard}>
+      <div className="frosted-card" style={styles.displayCard}>
         <div style={{
           ...styles.bigNumber,
           fontSize: zeros.toLocaleString().length <= 5 ? 42 : zeros.toLocaleString().length <= 9 ? 32 : zeros.toLocaleString().length <= 13 ? 24 : 18,
@@ -518,30 +378,13 @@ export default function BigNumberNamer() {
 }
 
 const styles = {
-  container: {
-    minHeight: "var(--app-height, 100dvh)",
-    display: "flex", flexDirection: "column", alignItems: "center",
-    padding: "calc(24px + var(--safe-top)) calc(16px + var(--safe-right)) calc(40px + var(--safe-bottom)) calc(16px + var(--safe-left))",
-    position: "relative", overflow: "hidden",
-  },
-  bgDots: { position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" },
   header: {
     marginBottom: 16,
     width: "100%", maxWidth: 380,
   },
-  title: {
-    fontSize: 28, fontWeight: 700, margin: 0,
-    letterSpacing: "-0.5px",
-  },
-  subtitle: {
-    fontSize: 14, color: "rgba(255,255,255,0.5)", margin: "4px 0 0",
-    fontFamily: "var(--font-body)", fontWeight: 300,
-  },
   displayCard: {
-    background: "var(--glass-bg)", backdropFilter: "blur(var(--glass-blur))",
-    borderRadius: 20, padding: "14px 16px",
+    padding: "14px 16px",
     width: "100%", maxWidth: 380, height: 260,
-    border: "1px solid var(--glass-border)",
     position: "relative", zIndex: 1,
     display: "flex", flexDirection: "column",
   },
