@@ -15,7 +15,50 @@ function luminance(hex) {
 function contrastTextColor(color) {
   if (color === "rainbow") return "#fff";
   if (color === "#FFFFFF") return "#333";
-  return luminance(color) > 0.35 ? "#222" : "#fff";
+  return luminance(color) > 0.5 ? "#222" : "#fff";
+}
+
+// ── Polygon Naming (21–100) ─────────────────────────────────────────────────
+
+const TENS_EXACT = {
+  20: "Icosagon", 30: "Triacontagon", 40: "Tetracontagon",
+  50: "Pentacontagon", 60: "Hexacontagon", 70: "Heptacontagon",
+  80: "Octacontagon", 90: "Enneacontagon", 100: "Hectogon",
+};
+const TENS_PREFIX = {
+  20: "Icosikai", 30: "Triacontakai", 40: "Tetracontakai",
+  50: "Pentacontakai", 60: "Hexacontakai", 70: "Heptacontakai",
+  80: "Octacontakai", 90: "Enneacontakai",
+};
+const ONES_SUFFIX = {
+  1: "henagon", 2: "digon", 3: "trigon", 4: "tetragon",
+  5: "pentagon", 6: "hexagon", 7: "heptagon", 8: "octagon", 9: "enneagon",
+};
+
+function polygonNameForSides(sides) {
+  if (sides === 100) return "Hectogon";
+  const tens = Math.floor(sides / 10) * 10;
+  const ones = sides % 10;
+  if (ones === 0) return TENS_EXACT[tens];
+  return TENS_PREFIX[tens] + ONES_SUFFIX[ones];
+}
+
+// ── Number to Word ──────────────────────────────────────────────────────────
+
+function numberToWord(n) {
+  const ONES = [
+    "", "one", "two", "three", "four", "five",
+    "six", "seven", "eight", "nine", "ten",
+    "eleven", "twelve", "thirteen", "fourteen", "fifteen",
+    "sixteen", "seventeen", "eighteen", "nineteen",
+  ];
+  const TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+  if (n === 0) return "zero";
+  if (n === 100) return "one hundred";
+  if (n < 20) return ONES[n];
+  const t = Math.floor(n / 10);
+  const o = n % 10;
+  return o === 0 ? TENS[t] : `${TENS[t]}-${ONES[o]}`;
 }
 
 // ── Shape Definitions ────────────────────────────────────────────────────────
@@ -61,6 +104,22 @@ const SHAPES = [
         render: "polygon",
       };
     });
+  })(),
+  // 21–100: generated from polygon naming
+  ...(() => {
+    const shapes = [];
+    for (let sides = 21; sides <= 100; sides++) {
+      const style = getNumberBlockStyle(sides);
+      const ones = sides % 10;
+      shapes.push({
+        name: polygonNameForSides(sides),
+        sides,
+        color: ones === 7 ? "rainbow" : style.background,
+        borderColor: style.border,
+        render: "polygon",
+      });
+    }
+    return shapes;
   })(),
 ];
 
@@ -257,8 +316,10 @@ function ShapeSVG({ shape, size, showNumber = false }) {
 function sideDescription(shape) {
   if (shape.render === "circle") return "No straight sides — perfectly round!";
   if (shape.render === "oval") return "No straight sides — a stretched circle!";
-  if (shape.render === "football") return "2 curved sides that meet at points!";
-  return `${shape.sides} side${shape.sides === 1 ? "" : "s"}`;
+  if (shape.render === "football") return "Two curved sides that meet at points!";
+  const word = numberToWord(shape.sides);
+  const capitalized = word.charAt(0).toUpperCase() + word.slice(1);
+  return `${capitalized} side${shape.sides === 1 ? "" : "s"}`;
 }
 
 // ── Main Component ───────────────────────────────────────────────────────────
@@ -316,13 +377,6 @@ export default function ShapeSelector() {
           animation: shapeReveal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
           filter: drop-shadow(0 8px 30px rgba(0,0,0,0.4));
         }
-        .overlay-number {
-          font-family: var(--font-heading);
-          font-size: 96px;
-          font-weight: 800;
-          line-height: 1;
-          animation: numberPop 0.4s 0.1s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-        }
         .overlay-name {
           font-family: var(--font-heading);
           font-size: 40px;
@@ -374,14 +428,6 @@ export default function ShapeSelector() {
           <div className="overlay-shape">
             <ShapeSVG shape={selected} size={220} showNumber />
           </div>
-          {(selected.displayNum ?? selected.sides) > 0 && (
-            <div
-              className="overlay-number"
-              style={{ color: selected.color === "rainbow" ? NB_SOLID["7"] : selected.borderColor || (selected.color === "#FFFFFF" ? "#E41E20" : selected.color) }}
-            >
-              {selected.displayNum ?? selected.sides}
-            </div>
-          )}
           <div
             className="overlay-name"
             style={{ color: selected.color === "rainbow" ? NB_SOLID["7"] : selected.borderColor || (selected.color === "#FFFFFF" ? "#E41E20" : selected.color) }}
