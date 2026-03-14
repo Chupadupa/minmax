@@ -1,10 +1,15 @@
 import { useState, useMemo, useCallback } from "react";
-import { NB_SOLID, NB7_STOPS, NB7_GRADIENT } from "../shared/numberblockColors.js";
+import { NB_SOLID, NB7_STOPS, NB7_GRADIENT, getNumberBlockStyle } from "../shared/numberblockColors.js";
 
 // ── Colors (Numberblocks-inspired) ───────────────────────────────────────────
 
-// Extend the shared solid palette with Numberblocks 10 (white)
-const NB_COLORS = { ...NB_SOLID, "10": "#FFFFFF" };
+// Build color map from getNumberBlockStyle for denominators 1–10
+const NB_COLORS = Object.fromEntries(
+  Array.from({ length: 10 }, (_, i) => [String(i + 1), getNumberBlockStyle(i + 1).background])
+);
+const NB_BORDERS = Object.fromEntries(
+  Array.from({ length: 10 }, (_, i) => [String(i + 1), getNumberBlockStyle(i + 1).border])
+);
 
 // LCD of 1..10 = 2520
 const LCD = 2520;
@@ -266,8 +271,8 @@ export default function FractionCombiner() {
               key={slice.id}
               d={arcPath(slice.startAngle, slice.endAngle)}
               fill={slice.denom === 7 ? "url(#nb7Rainbow)" : NB_COLORS[slice.denom]}
-              stroke="rgba(0,0,0,0.3)"
-              strokeWidth="1.5"
+              stroke={NB_BORDERS[slice.denom] || "rgba(0,0,0,0.3)"}
+              strokeWidth={NB_BORDERS[slice.denom] ? "2.5" : "1.5"}
               style={{ animation: "popIn 0.3s ease-out" }}
             />
           ))}
@@ -287,7 +292,7 @@ export default function FractionCombiner() {
                 x={lx} y={ly}
                 textAnchor="middle"
                 dominantBaseline="central"
-                fill={slice.denom === 10 ? "#E41E20" : "#fff"}
+                fill={NB_BORDERS[slice.denom] ? NB_BORDERS[slice.denom] : "#fff"}
                 fontFamily="var(--font-heading)"
                 fontWeight="700"
                 fontSize={sweep < 30 ? 14 : 18}
@@ -387,7 +392,8 @@ export default function FractionCombiner() {
           const fits = canFit(denom);
           const isExactMatch = exactMatchDenom === denom;
           const is7 = denom === 7;
-          const is10 = denom === 10;
+          const border = NB_BORDERS[denom];
+          const hasBorder = !!border;
           return (
             <button
               key={denom}
@@ -395,11 +401,12 @@ export default function FractionCombiner() {
               disabled={isFull}
               style={{
                 background: is7 ? NB7_GRADIENT : NB_COLORS[denom],
-                color: is10 ? "#E41E20" : undefined,
-                textShadow: is10 ? "none" : undefined,
+                border: hasBorder ? `3px solid ${border}` : undefined,
+                color: hasBorder ? border : undefined,
+                textShadow: hasBorder ? "none" : undefined,
                 boxShadow: isExactMatch && !isFull
-                  ? `0 0 0 3px #fff, 0 5px 14px ${NB_COLORS[denom]}88`
-                  : `0 5px 14px ${NB_COLORS[denom]}55, inset 0 2px 0 rgba(255,255,255,0.25)`,
+                  ? `0 0 0 3px #fff, 0 5px 14px ${hasBorder ? border : NB_COLORS[denom]}88`
+                  : `0 5px 14px ${hasBorder ? border : NB_COLORS[denom]}55, inset 0 2px 0 rgba(255,255,255,0.25)`,
                 opacity: isFull ? 0.3 : fits ? 1 : 0.5,
                 animation: warning && !fits ? "warningShake 0.4s ease-out" : "none",
               }}
@@ -408,7 +415,7 @@ export default function FractionCombiner() {
               <span style={{ fontSize: 13, opacity: 0.85 }}>1</span>
               <span style={{
                 width: "60%", height: 2,
-                background: is10 ? "rgba(228,30,32,0.7)" : "rgba(255,255,255,0.7)",
+                background: hasBorder ? `${border}B3` : "rgba(255,255,255,0.7)",
                 borderRadius: 1,
               }} />
               <span style={{ fontSize: 13, opacity: 0.85 }}>{denom}</span>
@@ -429,7 +436,7 @@ export default function FractionCombiner() {
               <span style={{
                 width: 12, height: 12, borderRadius: 3,
                 background: seg.denom === 7 ? NB7_GRADIENT : NB_COLORS[seg.denom],
-                border: seg.denom === 10 ? "1px solid rgba(255,255,255,0.3)" : "none",
+                border: NB_BORDERS[seg.denom] ? `1px solid ${NB_BORDERS[seg.denom]}` : "none",
                 display: "inline-block", flexShrink: 0,
               }} />
               1/{seg.denom}

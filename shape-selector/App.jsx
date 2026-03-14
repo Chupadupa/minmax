@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { BackgroundDots } from "../shared/BackgroundDots.jsx";
-import { NB_SOLID, NB7_STOPS } from "../shared/numberblockColors.js";
+import { NB_SOLID, NB7_STOPS, getNumberBlockStyle } from "../shared/numberblockColors.js";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -37,17 +37,31 @@ const SHAPES = [
   { name: "Heptagon",             sides: 7,  color: "rainbow",     render: "polygon" },
   { name: "Octagon",              sides: 8,  color: NB_SOLID["8"], render: "polygon" },
   { name: "Nonagon",              sides: 9,  color: NB_SOLID["9"], render: "polygon" },
-  { name: "Decagon",              sides: 10, color: "#FFFFFF",      render: "polygon" },
-  { name: "Hendecagon",           sides: 11, color: NB_SOLID["1"], render: "polygon" },
-  { name: "Dodecagon",            sides: 12, color: NB_SOLID["2"], render: "polygon" },
-  { name: "Tridecagon",           sides: 13, color: NB_SOLID["3"], render: "polygon" },
-  { name: "Tetradecagon",         sides: 14, color: NB_SOLID["4"], render: "polygon" },
-  { name: "Pentadecagon",         sides: 15, color: NB_SOLID["5"], render: "polygon" },
-  { name: "Hexadecagon",          sides: 16, color: NB_SOLID["6"], render: "polygon" },
-  { name: "Heptadecagon",         sides: 17, color: "rainbow",     render: "polygon" },
-  { name: "Octadecagon",          sides: 18, color: NB_SOLID["8"], render: "polygon" },
-  { name: "Enneadecagon",         sides: 19, color: NB_SOLID["9"], render: "polygon" },
-  { name: "Icosagon",             sides: 20, color: "#FFFFFF",      render: "polygon" },
+  ...(() => {
+    const teens = [
+      { name: "Decagon",       sides: 10 },
+      { name: "Hendecagon",    sides: 11 },
+      { name: "Dodecagon",     sides: 12 },
+      { name: "Tridecagon",    sides: 13 },
+      { name: "Tetradecagon",  sides: 14 },
+      { name: "Pentadecagon",  sides: 15 },
+      { name: "Hexadecagon",   sides: 16 },
+      { name: "Heptadecagon",  sides: 17 },
+      { name: "Octadecagon",   sides: 18 },
+      { name: "Enneadecagon",  sides: 19 },
+      { name: "Icosagon",      sides: 20 },
+    ];
+    return teens.map((s) => {
+      const style = getNumberBlockStyle(s.sides);
+      const ones = s.sides % 10;
+      return {
+        ...s,
+        color: ones === 7 ? "rainbow" : style.background,
+        borderColor: style.border,
+        render: "polygon",
+      };
+    });
+  })(),
 ];
 
 // ── SVG Helpers ──────────────────────────────────────────────────────────────
@@ -71,7 +85,8 @@ function ShapeSVG({ shape, size, showNumber = false }) {
   const gradId = `rainbow-${size}-${shape.name.replace(/\s/g, "")}`;
   const isWhite = shape.color === "#FFFFFF";
   const fill = isRainbow ? `url(#${gradId})` : shape.color;
-  const stroke = isWhite ? "rgba(228,30,32,0.5)" : "rgba(255,255,255,0.3)";
+  const stroke = shape.borderColor || (isWhite ? "rgba(228,30,32,0.5)" : "rgba(255,255,255,0.3)");
+  const strokeOpacity = shape.borderColor ? 0.7 : undefined;
   const num = shape.displayNum ?? shape.sides;
   const textColor = contrastTextColor(shape.color);
   const fontSize = size * 0.32;
@@ -204,7 +219,7 @@ function ShapeSVG({ shape, size, showNumber = false }) {
       {shape.render === "polygon" && (
         <polygon
           points={polygonPoints(shape.sides, cx, cy, r)}
-          fill={fill} stroke={stroke} strokeWidth={strokeW} strokeLinejoin="round"
+          fill={fill} stroke={stroke} strokeWidth={shape.borderColor ? strokeW * 1.5 : strokeW} strokeOpacity={strokeOpacity} strokeLinejoin="round"
         />
       )}
 
@@ -362,14 +377,14 @@ export default function ShapeSelector() {
           {(selected.displayNum ?? selected.sides) > 0 && (
             <div
               className="overlay-number"
-              style={{ color: selected.color === "rainbow" ? NB_SOLID["7"] : selected.color === "#FFFFFF" ? "#E41E20" : selected.color }}
+              style={{ color: selected.color === "rainbow" ? NB_SOLID["7"] : selected.borderColor || (selected.color === "#FFFFFF" ? "#E41E20" : selected.color) }}
             >
               {selected.displayNum ?? selected.sides}
             </div>
           )}
           <div
             className="overlay-name"
-            style={{ color: selected.color === "rainbow" ? NB_SOLID["7"] : selected.color === "#FFFFFF" ? "#E41E20" : selected.color }}
+            style={{ color: selected.color === "rainbow" ? NB_SOLID["7"] : selected.borderColor || (selected.color === "#FFFFFF" ? "#E41E20" : selected.color) }}
           >
             {selected.name}
           </div>
