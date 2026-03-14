@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useAutoFitFontSize } from "../shared/useAutoFitFontSize.js";
 import { formatDisplay, parseDisplay, compute, MAX_DISPLAY_DIGITS } from "./calcEngine.js";
-import { NB_COLORS as DIGIT_COLORS, NB_SOLID as DIGIT_SOLID } from "../shared/numberblockColors.js";
+import { NB_COLORS as DIGIT_COLORS, NB_SOLID as DIGIT_SOLID, getNumberBlockStyle } from "../shared/numberblockColors.js";
 import { BackgroundDots } from "../shared/BackgroundDots.jsx";
 
 const OP_COLOR = "linear-gradient(135deg, #FF8C1A, #E41E20)";
@@ -285,19 +285,18 @@ export default function Calculator() {
     };
 
     if (btn.type === "digit") {
-      if (btn.action === "0") {
-        return {
-          ...base,
-          background: "#FFFFFF",
-          border: "3px solid #E41E20",
-          boxShadow: "0 5px 14px rgba(228,30,32,0.25), inset 0 2px 0 rgba(255,255,255,0.5)",
-          color: "#E41E20", textShadow: "none",
-        };
-      }
+      const d = Number(btn.action);
+      const style = d >= 1 ? getNumberBlockStyle(d) : { background: "#FFFFFF", border: "#E41E20" };
+      const hasBorder = !!style.border;
       return {
         ...base,
-        background: DIGIT_COLORS[btn.action],
-        boxShadow: `0 5px 14px ${DIGIT_SOLID[btn.action]}55, inset 0 2px 0 rgba(255,255,255,0.25)`,
+        background: style.background,
+        border: hasBorder ? `3px solid ${style.border}` : undefined,
+        boxShadow: hasBorder
+          ? `0 5px 14px ${style.border}40, inset 0 2px 0 rgba(255,255,255,0.5)`
+          : `0 5px 14px ${DIGIT_SOLID[btn.action]}55, inset 0 2px 0 rgba(255,255,255,0.25)`,
+        color: hasBorder ? style.border : undefined,
+        textShadow: hasBorder ? "none" : undefined,
       };
     }
 

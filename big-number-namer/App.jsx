@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { getNumberName, formatZerosWithCommas } from "./numberNaming.js";
 import { useAutoFitFontSize } from "../shared/useAutoFitFontSize.js";
-import { NB_COLORS, NB_SOLID } from "../shared/numberblockColors.js";
+import { NB_COLORS, NB_SOLID, getNumberBlockStyle } from "../shared/numberblockColors.js";
 import { BackgroundDots } from "../shared/BackgroundDots.jsx";
 import {
   SettingsOverlay, SettingsToggle, SettingsDivider,
@@ -351,16 +351,25 @@ export default function BigNumberNamer() {
 
       {/* Numpad */}
       <div style={styles.numpad}>
-        {[7, 8, 9, 4, 5, 6, 1, 2, 3].map((d) => (
-          <button key={d} className="nb-btn" disabled={atMax} style={{
-            background: NB_COLORS[String(d)],
-            boxShadow: `0 5px 14px ${NB_SOLID[String(d)]}55, inset 0 2px 0 rgba(255,255,255,0.25)`,
-            animation: bounce === String(d) && !atMax ? "btnPress 0.2s ease-out" : "none",
-            opacity: atMax ? 0.35 : 1,
-          }} onClick={() => handleDigit(String(d))}>
-            {d}
-          </button>
-        ))}
+        {[7, 8, 9, 4, 5, 6, 1, 2, 3].map((d) => {
+          const style = getNumberBlockStyle(d);
+          const hasBorder = !!style.border;
+          return (
+            <button key={d} className="nb-btn" disabled={atMax} style={{
+              background: style.background,
+              border: hasBorder ? `3px solid ${style.border}` : undefined,
+              boxShadow: hasBorder
+                ? `0 5px 14px ${style.border}40, inset 0 2px 0 rgba(255,255,255,0.5)`
+                : `0 5px 14px ${NB_SOLID[String(d)]}55, inset 0 2px 0 rgba(255,255,255,0.25)`,
+              color: hasBorder ? style.border : undefined,
+              textShadow: hasBorder ? "none" : undefined,
+              animation: bounce === String(d) && !atMax ? "btnPress 0.2s ease-out" : "none",
+              opacity: atMax ? 0.35 : 1,
+            }} onClick={() => handleDigit(String(d))}>
+              {d}
+            </button>
+          );
+        })}
         <button className="nb-btn" disabled={atMax} style={{
           background: "#FFFFFF",
           border: "3px solid #E41E20",

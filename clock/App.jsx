@@ -11,7 +11,7 @@ import {
   padTwo,
 } from "./clockUtils.js";
 
-import { NB_SOLID } from "../shared/numberblockColors.js";
+import { NB_SOLID, getNumberBlockStyle } from "../shared/numberblockColors.js";
 import { BackgroundDots } from "../shared/BackgroundDots.jsx";
 import {
   SettingsOverlay, SettingsToggle, SettingsDivider,
@@ -20,10 +20,14 @@ import {
 
 // ── Colors ───────────────────────────────────────────────────────────────────
 
-const HOUR_COLORS = Object.fromEntries([
-  ...Object.entries(NB_SOLID).map(([k, v]) => [Number(k), v]),
-  [10, NB_SOLID["1"]], [11, NB_SOLID["2"]], [12, NB_SOLID["3"]],
-]);
+// Build hour→style map using getNumberBlockStyle for proper decade colors
+const HOUR_STYLES = Object.fromEntries(
+  Array.from({ length: 12 }, (_, i) => [i + 1, getNumberBlockStyle(i + 1)])
+);
+// Flat color map for contexts needing a single color (keypad buttons, shadows)
+const HOUR_COLORS = Object.fromEntries(
+  Object.entries(HOUR_STYLES).map(([k, s]) => [Number(k), s.border || s.background])
+);
 
 const MINUTE_HAND_COLOR = "#3A8FDE";
 const HOUR_HAND_COLOR = "#E41E20";
@@ -108,7 +112,9 @@ function AnalogClock({ hours, minutes, seconds, dragging, onDragStart, onDragMov
           cx={CX + dotR * Math.cos(angle)}
           cy={CY + dotR * Math.sin(angle)}
           r={4}
-          fill={HOUR_COLORS[h]}
+          fill={HOUR_STYLES[h].background}
+          stroke={HOUR_STYLES[h].border || "none"}
+          strokeWidth={HOUR_STYLES[h].border ? 1.5 : 0}
           opacity={0.8}
         />,
         <text
