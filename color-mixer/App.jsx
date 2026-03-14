@@ -368,7 +368,7 @@ export default function ColorMixer() {
         >
           ⚙️
         </button>
-        <h1 className="gradient-text">Color Mixer</h1>
+        <h1 className="gradient-text">Color Combiner</h1>
         <p className="subtitle">Tap colors to mix them together!</p>
       </div>
 
@@ -463,7 +463,7 @@ export default function ColorMixer() {
       <SettingsOverlay
         show={showSettings}
         onClose={() => setShowSettings(false)}
-        title="Color Mixer Settings"
+        title="Color Combiner Settings"
       >
         <SettingsSection title="Display">
           <SettingsToggle

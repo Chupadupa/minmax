@@ -17,7 +17,7 @@ const SHAPES = [
   { name: "Heptagon",      sides: 7,  color: "rainbow",     render: "polygon" },
   { name: "Octagon",       sides: 8,  color: NB_SOLID["8"], render: "polygon" },
   { name: "Nonagon",       sides: 9,  color: NB_SOLID["9"], render: "polygon" },
-  { name: "Decagon",       sides: 10, color: NB_SOLID["1"], render: "polygon" },
+  { name: "Decagon",       sides: 10, color: "#FFFFFF",      render: "polygon" },
 ];
 
 // ── SVG Helpers ──────────────────────────────────────────────────────────────
@@ -39,8 +39,9 @@ function ShapeSVG({ shape, size }) {
   const strokeW = size * 0.04;
   const isRainbow = shape.color === "rainbow";
   const gradId = `rainbow-${size}`;
+  const isWhite = shape.color === "#FFFFFF";
   const fill = isRainbow ? `url(#${gradId})` : shape.color;
-  const stroke = "rgba(255,255,255,0.3)";
+  const stroke = isWhite ? "rgba(228,30,32,0.5)" : "rgba(255,255,255,0.3)";
 
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
@@ -253,14 +254,14 @@ export default function ShapeSelector() {
           {selected.sides > 0 && (
             <div
               className="overlay-number"
-              style={{ color: selected.color === "rainbow" ? NB_SOLID["7"] : selected.color }}
+              style={{ color: selected.color === "rainbow" ? NB_SOLID["7"] : selected.color === "#FFFFFF" ? "#E41E20" : selected.color }}
             >
               {selected.sides}
             </div>
           )}
           <div
             className="overlay-name"
-            style={{ color: selected.color === "rainbow" ? NB_SOLID["7"] : selected.color }}
+            style={{ color: selected.color === "rainbow" ? NB_SOLID["7"] : selected.color === "#FFFFFF" ? "#E41E20" : selected.color }}
           >
             {selected.name}
           </div>

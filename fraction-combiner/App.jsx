@@ -217,7 +217,7 @@ export default function FractionCombiner() {
       {/* Header */}
       <div className="page-header" style={styles.header}>
         <a href="../" className="back-btn" aria-label="Back to home">⬅️</a>
-        <h1 className="gradient-text" style={{ fontSize: 26 }}>Fraction Combiner</h1>
+        <h1 className="gradient-text" style={{ fontSize: 26 }}>Fraction Fitter</h1>
         <p className="subtitle">Fill the circle with fraction pieces!</p>
       </div>
 
