@@ -33,11 +33,55 @@ export const NB_SOLID = {
   "90": "#8E8E93", "100": "#FFFFFF",
 };
 
-// Outline colors for white-based Numberblocks (10, 100)
+// Outline colors for exact multiples of 10
 export const NB_OUTLINE = {
-  "10": "#E41E20",  // Red outline
-  "100": "#E8578A", // Red/Pink outline
+  "10": "#B71C1C",  // Darker red (distinguishes from 11's bright red border)
+  "20": "#DAA520",  // Goldenrod
+  "30": "#CCCC00",  // Dark yellow
+  "40": "#2E7D32",  // Dark green
+  "50": "#00897B",  // Dark teal
+  "60": "#6A1B9A",  // Dark purple
+  "70": "#7B1FA2",  // Dark violet
+  "80": "#C62828",  // Dark red
+  "90": "#616161",  // Dark grey
+  "100": "#E8578A", // Red/Pink
 };
+
+// ── Style Helper ──
+// Returns { background, border } for any Numberblocks number 1–100+.
+//   1–9:  solid fill, no border
+//   10,20…100: decade fill + decade outline
+//   11–19, 21–29…: decade fill + ones-digit color border
+export function getNumberBlockStyle(n) {
+  const ones = n % 10;
+  const tens = n - ones; // e.g. 23 → 20, 7 → 0
+
+  // Single digits 1–9: solid color, no border
+  if (n >= 1 && n <= 9) {
+    return {
+      background: NB_COLORS[String(n)],
+      border: null,
+    };
+  }
+
+  // Decade background (10→"10", 20→"20", …)
+  const bgKey = String(tens);
+  const background = NB_COLORS[bgKey] || NB_COLORS[String(Math.min(tens, 100))];
+
+  // Exact multiples of 10: use the decade's own outline
+  if (ones === 0) {
+    return {
+      background,
+      border: NB_OUTLINE[bgKey] || null,
+    };
+  }
+
+  // In-between numbers: border from the ones digit
+  return {
+    background,
+    border: NB_SOLID[String(ones)],
+  };
+}
 
 // Rainbow gradient stops for Numberblocks 7 (used in SVG gradients and CSS)
 export const NB7_STOPS = [
