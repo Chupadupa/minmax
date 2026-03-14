@@ -14,23 +14,23 @@ export const NB_COLORS = {
   "8": "#D6268E",   // Magenta
   "9": "#B0B0B0",   // Light Grey
   "10": "#FFFFFF",  // White (Red outline — use NB_OUTLINE["10"] for border)
-  "20": "#FFF8DC",  // Light Yellow/Cream
+  "20": "#FFD8A0",  // Light Orange
   "30": "#FFFACD",  // Pale Yellow
   "40": "#90EE90",  // Light Green
-  "50": "#7FFFD4",  // Mint Green/Cyan
+  "50": "#5BCFEF",  // Light Blue/Cyan
   "60": "#9B59B6",  // Purple/Violet
   "70": "#C39BD3",  // Light Purple
-  "80": "#FA8072",  // Salmon/Light Red
+  "80": "#F48FB1",  // Pink
   "90": "#8E8E93",  // Grey
-  "100": "#FFFFFF", // White (Red/Pink outline — use NB_OUTLINE["100"] for border)
+  "100": "#FFCDD2", // Pale Red (Red/Pink outline — use NB_OUTLINE["100"] for border)
 };
 
 export const NB_SOLID = {
   "1": "#E41E20", "2": "#FF8C1A", "3": "#FFD030", "4": "#4AAF4E",
   "5": "#29B6A8", "6": "#3F51B5", "7": "#6E3FA0", "8": "#D6268E", "9": "#B0B0B0",
-  "10": "#FFFFFF", "20": "#FFF8DC", "30": "#FFFACD", "40": "#90EE90",
-  "50": "#7FFFD4", "60": "#9B59B6", "70": "#C39BD3", "80": "#FA8072",
-  "90": "#8E8E93", "100": "#FFFFFF",
+  "10": "#FFFFFF", "20": "#FFD8A0", "30": "#FFFACD", "40": "#90EE90",
+  "50": "#5BCFEF", "60": "#9B59B6", "70": "#C39BD3", "80": "#F48FB1",
+  "90": "#8E8E93", "100": "#FFCDD2",
 };
 
 // Outline colors for exact multiples of 10
