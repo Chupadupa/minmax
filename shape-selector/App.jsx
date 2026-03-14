@@ -15,6 +15,7 @@ function luminance(hex) {
 function contrastTextColor(color) {
   if (color === "rainbow") return "#fff";
   if (color === "#FFFFFF") return "#333";
+  if (color === NB_SOLID["3"]) return "#fff"; // White text on yellow shapes
   return luminance(color) > 0.5 ? "#222" : "#fff";
 }
 
