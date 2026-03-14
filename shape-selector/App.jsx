@@ -1,25 +1,30 @@
 import { useState } from "react";
 import { BackgroundDots } from "../shared/BackgroundDots.jsx";
+import { NB_SOLID, NB7_STOPS } from "../shared/numberblockColors.js";
 
 // ── Shape Definitions ────────────────────────────────────────────────────────
 
 const SHAPES = [
-  { name: "Circle",    sides: 0,  color: "#DC2828" },
-  { name: "Triangle",  sides: 3,  color: "#F08C14" },
-  { name: "Square",    sides: 4,  color: "#FADC14" },
-  { name: "Pentagon",  sides: 5,  color: "#28AA3C" },
-  { name: "Hexagon",   sides: 6,  color: "#1E64D2" },
-  { name: "Heptagon",  sides: 7,  color: "#8C32B4" },
-  { name: "Octagon",   sides: 8,  color: "#F082AA" },
-  { name: "Nonagon",   sides: 9,  color: "#14BEDC" },
-  { name: "Decagon",   sides: 10, color: "#C06E0A" },
+  { name: "Circle",        sides: 0,  color: NB_SOLID["1"], render: "circle" },
+  { name: "Oval",          sides: 0,  color: NB_SOLID["2"], render: "oval" },
+  { name: "Triangle",      sides: 3,  color: NB_SOLID["3"], render: "polygon" },
+  { name: "Square",        sides: 4,  color: NB_SOLID["4"], render: "square" },
+  { name: "Diamond",       sides: 4,  color: NB_SOLID["4"], render: "diamond" },
+  { name: "Trapezoid",     sides: 4,  color: NB_SOLID["4"], render: "trapezoid" },
+  { name: "Parallelogram", sides: 4,  color: NB_SOLID["4"], render: "parallelogram" },
+  { name: "Pentagon",      sides: 5,  color: NB_SOLID["5"], render: "polygon" },
+  { name: "Hexagon",       sides: 6,  color: NB_SOLID["6"], render: "polygon" },
+  { name: "Heptagon",      sides: 7,  color: "rainbow",     render: "polygon" },
+  { name: "Octagon",       sides: 8,  color: NB_SOLID["8"], render: "polygon" },
+  { name: "Nonagon",       sides: 9,  color: NB_SOLID["9"], render: "polygon" },
+  { name: "Decagon",       sides: 10, color: NB_SOLID["1"], render: "polygon" },
 ];
 
 // ── SVG Helpers ──────────────────────────────────────────────────────────────
 
-function polygonPoints(sides, cx, cy, r) {
+function polygonPoints(sides, cx, cy, r, rotationOffset = 0) {
   const pts = [];
-  const offset = -Math.PI / 2; // start at top
+  const offset = -Math.PI / 2 + rotationOffset;
   for (let i = 0; i < sides; i++) {
     const angle = offset + (2 * Math.PI * i) / sides;
     pts.push(`${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`);
@@ -32,41 +37,110 @@ function ShapeSVG({ shape, size }) {
   const cy = size / 2;
   const r = size * 0.42;
   const strokeW = size * 0.04;
+  const isRainbow = shape.color === "rainbow";
+  const gradId = `rainbow-${size}`;
+  const fill = isRainbow ? `url(#${gradId})` : shape.color;
+  const stroke = "rgba(255,255,255,0.3)";
 
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      {shape.sides === 0 ? (
+      {isRainbow && (
+        <defs>
+          <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
+            {NB7_STOPS.map((c, i) => (
+              <stop key={i} offset={`${(i / (NB7_STOPS.length - 1)) * 100}%`} stopColor={c} />
+            ))}
+          </linearGradient>
+        </defs>
+      )}
+
+      {shape.render === "circle" && (
         <circle
           cx={cx} cy={cy} r={r}
-          fill={shape.color}
-          stroke="rgba(255,255,255,0.3)"
-          strokeWidth={strokeW}
+          fill={fill} stroke={stroke} strokeWidth={strokeW}
         />
-      ) : (
+      )}
+
+      {shape.render === "oval" && (
+        <ellipse
+          cx={cx} cy={cy} rx={r * 0.55} ry={r}
+          fill={fill} stroke={stroke} strokeWidth={strokeW}
+          style={{ transform: `rotate(0deg)`, transformOrigin: `${cx}px ${cy}px` }}
+        />
+      )}
+
+      {shape.render === "square" && (
+        <polygon
+          points={polygonPoints(4, cx, cy, r, Math.PI / 4)}
+          fill={fill} stroke={stroke} strokeWidth={strokeW} strokeLinejoin="round"
+        />
+      )}
+
+      {shape.render === "diamond" && (
+        <polygon
+          points={polygonPoints(4, cx, cy, r)}
+          fill={fill} stroke={stroke} strokeWidth={strokeW} strokeLinejoin="round"
+        />
+      )}
+
+      {shape.render === "trapezoid" && (() => {
+        const topW = r * 0.6;
+        const botW = r * 1.1;
+        const h = r * 0.85;
+        const pts = [
+          `${cx - topW},${cy - h}`,
+          `${cx + topW},${cy - h}`,
+          `${cx + botW},${cy + h}`,
+          `${cx - botW},${cy + h}`,
+        ].join(" ");
+        return (
+          <polygon
+            points={pts}
+            fill={fill} stroke={stroke} strokeWidth={strokeW} strokeLinejoin="round"
+          />
+        );
+      })()}
+
+      {shape.render === "parallelogram" && (() => {
+        const w = r * 1.0;
+        const h = r * 0.7;
+        const skew = r * 0.35;
+        const pts = [
+          `${cx - w + skew},${cy - h}`,
+          `${cx + w + skew},${cy - h}`,
+          `${cx + w - skew},${cy + h}`,
+          `${cx - w - skew},${cy + h}`,
+        ].join(" ");
+        return (
+          <polygon
+            points={pts}
+            fill={fill} stroke={stroke} strokeWidth={strokeW} strokeLinejoin="round"
+          />
+        );
+      })()}
+
+      {shape.render === "polygon" && (
         <polygon
           points={polygonPoints(shape.sides, cx, cy, r)}
-          fill={shape.color}
-          stroke="rgba(255,255,255,0.3)"
-          strokeWidth={strokeW}
-          strokeLinejoin="round"
+          fill={fill} stroke={stroke} strokeWidth={strokeW} strokeLinejoin="round"
         />
       )}
     </svg>
   );
 }
 
+// ── Side Description ─────────────────────────────────────────────────────────
+
+function sideDescription(shape) {
+  if (shape.render === "circle") return "No straight sides — perfectly round!";
+  if (shape.render === "oval") return "No straight sides — an oval with pointed ends!";
+  return `${shape.sides} side${shape.sides === 1 ? "" : "s"}`;
+}
+
 // ── Main Component ───────────────────────────────────────────────────────────
 
 export default function ShapeSelector() {
   const [selected, setSelected] = useState(null);
-
-  const handleSelect = (shape) => {
-    setSelected(shape);
-  };
-
-  const handleClose = () => {
-    setSelected(null);
-  };
 
   return (
     <div className="toy-container" style={{ gap: 16 }}>
@@ -80,10 +154,10 @@ export default function ShapeSelector() {
           0% { transform: translateY(20px); opacity: 0; }
           100% { transform: translateY(0); opacity: 1; }
         }
-        @keyframes gridItemPop {
-          0% { transform: scale(1); }
-          50% { transform: scale(0.88); }
-          100% { transform: scale(1); }
+        @keyframes numberPop {
+          0% { transform: scale(0); opacity: 0; }
+          70% { transform: scale(1.15); }
+          100% { transform: scale(1); opacity: 1; }
         }
         .shape-grid-item {
           background: rgba(255,255,255,0.08);
@@ -111,12 +185,19 @@ export default function ShapeSelector() {
           z-index: 100;
           cursor: pointer;
           animation: fadeIn 0.2s ease-out;
-          gap: 24px;
+          gap: 16px;
           padding: 20px;
         }
         .overlay-shape {
           animation: shapeReveal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
           filter: drop-shadow(0 8px 30px rgba(0,0,0,0.4));
+        }
+        .overlay-number {
+          font-family: var(--font-heading);
+          font-size: 96px;
+          font-weight: 800;
+          line-height: 1;
+          animation: numberPop 0.4s 0.1s cubic-bezier(0.34, 1.56, 0.64, 1) both;
         }
         .overlay-name {
           font-family: var(--font-heading);
@@ -156,7 +237,7 @@ export default function ShapeSelector() {
           <div
             key={shape.name}
             className="shape-grid-item"
-            onClick={() => handleSelect(shape)}
+            onClick={() => setSelected(shape)}
           >
             <ShapeSVG shape={shape} size={80} />
           </div>
@@ -165,17 +246,26 @@ export default function ShapeSelector() {
 
       {/* Reveal overlay */}
       {selected && (
-        <div className="overlay-backdrop" onClick={handleClose}>
+        <div className="overlay-backdrop" onClick={() => setSelected(null)}>
           <div className="overlay-shape">
             <ShapeSVG shape={selected} size={220} />
           </div>
-          <div className="overlay-name" style={{ color: selected.color }}>
+          {selected.sides > 0 && (
+            <div
+              className="overlay-number"
+              style={{ color: selected.color === "rainbow" ? NB_SOLID["7"] : selected.color }}
+            >
+              {selected.sides}
+            </div>
+          )}
+          <div
+            className="overlay-name"
+            style={{ color: selected.color === "rainbow" ? NB_SOLID["7"] : selected.color }}
+          >
             {selected.name}
           </div>
           <div className="overlay-detail">
-            {selected.sides === 0
-              ? "No straight sides — perfectly round!"
-              : `${selected.sides} side${selected.sides === 1 ? "" : "s"}`}
+            {sideDescription(selected)}
           </div>
           <div className="overlay-hint">Tap anywhere to close</div>
         </div>
