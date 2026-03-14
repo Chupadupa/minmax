@@ -4,9 +4,12 @@
 // Also exports helper sub-components: SettingsToggle, SettingsDivider,
 // SettingsSection, and SettingsLink.
 
+import { useScrollLock } from "./useScrollLock.js";
+
 // ── Main Overlay ─────────────────────────────────────────────────────────────
 
 export function SettingsOverlay({ show, onClose, title = "Settings", children }) {
+  useScrollLock(show);
   if (!show) return null;
 
   return (

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { BackgroundDots } from "../shared/BackgroundDots.jsx";
 import { NB_SOLID, NB7_STOPS, getNumberBlockStyle } from "../shared/numberblockColors.js";
+import { useScrollLock } from "../shared/useScrollLock.js";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -327,6 +328,7 @@ function sideDescription(shape) {
 
 export default function ShapeSelector() {
   const [selected, setSelected] = useState(null);
+  useScrollLock(!!selected);
 
   return (
     <div className="toy-container" style={{ gap: 16 }}>

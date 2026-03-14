@@ -64,6 +64,12 @@ body {
   color: var(--color-text);
 }
 
+/* Prevent background scrolling when a full-screen overlay/popup is active.
+   Any component can toggle this class on <body> via the useScrollLock hook. */
+body.overlay-open {
+  overflow: hidden;
+}
+
 /* Fixed gradient layer — uses a pseudo-element on body instead of
    background-attachment: fixed (which iOS Safari/WebKit ignores entirely).
    On html::before, iOS WebKit may skip the initial paint of position: fixed
