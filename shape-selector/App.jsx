@@ -38,6 +38,16 @@ const SHAPES = [
   { name: "Octagon",              sides: 8,  color: NB_SOLID["8"], render: "polygon" },
   { name: "Nonagon",              sides: 9,  color: NB_SOLID["9"], render: "polygon" },
   { name: "Decagon",              sides: 10, color: "#FFFFFF",      render: "polygon" },
+  { name: "Hendecagon",           sides: 11, color: NB_SOLID["1"], render: "polygon" },
+  { name: "Dodecagon",            sides: 12, color: NB_SOLID["2"], render: "polygon" },
+  { name: "Tridecagon",           sides: 13, color: NB_SOLID["3"], render: "polygon" },
+  { name: "Tetradecagon",         sides: 14, color: NB_SOLID["4"], render: "polygon" },
+  { name: "Pentadecagon",         sides: 15, color: NB_SOLID["5"], render: "polygon" },
+  { name: "Hexadecagon",          sides: 16, color: NB_SOLID["6"], render: "polygon" },
+  { name: "Heptadecagon",         sides: 17, color: "rainbow",     render: "polygon" },
+  { name: "Octadecagon",          sides: 18, color: NB_SOLID["8"], render: "polygon" },
+  { name: "Enneadecagon",         sides: 19, color: NB_SOLID["9"], render: "polygon" },
+  { name: "Icosagon",             sides: 20, color: "#FFFFFF",      render: "polygon" },
 ];
 
 // ── SVG Helpers ──────────────────────────────────────────────────────────────
@@ -132,9 +142,9 @@ function ShapeSVG({ shape, size, showNumber = false }) {
       })()}
 
       {shape.render === "parallelogram" && (() => {
-        const w = r * 1.0;
-        const h = r * 0.7;
-        const skew = r * 0.35;
+        const w = r * 0.85;
+        const h = r * 0.65;
+        const skew = r * 0.25;
         const pts = [
           `${cx - w + skew},${cy - h}`,
           `${cx + w + skew},${cy - h}`,
@@ -150,42 +160,42 @@ function ShapeSVG({ shape, size, showNumber = false }) {
       })()}
 
       {shape.render === "rightTriangle" && (() => {
-        const pts = [
-          `${cx - r},${cy + r * 0.85}`,
-          `${cx + r},${cy + r * 0.85}`,
-          `${cx - r},${cy - r * 0.85}`,
-        ].join(" ");
+        const verts = [
+          [cx - r, cy + r * 0.85],
+          [cx + r, cy + r * 0.85],
+          [cx - r, cy - r * 0.85],
+        ];
         return (
           <polygon
-            points={pts}
+            points={verts.map((v) => v.join(",")).join(" ")}
             fill={fill} stroke={stroke} strokeWidth={strokeW} strokeLinejoin="round"
           />
         );
       })()}
 
       {shape.render === "obtuseTriangle" && (() => {
-        const pts = [
-          `${cx - r * 1.1},${cy + r * 0.75}`,
-          `${cx + r * 1.1},${cy + r * 0.75}`,
-          `${cx + r * 0.3},${cy - r * 0.85}`,
-        ].join(" ");
+        const verts = [
+          [cx - r * 1.1, cy + r * 0.75],
+          [cx + r * 1.1, cy + r * 0.75],
+          [cx + r * 0.3, cy - r * 0.85],
+        ];
         return (
           <polygon
-            points={pts}
+            points={verts.map((v) => v.join(",")).join(" ")}
             fill={fill} stroke={stroke} strokeWidth={strokeW} strokeLinejoin="round"
           />
         );
       })()}
 
       {shape.render === "isoscelesTriangle" && (() => {
-        const pts = [
-          `${cx - r * 0.7},${cy + r * 0.85}`,
-          `${cx + r * 0.7},${cy + r * 0.85}`,
-          `${cx},${cy - r * 0.95}`,
-        ].join(" ");
+        const verts = [
+          [cx - r * 0.7, cy + r * 0.85],
+          [cx + r * 0.7, cy + r * 0.85],
+          [cx, cy - r * 0.95],
+        ];
         return (
           <polygon
-            points={pts}
+            points={verts.map((v) => v.join(",")).join(" ")}
             fill={fill} stroke={stroke} strokeWidth={strokeW} strokeLinejoin="round"
           />
         );
@@ -198,19 +208,31 @@ function ShapeSVG({ shape, size, showNumber = false }) {
         />
       )}
 
-      {showNumber && num > 0 && (
-        <text
-          x={cx} y={cy}
-          textAnchor="middle" dominantBaseline="central"
-          fill={textColor}
-          fontFamily="var(--font-heading)"
-          fontWeight="800"
-          fontSize={fontSize}
-          style={{ pointerEvents: "none" }}
-        >
-          {num}
-        </text>
-      )}
+      {showNumber && num > 0 && (() => {
+        let tx = cx, ty = cy;
+        if (shape.render === "rightTriangle") {
+          tx = cx - r / 3;
+          ty = cy + r * 0.85 / 3;
+        } else if (shape.render === "obtuseTriangle") {
+          tx = cx + r * 0.1;
+          ty = cy + r * 0.217;
+        } else if (shape.render === "isoscelesTriangle") {
+          ty = cy + r * 0.25;
+        }
+        return (
+          <text
+            x={tx} y={ty}
+            textAnchor="middle" dominantBaseline="central"
+            fill={textColor}
+            fontFamily="var(--font-heading)"
+            fontWeight="800"
+            fontSize={fontSize}
+            style={{ pointerEvents: "none" }}
+          >
+            {num}
+          </text>
+        );
+      })()}
     </svg>
   );
 }
