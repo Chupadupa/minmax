@@ -501,12 +501,12 @@ export default function ShapeSelector() {
               How many sides?
             </label>
             <input
-              type="number"
-              min="3"
-              max="1000000"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               autoFocus
               value={customValue}
-              onChange={(e) => setCustomValue(e.target.value)}
+              onChange={(e) => { const v = e.target.value.replace(/\D/g, ""); setCustomValue(v); }}
               onKeyDown={(e) => { if (e.key === "Enter") handleCustomConfirm(); }}
               placeholder="e.g. 250"
               style={styles.customInput}
@@ -533,7 +533,12 @@ export default function ShapeSelector() {
           </div>
           <div
             className="overlay-name"
-            style={{ color: selected.color === "rainbow" ? NB_SOLID["7"] : selected.borderColor || (selected.color === "#FFFFFF" ? "#E41E20" : selected.color) }}
+            style={{
+              color: selected.color === "rainbow" ? NB_SOLID["7"] : selected.borderColor || (selected.color === "#FFFFFF" ? "#E41E20" : selected.color),
+              fontSize: selected.name.length > 30 ? `${Math.max(18, 40 - (selected.name.length - 30) * 0.7)}px` : undefined,
+              wordBreak: selected.name.length > 30 ? "break-all" : undefined,
+              hyphens: selected.name.length > 30 ? "manual" : undefined,
+            }}
           >
             {selected.name}
           </div>
