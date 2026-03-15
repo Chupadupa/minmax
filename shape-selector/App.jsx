@@ -375,6 +375,8 @@ export default function ShapeSelector() {
           animation: fadeIn 0.2s ease-out;
           gap: 16px;
           padding: 20px;
+          touch-action: none;
+          overscroll-behavior: none;
         }
         .overlay-shape {
           animation: shapeReveal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
