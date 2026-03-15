@@ -442,6 +442,10 @@ export default function ShapeSelector() {
           color: #fff;
           text-align: center;
           animation: nameSlide 0.4s 0.15s ease-out both;
+          max-width: 100%;
+          padding: 0 8px;
+          overflow-wrap: break-word;
+          box-sizing: border-box;
         }
         .overlay-detail {
           font-family: var(--font-body);
@@ -535,9 +539,7 @@ export default function ShapeSelector() {
             className="overlay-name"
             style={{
               color: selected.color === "rainbow" ? NB_SOLID["7"] : selected.borderColor || (selected.color === "#FFFFFF" ? "#E41E20" : selected.color),
-              fontSize: selected.name.length > 30 ? `${Math.max(18, 40 - (selected.name.length - 30) * 0.7)}px` : undefined,
-              wordBreak: selected.name.length > 30 ? "break-all" : undefined,
-              hyphens: selected.name.length > 30 ? "manual" : undefined,
+              fontSize: selected.name.length > 16 ? `${Math.max(18, 40 - (selected.name.length - 16) * 0.8)}px` : undefined,
             }}
           >
             {selected.name}
