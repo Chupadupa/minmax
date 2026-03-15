@@ -248,6 +248,36 @@ body::before {
   100% { transform: scale(1); }
 }
 
+/* ── Shared Animation: Shake ─────────────────────────────────────────────── */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-6px); }
+  40%      { transform: translateX(6px); }
+  60%      { transform: translateX(-4px); }
+  80%      { transform: translateX(4px); }
+}
+
+/* ── Utility: Toy Button ─────────────────────────────────────────────────── */
+/* Shared base class for colorful interactive buttons across toys.
+   Apply a background color and optional border per button. */
+.toy-btn {
+  border-radius: 16px;
+  border: none;
+  font-weight: 700;
+  font-family: var(--font-heading);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: transform 0.1s ease, opacity 0.15s ease;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+}
+.toy-btn:active:not([disabled]) { transform: scale(0.9); }
+.toy-btn[disabled] { cursor: default; }
+
 /* ── Global: Prevent Text Selection ────────────────────────────────────────── */
 body, #root {
   user-select: none;

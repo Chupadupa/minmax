@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { NB_SOLID, NB7_STOPS, NB7_GRADIENT, getNumberBlockStyle } from "../shared/numberblockColors.js";
 import { StickyHeader } from "../shared/StickyHeader.jsx";
+import { simplify } from "../shared/mathUtils.js";
 
 // ── Colors (Numberblocks-inspired) ───────────────────────────────────────────
 
@@ -41,20 +42,6 @@ function arcPath(startAngle, endAngle) {
   const [x2, y2] = polarToXY(endAngle);
   const large = endAngle - startAngle > 180 ? 1 : 0;
   return `M ${CX} ${CY} L ${x1} ${y1} A ${R} ${R} 0 ${large} 1 ${x2} ${y2} Z`;
-}
-
-// ── Simplify fraction ────────────────────────────────────────────────────────
-
-function gcd(a, b) {
-  a = Math.abs(a);
-  b = Math.abs(b);
-  while (b) { [a, b] = [b, a % b]; }
-  return a;
-}
-
-function simplify(num, den) {
-  const g = gcd(num, den);
-  return [num / g, den / g];
 }
 
 // ── Warning Toast ────────────────────────────────────────────────────────────
@@ -184,13 +171,7 @@ export default function FractionCombiner() {
           50% { transform: translateX(-50%) scale(1.08); }
           100% { transform: translateX(-50%) scale(1); opacity: 1; }
         }
-        @keyframes warningShake {
-          0%, 100% { transform: translateX(0); }
-          20% { transform: translateX(-6px); }
-          40% { transform: translateX(6px); }
-          60% { transform: translateX(-4px); }
-          80% { transform: translateX(4px); }
-        }
+        /* warningShake — uses shared @keyframes shake from base.css */
         @keyframes celebratePop {
           0% { transform: scale(1); }
           50% { transform: scale(1.06); }
@@ -205,19 +186,12 @@ export default function FractionCombiner() {
           50% { stroke-opacity: 0.9; }
         }
         .frac-btn {
-          border-radius: 16px; border: none;
-          font-size: 17px; font-weight: 700;
-          font-family: var(--font-heading); color: #fff;
-          cursor: pointer; display: flex; flex-direction: column;
-          align-items: center; justify-content: center;
-          user-select: none; -webkit-user-select: none;
-          transition: transform 0.1s ease, opacity 0.15s ease;
-          text-shadow: 0 2px 4px rgba(0,0,0,0.25);
+          flex-direction: column;
+          font-size: 17px;
           padding: 10px 4px;
           gap: 2px;
         }
-        .frac-btn:active:not([disabled]) { transform: scale(0.9); }
-        .frac-btn[disabled] { cursor: default; opacity: 0.3; }
+        .frac-btn[disabled] { opacity: 0.3; }
       `}</style>
 
       {/* Header */}
@@ -369,7 +343,7 @@ export default function FractionCombiner() {
 
       {/* Action buttons */}
       <div style={styles.actionRow}>
-        <button className="frac-btn" disabled={segments.length === 0} style={{
+        <button className="toy-btn frac-btn" disabled={segments.length === 0} style={{
           background: "rgba(255,255,255,0.18)",
           border: "1px solid rgba(255,255,255,0.12)",
           color: segments.length > 0 ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.4)",
@@ -377,7 +351,7 @@ export default function FractionCombiner() {
         }} onClick={handleUndo}>
           ↩ Undo
         </button>
-        <button className="frac-btn" disabled={segments.length === 0} style={{
+        <button className="toy-btn frac-btn" disabled={segments.length === 0} style={{
           background: "rgba(255,255,255,0.18)",
           border: "1px solid rgba(255,255,255,0.12)",
           color: segments.length > 0 ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.4)",
@@ -398,7 +372,7 @@ export default function FractionCombiner() {
           return (
             <button
               key={denom}
-              className="frac-btn"
+              className="toy-btn frac-btn"
               disabled={isFull}
               style={{
                 background: is7 ? NB7_GRADIENT : NB_COLORS[denom],
@@ -409,7 +383,7 @@ export default function FractionCombiner() {
                   ? `0 0 0 3px #fff, 0 5px 14px ${hasBorder ? border : NB_COLORS[denom]}88`
                   : `0 5px 14px ${hasBorder ? border : NB_COLORS[denom]}55, inset 0 2px 0 rgba(255,255,255,0.25)`,
                 opacity: isFull ? 0.3 : fits ? 1 : 0.5,
-                animation: warning && !fits ? "warningShake 0.4s ease-out" : "none",
+                animation: warning && !fits ? "shake 0.4s ease-out" : "none",
               }}
               onClick={() => handleAdd(denom)}
             >
