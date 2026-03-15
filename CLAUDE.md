@@ -270,3 +270,11 @@ The service worker cache version is **auto-generated at build time** — no manu
 6. **Use `<StickyHeader />`** for the header (required for PWA navigation — see UI Conventions above). This provides the back button, title, subtitle, and optional gear button in a consistent sticky container.
 7. **Use shared resources**: `.toy-container` class for layout, `.toy-btn` class for buttons, `<BackgroundDots />` for decorations, `numberblockColors.js` for the Numberblocks palette, `colorUtils.js` for color helpers, `mathUtils.js` for math helpers, `<SettingsOverlay>` for settings modals, `.frosted-card` for glass card displays, `useScrollLock` hook for overlays.
 8. The toy will be built and deployed automatically
+
+## Future Improvements
+
+Low-priority items to consider as the project grows:
+
+- [ ] **Add minimal ESLint config** — `eslint` + `eslint-plugin-react-hooks` for correctness checks only (no style rules, no Prettier). Catches bugs like unused effects and missing hook dependencies automatically.
+- [ ] **Templatize HTML boilerplate** — The 6 toy `index.html` files share ~18 lines of identical boilerplate. A Vite HTML plugin could inject shared head content from a template. Not worth it until 10+ toys.
+- [ ] **Extract Fraction Combiner SVG math** — Move `polarToXY`, `arcPath`, and color constants from `fraction-combiner/App.jsx` to a `fractionUtils.js` file. At 500 lines with one main component, the file isn't yet unwieldy, so this is optional.
