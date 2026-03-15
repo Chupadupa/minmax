@@ -150,7 +150,8 @@ function ShapeSVG({ shape, size, showNumber = false }) {
   const strokeOpacity = shape.borderColor ? 0.7 : undefined;
   const num = shape.displayNum ?? shape.sides;
   const textColor = contrastTextColor(shape.color);
-  const fontSize = size * 0.32;
+  const numLen = String(num).length;
+  const fontSize = numLen <= 3 ? size * 0.32 : size * 0.7 / numLen;
 
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
@@ -316,9 +317,12 @@ function ShapeSVG({ shape, size, showNumber = false }) {
 // ── Side Description ─────────────────────────────────────────────────────────
 
 function sideDescription(shape) {
-  if (shape.render === "circle") return "No straight sides — perfectly round!";
+  if (shape.render === "circle" && shape.sides === 0) return "No straight sides — perfectly round!";
   if (shape.render === "oval") return "No straight sides — a stretched circle!";
   if (shape.render === "football") return "Two curved sides that meet at points!";
+  if (shape.sides > 100) {
+    return `${shape.sides.toLocaleString()} sides — that's a lot of sides!`;
+  }
   const word = numberToWord(shape.sides);
   const capitalized = word.charAt(0).toUpperCase() + word.slice(1);
   return `${capitalized} side${shape.sides === 1 ? "" : "s"}`;
@@ -328,7 +332,28 @@ function sideDescription(shape) {
 
 export default function ShapeSelector() {
   const [selected, setSelected] = useState(null);
-  useScrollLock(!!selected);
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [customValue, setCustomValue] = useState("");
+  useScrollLock(!!selected || showCustomInput);
+
+  function handleCustomConfirm() {
+    const sides = parseInt(customValue, 10);
+    if (!sides || sides < 3) return;
+    const style = getNumberBlockStyle(sides);
+    const ones = sides % 10;
+    const name = sides <= 100 ? polygonNameForSides(sides) : `${sides}-gon`;
+    const shape = {
+      name,
+      sides,
+      displayNum: sides,
+      color: ones === 7 ? "rainbow" : style.background,
+      borderColor: style.border,
+      render: "circle",
+    };
+    setShowCustomInput(false);
+    setCustomValue("");
+    setSelected(shape);
+  }
 
   return (
     <div className="toy-container" style={{ gap: 16 }}>
@@ -425,7 +450,53 @@ export default function ShapeSelector() {
             <ShapeSVG shape={shape} size={80} showNumber />
           </div>
         ))}
+        <div
+          className="shape-grid-item"
+          onClick={() => setShowCustomInput(true)}
+          style={{ flexDirection: "column", gap: 4 }}
+        >
+          <span style={{ fontSize: 36, lineHeight: 1 }}>✏️</span>
+          <span style={{ fontFamily: "var(--font-heading)", fontSize: 13, color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>Custom</span>
+        </div>
       </div>
+
+      {/* Custom sides input overlay */}
+      {showCustomInput && (
+        <div className="overlay-backdrop" onClick={() => { setShowCustomInput(false); setCustomValue(""); }}>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={styles.customPanel}
+          >
+            <div style={{ fontFamily: "var(--font-heading)", fontSize: 24, fontWeight: 700, color: "#fff", marginBottom: 12 }}>
+              Custom Polygon
+            </div>
+            <label style={{ fontFamily: "var(--font-body)", fontSize: 15, color: "rgba(255,255,255,0.7)", marginBottom: 8, display: "block" }}>
+              How many sides?
+            </label>
+            <input
+              type="number"
+              min="3"
+              max="1000000"
+              autoFocus
+              value={customValue}
+              onChange={(e) => setCustomValue(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleCustomConfirm(); }}
+              placeholder="e.g. 250"
+              style={styles.customInput}
+            />
+            <button
+              onClick={handleCustomConfirm}
+              disabled={!customValue || parseInt(customValue, 10) < 3}
+              style={{
+                ...styles.customOkBtn,
+                opacity: (!customValue || parseInt(customValue, 10) < 3) ? 0.4 : 1,
+              }}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Reveal overlay */}
       {selected && (
@@ -465,5 +536,41 @@ const styles = {
     maxWidth: 400,
     position: "relative",
     zIndex: 1,
+  },
+  customPanel: {
+    background: "rgba(40,40,60,0.95)",
+    borderRadius: 24,
+    padding: "28px 24px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    minWidth: 260,
+    animation: "shapeReveal 0.3s ease-out forwards",
+  },
+  customInput: {
+    width: "100%",
+    padding: "12px 16px",
+    fontSize: 22,
+    fontFamily: "var(--font-heading)",
+    fontWeight: 700,
+    borderRadius: 14,
+    border: "2px solid rgba(255,255,255,0.2)",
+    background: "rgba(255,255,255,0.1)",
+    color: "#fff",
+    textAlign: "center",
+    outline: "none",
+    marginBottom: 12,
+  },
+  customOkBtn: {
+    padding: "10px 40px",
+    fontSize: 18,
+    fontFamily: "var(--font-heading)",
+    fontWeight: 700,
+    borderRadius: 14,
+    border: "none",
+    background: "linear-gradient(135deg, #6366f1, #a855f7)",
+    color: "#fff",
+    cursor: "pointer",
+    transition: "transform 0.15s ease",
   },
 };
