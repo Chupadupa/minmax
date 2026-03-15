@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { NB_SOLID, NB7_STOPS, NB7_GRADIENT, getNumberBlockStyle } from "../shared/numberblockColors.js";
+import { StickyHeader } from "../shared/StickyHeader.jsx";
 
 // ── Colors (Numberblocks-inspired) ───────────────────────────────────────────
 
@@ -220,11 +221,11 @@ export default function FractionCombiner() {
       `}</style>
 
       {/* Header */}
-      <div className="page-header" style={styles.header}>
-        <a href="../" className="back-btn" aria-label="Back to home">⬅️</a>
-        <h1 className="gradient-text" style={{ fontSize: 26 }}>Fraction Fitter</h1>
-        <p className="subtitle">Fill the circle with fraction pieces!</p>
-      </div>
+      <StickyHeader
+        title="Fraction Fitter"
+        subtitle="Fill the circle with fraction pieces!"
+        titleStyle={{ fontSize: 26 }}
+      />
 
       {/* Pie Chart */}
       <div style={{
@@ -454,10 +455,6 @@ export default function FractionCombiner() {
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const styles = {
-  header: {
-    marginBottom: 12,
-    width: "100%", maxWidth: 380,
-  },
   pieContainer: {
     position: "relative",
     width: "100%", maxWidth: 280,

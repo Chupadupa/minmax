@@ -7,6 +7,7 @@ import {
   SettingsOverlay, SettingsToggle, SettingsDivider,
   SettingsSection, SettingsAboutText, SettingsLink,
 } from "../shared/SettingsOverlay.jsx";
+import { StickyHeader } from "../shared/StickyHeader.jsx";
 
 const MAX_ZEROS = 3000000000003;
 
@@ -247,12 +248,11 @@ export default function BigNumberNamer() {
       <BackgroundDots count={20} />
 
       {/* Header */}
-      <div className="page-header" style={styles.header}>
-        <a href="../" className="back-btn" aria-label="Back to home">⬅️</a>
-        <button className="gear-btn" onClick={() => setShowSettings(true)}>⚙</button>
-        <h1 className="gradient-text">Big Number Namer</h1>
-        <p className="subtitle">How many zeros?</p>
-      </div>
+      <StickyHeader
+        title="Big Number Namer"
+        subtitle="How many zeros?"
+        onGearClick={() => setShowSettings(true)}
+      />
 
       {/* Settings overlay */}
       <BigNumberSettings
@@ -387,10 +387,6 @@ export default function BigNumberNamer() {
 }
 
 const styles = {
-  header: {
-    marginBottom: 16,
-    width: "100%", maxWidth: 380,
-  },
   displayCard: {
     padding: "14px 16px",
     width: "100%", maxWidth: 380, height: 260,

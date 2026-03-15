@@ -17,6 +17,7 @@ import {
   SettingsOverlay, SettingsToggle, SettingsDivider,
   SettingsSection, SettingsAboutText,
 } from "../shared/SettingsOverlay.jsx";
+import { StickyHeader } from "../shared/StickyHeader.jsx";
 
 // ── Colors ───────────────────────────────────────────────────────────────────
 
@@ -630,12 +631,11 @@ export default function ClockToy() {
       <BackgroundDots count={16} />
 
       {/* Header */}
-      <div className="page-header" style={styles.header}>
-        <a href="../" className="back-btn" aria-label="Back to home">⬅️</a>
-        <button className="gear-btn" onClick={() => setShowSettings(true)}>⚙</button>
-        <h1 className="gradient-text">Time Teller</h1>
-        <p className="subtitle">Set the time!</p>
-      </div>
+      <StickyHeader
+        title="Time Teller"
+        subtitle="Set the time!"
+        onGearClick={() => setShowSettings(true)}
+      />
 
       {/* Settings overlay */}
       <ClockSettings
@@ -709,10 +709,6 @@ export default function ClockToy() {
 // ── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = {
-  header: {
-    marginBottom: 12,
-    width: "100%", maxWidth: 380,
-  },
   clockContainer: {
     width: "100%", maxWidth: 320,
     display: "flex", justifyContent: "center",

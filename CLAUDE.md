@@ -62,6 +62,7 @@ There are no test, lint, or format commands.
 │   ├── useAutoFitFontSize.js   # Generic auto-fit font hook (reusable across toys)
 │   ├── numberblockColors.js    # Shared NB_COLORS, NB_SOLID, NB7_STOPS, NB7_GRADIENT constants
 │   ├── BackgroundDots.jsx      # Floating background dots decoration component
+│   ├── StickyHeader.jsx        # Consistent sticky header component for all toys
 │   └── SettingsOverlay.jsx     # Reusable settings modal shell with toggle/divider/section helpers
 ├── public/
 │   ├── icon.svg                # App icon (SVG source)
@@ -136,6 +137,9 @@ A pie chart game for learning fractions. Combine fraction pieces to fill a whole
 
 - **`BackgroundDots.jsx`** — Renders random floating circle decorations using the `float` animation and `.bg-dots` class. Accepts a `count` prop (default 20). Used by big-number-namer, clock, and calculator.
 
+- **`StickyHeader.jsx`** — Consistent sticky header used by all toys. Stays pinned at the top when the page scrolls, with a frosted-glass background and drop shadow. Exports:
+  - `StickyHeader({ title, subtitle?, titleStyle?, onGearClick? })` — renders back button, optional gear button, gradient title, and optional subtitle inside a `.sticky-header` wrapper. Uses `.sticky-header` CSS class from `base.css`.
+
 - **`SettingsOverlay.jsx`** — Reusable settings modal shell with composition pattern. Exports:
   - `SettingsOverlay({ show, onClose, title?, children })` — backdrop, panel, close button, gradient heading
   - `SettingsToggle({ checked, onChange, label, hint? })` — checkbox toggle row
@@ -151,6 +155,7 @@ A pie chart game for learning fractions. Combine fraction pieces to fill a whole
 - **Use CSS variables** (`var(--font-heading)`, `var(--glass-bg)`, etc.) instead of hardcoding shared values
 - **Use shared CSS classes** (`.gradient-text`, `.back-btn`, `.gear-btn`, `.page-header`, `.frosted-card`, `.toy-container`, `.bg-dots`) for common UI patterns instead of duplicating inline styles
 - **Use `.toy-container`** class on the outermost div of every toy for consistent layout and safe-area padding. Add toy-specific overrides (e.g. `justifyContent`, `gap`) as inline styles.
+- **Use `<StickyHeader />`** component for the toy header — provides a consistent sticky header with frosted-glass background, drop shadow, back button, optional gear button, gradient title, and subtitle. Stays pinned at the top when scrolling.
 - **Use `<BackgroundDots />`** component for floating dot decorations instead of defining the useMemo + render pattern inline
 - **Use `.frosted-card`** class for frosted glass card displays instead of redefining `background`, `backdropFilter`, `border`, `borderRadius` inline
 - **Use the shared `SettingsOverlay`** shell for settings modals; pass toy-specific toggles and about content as children
@@ -167,8 +172,8 @@ A pie chart game for learning fractions. Combine fraction pieces to fill a whole
 
 ### UI Conventions
 
-- **Every toy must include a back button** in its header that links to the hub (`../`). This is critical for PWA navigation where there is no browser chrome. Use an `<a>` tag (not a button) with `href="../"` and the `.back-btn` CSS class from `base.css` (36×36 rounded pill in the top-left corner with the `⬅️` emoji).
-- **Header layout**: Back button (top-left), settings gear if needed (top-right), centered title and subtitle.
+- **Every toy must use `<StickyHeader />`** for its header. This provides the back button, optional gear button, gradient title, and subtitle in a consistent sticky container. The back button links to `../` for PWA navigation. Pass `onGearClick` to show a gear button for settings.
+- **Header layout**: Back button (top-left), settings gear if needed (top-right), centered title and subtitle — all handled by `<StickyHeader />`.
 
 ## PWA Support
 
@@ -200,6 +205,6 @@ The service worker cache version is **auto-generated at build time** — no manu
 3. **Include `<script src="/pwa-init.js"></script>`** in the `<head>` — this handles the iOS viewport fix and service worker registration automatically.
 4. Add a card link in the root `index.html` grid
 5. **Import `shared/base.css`** — either via `<link rel="stylesheet" href="shared/base.css" />` in HTML, or `import '../shared/base.css'` in a JS/JSX entry point. This gives you fonts, resets, background, animations, and utility classes. Skip this import if you want a fully custom look.
-6. **Include a back button** in the header linking to `../` (required for PWA navigation — see UI Conventions above). Use the `.back-btn` CSS class from `base.css`.
+6. **Use `<StickyHeader />`** for the header (required for PWA navigation — see UI Conventions above). This provides the back button, title, subtitle, and optional gear button in a consistent sticky container.
 7. **Use shared resources**: `.toy-container` class for layout, `<BackgroundDots />` for decorations, `numberblockColors.js` for the Numberblocks palette, `<SettingsOverlay>` for settings modals, `.frosted-card` for glass card displays.
 8. The toy will be built and deployed automatically

@@ -124,6 +124,30 @@ body::before {
   border-radius: 20px;
 }
 
+/* ── Utility: Sticky Header ────────────────────────────────────────────────── */
+.sticky-header {
+  position: sticky;
+  top: calc(8px + var(--safe-top));
+  z-index: 10;
+  width: 100%;
+  max-width: 400px;
+  padding: 10px 16px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border-light);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  animation: popIn 0.5s ease-out;
+}
+
+/* Disable the page-header's own animation when inside the sticky wrapper */
+.sticky-header .page-header {
+  animation: none;
+}
+
 /* ── Utility: Page Header Layout ────────────────────────────────────────────── */
 .page-header {
   text-align: center;
@@ -188,7 +212,6 @@ body::before {
   padding: calc(24px + var(--safe-top)) calc(16px + var(--safe-right))
            calc(40px + var(--safe-bottom)) calc(16px + var(--safe-left));
   position: relative;
-  overflow: hidden;
 }
 
 /* ── Utility: Background Dots Container ────────────────────────────────────── */
