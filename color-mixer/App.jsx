@@ -140,6 +140,7 @@ const NAMED_COLORS = [
   { name: "Misty Rose",       rgb: [255, 228, 225] },
 
   // ── Oranges ──
+  { name: "Orange",           rgb: [255, 160, 64] },
   { name: "Orange",           rgb: [240, 140, 20] },
   { name: "Dark Orange",      rgb: [255, 140, 0] },
   { name: "Red-Orange",       rgb: [255, 83, 73] },
@@ -195,6 +196,7 @@ const NAMED_COLORS = [
   { name: "Maize",            rgb: [251, 236, 93] },
 
   // ── Greens ──
+  { name: "Green",            rgb: [128, 165, 128] },
   { name: "Green",            rgb: [40, 170, 60] },
   { name: "Lime",             rgb: [0, 255, 0] },
   { name: "Lime Green",       rgb: [50, 205, 50] },
