@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { BackgroundDots } from "../shared/BackgroundDots.jsx";
 import { StickyHeader } from "../shared/StickyHeader.jsx";
-import { NB_SOLID, NB7_STOPS, getNumberBlockStyle } from "../shared/numberblockColors.js";
+import { SettingsOverlay, SettingsToggle } from "../shared/SettingsOverlay.jsx";
+import { NB_SOLID, NB7_STOPS, NB7_GRADIENT, getNumberBlockStyle } from "../shared/numberblockColors.js";
 import { useScrollLock } from "../shared/useScrollLock.js";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -61,6 +62,38 @@ function polygonNameForSides(sides) {
   name += "gon";
 
   return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
+// ── Polygon Name Segments (for coloring / hyphenation) ──────────────────────
+
+function polygonNameSegments(sides) {
+  if (sides === 10000) return [{ text: "Myria", digit: null }, { text: "gon", digit: null }];
+  if (sides === 1000) return [{ text: "Chilia", digit: null }, { text: "gon", digit: null }];
+  if (sides === 100) return [{ text: "Hecto", digit: null }, { text: "gon", digit: null }];
+  const th = Math.floor(sides / 1000) * 1000;
+  const h = Math.floor((sides % 1000) / 100) * 100;
+  const t = Math.floor((sides % 100) / 10) * 10;
+  const o = sides % 10;
+
+  const segments = [];
+  if (th > 0) segments.push({ text: THOUSANDS_PREFIX[th], digit: Math.floor(sides / 1000) });
+  if (h > 0) segments.push({ text: HUNDREDS_PREFIX[h], digit: Math.floor((sides % 1000) / 100) });
+  if (t > 0) segments.push({ text: TENS_PREFIX[t], digit: Math.floor((sides % 100) / 10) });
+  if (o > 0) {
+    if (segments.length > 0) segments.push({ text: "kai", digit: null });
+    segments.push({ text: ONES_SUFFIX[o], digit: o });
+  }
+  segments.push({ text: "gon", digit: null });
+
+  // Capitalize first segment
+  segments[0] = { ...segments[0], text: segments[0].text.charAt(0).toUpperCase() + segments[0].text.slice(1) };
+  return segments;
+}
+
+function segmentColor(digit, fallbackColor) {
+  if (digit === null) return null;
+  if (digit === 7) return NB7_GRADIENT;
+  return NB_SOLID[String(digit)] || fallbackColor;
 }
 
 // ── Number to Word ──────────────────────────────────────────────────────────
@@ -362,7 +395,10 @@ export default function ShapeSelector() {
   const [selected, setSelected] = useState(null);
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customValue, setCustomValue] = useState("");
-  useScrollLock(!!selected || showCustomInput);
+  const [showSettings, setShowSettings] = useState(false);
+  const [useHyphens, setUseHyphens] = useState(true);
+  const [colorNames, setColorNames] = useState(true);
+  useScrollLock(!!selected || showCustomInput || showSettings);
 
   function handleCustomConfirm() {
     const sides = parseInt(customValue, 10);
@@ -468,6 +504,7 @@ export default function ShapeSelector() {
       <StickyHeader
         title="Shape Selector"
         subtitle="Tap a shape to see it up close!"
+        onGearClick={() => setShowSettings(true)}
       />
 
       {/* Shape grid */}
@@ -529,27 +566,72 @@ export default function ShapeSelector() {
         </div>
       )}
 
+      {/* Settings overlay */}
+      <SettingsOverlay show={showSettings} onClose={() => setShowSettings(false)}>
+        <SettingsToggle
+          checked={useHyphens}
+          onChange={() => setUseHyphens((v) => !v)}
+          label="Hyphenate shape names"
+          hint="Add hyphens between name parts (e.g. Heptaconta-kai-hepta-gon)"
+        />
+        <div style={{ height: 16 }} />
+        <SettingsToggle
+          checked={colorNames}
+          onChange={() => setColorNames((v) => !v)}
+          label="Color name parts"
+          hint="Color each part of the name by the digit it represents"
+        />
+      </SettingsOverlay>
+
       {/* Reveal overlay */}
-      {selected && (
-        <div className="overlay-backdrop" onClick={() => setSelected(null)}>
-          <div className="overlay-shape">
-            <ShapeSVG shape={selected} size={220} showNumber />
+      {selected && (() => {
+        const fallbackColor = selected.color === "rainbow" ? NB_SOLID["7"] : selected.borderColor || (selected.color === "#FFFFFF" ? "#E41E20" : selected.color);
+        const segments = selected.sides >= 21 && selected.sides <= 9999
+          ? polygonNameSegments(selected.sides)
+          : null;
+        const nameLen = selected.name.length;
+        const fontSize = nameLen > 16 ? Math.max(18, 40 - (nameLen - 16) * 0.8) : 40;
+
+        return (
+          <div className="overlay-backdrop" onClick={() => setSelected(null)}>
+            <div className="overlay-shape">
+              <ShapeSVG shape={selected} size={220} showNumber />
+            </div>
+            <div
+              className="overlay-name"
+              style={{
+                color: fallbackColor,
+                fontSize: `${fontSize}px`,
+              }}
+            >
+              {segments ? (
+                segments.map((seg, i) => {
+                  const color = colorNames ? segmentColor(seg.digit, fallbackColor) : null;
+                  const isGradient = color && color.startsWith("linear-gradient");
+                  const showHyphen = useHyphens && i < segments.length - 1;
+                  const colorStyle = color
+                    ? isGradient
+                      ? { background: color, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }
+                      : { color }
+                    : {};
+                  return (
+                    <span key={i} style={{ display: "inline-block" }}>
+                      <span style={colorStyle}>{seg.text}</span>
+                      {showHyphen && <span style={colorStyle}>-</span>}
+                    </span>
+                  );
+                })
+              ) : (
+                selected.name
+              )}
+            </div>
+            <div className="overlay-detail">
+              {sideDescription(selected)}
+            </div>
+            <div className="overlay-hint">Tap anywhere to close</div>
           </div>
-          <div
-            className="overlay-name"
-            style={{
-              color: selected.color === "rainbow" ? NB_SOLID["7"] : selected.borderColor || (selected.color === "#FFFFFF" ? "#E41E20" : selected.color),
-              fontSize: selected.name.length > 16 ? `${Math.max(18, 40 - (selected.name.length - 16) * 0.8)}px` : undefined,
-            }}
-          >
-            {selected.name}
-          </div>
-          <div className="overlay-detail">
-            {sideDescription(selected)}
-          </div>
-          <div className="overlay-hint">Tap anywhere to close</div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
