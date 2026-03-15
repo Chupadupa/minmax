@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { getNumberName, formatZerosWithCommas } from "./numberNaming.js";
 import { useAutoFitFontSize } from "../shared/useAutoFitFontSize.js";
 import { NB_COLORS, NB_SOLID, getNumberBlockStyle } from "../shared/numberblockColors.js";
@@ -8,6 +8,7 @@ import {
   SettingsSection, SettingsAboutText, SettingsLink,
 } from "../shared/SettingsOverlay.jsx";
 import { StickyHeader } from "../shared/StickyHeader.jsx";
+import { Toast } from "../shared/Toast.jsx";
 
 const MAX_ZEROS = 3000000000003;
 
@@ -19,48 +20,6 @@ function getFunFact(zeros) {
   if (zeros === 3000003) return "🔥 Millinillinillion! A million illions!";
   if (zeros === 3000000000003) return "🏆 Millinillinillinillinillion! The biggest named number here!";
   return null;
-}
-
-// ── Toast ─────────────────────────────────────────────────────────────────────
-
-function FunFactToast({ text }) {
-  const [display, setDisplay] = useState({ text: null, phase: "idle" });
-  const prevText = useRef(null);
-
-  useEffect(() => {
-    if (text && !prevText.current) {
-      setDisplay({ text, phase: "enter" });
-    } else if (text && text !== prevText.current) {
-      setDisplay({ text, phase: "enter" });
-    } else if (!text && prevText.current) {
-      setDisplay(d => ({ ...d, phase: "exit" }));
-      const t = setTimeout(() => setDisplay({ text: null, phase: "idle" }), 350);
-      prevText.current = text;
-      return () => clearTimeout(t);
-    }
-    prevText.current = text;
-  }, [text]);
-
-  if (!display.text) return null;
-
-  return (
-    <div style={{
-      position: "absolute",
-      left: "50%", top: -8,
-      padding: "8px 18px", borderRadius: 14,
-      background: "rgba(30, 20, 60, 0.94)",
-      border: "1px solid rgba(255, 208, 48, 0.5)",
-      boxShadow: "0 4px 20px rgba(0,0,0,0.4), 0 0 15px rgba(255,208,48,0.15)",
-      fontSize: 14, textAlign: "center", color: "#FFD030",
-      fontFamily: "var(--font-heading)", fontWeight: 600,
-      whiteSpace: "nowrap", zIndex: 5,
-      animation: display.phase === "enter"
-        ? "factPop 0.35s ease-out forwards"
-        : "factOut 0.35s ease-in forwards",
-    }}>
-      {display.text}
-    </div>
-  );
 }
 
 // ── Settings Content ─────────────────────────────────────────────────────────
@@ -292,7 +251,13 @@ export default function BigNumberNamer() {
 
       {/* Fun fact overlay */}
       <div style={styles.funFactAnchor}>
-        <FunFactToast text={funFact} />
+        <Toast
+          text={funFact}
+          variant="info"
+          position="top"
+          enterAnimation="factPop 0.35s ease-out forwards"
+          exitAnimation="factOut 0.35s ease-in forwards"
+        />
       </div>
 
       {/* Plus / Minus row */}

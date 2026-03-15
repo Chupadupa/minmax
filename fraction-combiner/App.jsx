@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { NB_SOLID, NB7_STOPS, NB7_GRADIENT, getNumberBlockStyle } from "../shared/numberblockColors.js";
 import { StickyHeader } from "../shared/StickyHeader.jsx";
 import { simplify } from "../shared/mathUtils.js";
+import { Toast } from "../shared/Toast.jsx";
 
 // ── Colors (Numberblocks-inspired) ───────────────────────────────────────────
 
@@ -42,29 +43,6 @@ function arcPath(startAngle, endAngle) {
   const [x2, y2] = polarToXY(endAngle);
   const large = endAngle - startAngle > 180 ? 1 : 0;
   return `M ${CX} ${CY} L ${x1} ${y1} A ${R} ${R} 0 ${large} 1 ${x2} ${y2} Z`;
-}
-
-// ── Warning Toast ────────────────────────────────────────────────────────────
-
-function WarningToast({ text, visible }) {
-  if (!visible) return null;
-  return (
-    <div style={{
-      position: "absolute",
-      left: "50%", bottom: -48,
-      transform: "translateX(-50%)",
-      padding: "8px 18px", borderRadius: 14,
-      background: "rgba(228, 30, 32, 0.92)",
-      border: "1px solid rgba(255, 140, 26, 0.5)",
-      boxShadow: "0 4px 20px rgba(228,30,32,0.4)",
-      fontSize: 14, textAlign: "center", color: "#fff",
-      fontFamily: "var(--font-heading)", fontWeight: 600,
-      whiteSpace: "nowrap", zIndex: 5,
-      animation: "warningPop 0.4s ease-out forwards",
-    }}>
-      {text}
-    </div>
-  );
 }
 
 // ── Main Component ───────────────────────────────────────────────────────────
@@ -304,7 +282,15 @@ export default function FractionCombiner() {
         </svg>
 
         {/* Warning toast */}
-        <WarningToast key={warningKey} text={warning} visible={!!warning} />
+        <Toast
+          key={warningKey}
+          text={warning}
+          visible={!!warning}
+          variant="warning"
+          position="bottom"
+          enterAnimation="warningPop 0.4s ease-out forwards"
+          exitAnimation="warningPop 0.4s ease-out forwards"
+        />
       </div>
 
       {/* Fun fact banner — always reserves space to prevent layout shift */}

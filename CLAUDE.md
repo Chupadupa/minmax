@@ -43,7 +43,8 @@ There are no test, lint, or format commands.
 ├── clock/                      # Time Teller toy
 │   ├── index.html
 │   ├── main.jsx
-│   ├── App.jsx                 # Interactive analog clock components
+│   ├── App.jsx                 # Clock orchestrator, keypad, digital display, settings
+│   ├── AnalogClock.jsx         # SVG analog clock face with draggable hands
 │   └── clockUtils.js           # Pure clock math (angles, time parsing, formatting)
 ├── calculator/                 # Calculator toy
 │   ├── index.html
@@ -64,6 +65,7 @@ There are no test, lint, or format commands.
 │   ├── index.html
 │   ├── main.jsx
 │   ├── App.jsx                 # Shape grid, SVG rendering, overlay
+│   ├── shapeData.js            # Shape definitions, SVG helpers, color helpers (pure logic)
 │   └── shapeNaming.js          # Latin-based polygon naming system (3–10,000 sides), number-to-word
 ├── shared/
 │   ├── base.css                # Shared stylesheet: tokens, resets, fonts, animations, utilities, .toy-btn
@@ -74,7 +76,9 @@ There are no test, lint, or format commands.
 │   ├── numberblockColors.js    # Shared NB_COLORS, NB_SOLID, NB_OUTLINE, NB7_STOPS, NB7_GRADIENT, getNumberBlockStyle
 │   ├── BackgroundDots.jsx      # Floating background dots decoration component
 │   ├── StickyHeader.jsx        # Consistent sticky header component for all toys
-│   └── SettingsOverlay.jsx     # Reusable settings modal shell with toggle/divider/section helpers
+│   ├── SettingsOverlay.jsx     # Reusable settings modal shell with toggle/divider/section helpers
+│   ├── Toast.jsx               # Shared toast notification with enter/exit animation, info/warning variants
+│   └── mountApp.jsx            # Shared React mount utility (createRoot + base.css import)
 ├── public/
 │   ├── icon.svg                # App icon (SVG source)
 │   ├── icon-180.png            # Apple touch icon
@@ -105,7 +109,7 @@ There are no test, lint, or format commands.
 
 - **`App.jsx`** — All React components, state, and styles:
   1. **Constants** — `MAX_ZEROS` (3,000,000,000,003); colors imported from `shared/numberblockColors.js`
-  2. **Components**: `FunFactToast`, `BigNumberSettings` (uses shared `SettingsOverlay`), `BigNumberNamer` (main)
+  2. **Components**: `BigNumberSettings` (uses shared `SettingsOverlay`), `BigNumberNamer` (main). Uses shared `Toast` for fun facts.
   3. **Styles** — Inline style objects at bottom of file (`styles`); settings styles from shared module
 
 ### Time Teller (`clock/`)
@@ -113,7 +117,8 @@ There are no test, lint, or format commands.
 Interactive analog clock where kids can drag clock hands or type a time to learn to tell time.
 
 - **`clockUtils.js`** — Pure functions for clock math: angle↔time conversion, time formatting, drag-to-angle, wrap detection
-- **`App.jsx`** — SVG clock face with draggable hour/minute/second hands, 12/24-hour toggle, Numberblocks-inspired hour labels
+- **`AnalogClock.jsx`** — SVG analog clock face with draggable hour/minute/second hands, Numberblocks-inspired hour labels
+- **`App.jsx`** — Clock orchestrator: state management, drag/keypad handlers, digital display, AM/PM toggle, settings
 
 ### Calculator (`calculator/`)
 
@@ -141,7 +146,7 @@ Tap colors from a palette to mix them together and see the resulting color name.
 
 A pie chart game for learning fractions. Combine fraction pieces to fill a whole circle.
 
-- **`App.jsx`** — SVG pie chart, fraction selection (halves through tenths), Numberblocks-inspired colors, LCD-based fraction arithmetic (LCD = 2520 for 1–10). Uses `simplify()` from `shared/mathUtils.js` for fraction reduction.
+- **`App.jsx`** — SVG pie chart, fraction selection (halves through tenths), Numberblocks-inspired colors, LCD-based fraction arithmetic (LCD = 2520 for 1–10). Uses `simplify()` from `shared/mathUtils.js` for fraction reduction and shared `Toast` for warnings.
 
 ### Shape Selector (`shape-selector/`)
 
@@ -151,7 +156,8 @@ A shape exploration toy. Tap shapes from a grid to see them enlarged with their 
   - `polygonNameForSides(sides)` — Latin-based name for 3–10,000 sides
   - `polygonNameSegments(sides)` — name broken into colored/hyphenatable segments
   - `numberToWord(n)` — English word form for a number (0–10,000)
-- **`App.jsx`** — SVG shape rendering (circles, ovals, footballs, triangles, quadrilaterals, regular polygons up to 100 sides), custom polygon input for any side count 3–10,000, Numberblocks-inspired colors with `getNumberBlockStyle`, color-coded name segments, hyphenation toggle. Uses `contrastTextColor()` from `shared/colorUtils.js`.
+- **`shapeData.js`** — Pure data/logic (no React dependency): `SHAPES` array (17 hand-defined + 91 generated polygons), `shapeTextColor()`, `segmentColor()`, `polygonPoints()` SVG helper
+- **`App.jsx`** — SVG shape rendering (circles, ovals, footballs, triangles, quadrilaterals, regular polygons up to 100 sides), custom polygon input for any side count 3–10,000, Numberblocks-inspired colors with `getNumberBlockStyle`, color-coded name segments, hyphenation toggle.
 
 ### Shared Utilities (`shared/`)
 
@@ -192,6 +198,12 @@ A shape exploration toy. Tap shapes from a grid to see them enlarged with their 
   - `SettingsAboutText({ children })` — styled paragraph for about/credits text
   - `SettingsLink({ href, children })` — styled external link
 
+- **`Toast.jsx`** — Shared toast notification component with enter/exit animation support. Exports:
+  - `Toast({ text, visible, variant?, position?, enterAnimation?, exitAnimation?, exitDuration? })` — animated toast with two variants: `"info"` (gold on dark) and `"warning"` (white on red). Supports `"top"` or `"bottom"` positioning. Used by big-number-namer and fraction-combiner.
+
+- **`mountApp.jsx`** — Shared React mount utility. Exports:
+  - `mountApp(App)` — creates a React root, imports `base.css`, and renders the given App component. All toy `main.jsx` files use this instead of duplicating mount logic.
+
 ## Coding Conventions
 
 - **Shared base styles** live in `shared/base.css` — design tokens (CSS custom properties), global resets, font loading, background, shared animations, and utility classes. Import it in new toys to inherit the Doodads look. Override CSS variables for tweaks, or skip the import entirely for a custom look.
@@ -204,6 +216,7 @@ A shape exploration toy. Tap shapes from a grid to see them enlarged with their 
 - **Use `<BackgroundDots />`** component for floating dot decorations instead of defining the useMemo + render pattern inline
 - **Use `.frosted-card`** class for frosted glass card displays instead of redefining `background`, `backdropFilter`, `border`, `borderRadius` inline
 - **Use the shared `SettingsOverlay`** shell for settings modals; pass toy-specific toggles and about content as children
+- **Use the shared `Toast`** component for toast notifications instead of defining custom toast components per toy. Use `variant="info"` for informational toasts and `variant="warning"` for error/warning toasts.
 - **Use `useScrollLock`** hook when showing full-screen overlays to prevent background scrolling
 - **Import Numberblocks colors from `shared/numberblockColors.js`** instead of redefining the palette in each toy
 - **Import color utilities from `shared/colorUtils.js`** for luminance, contrast text color, and hex conversion instead of redefining in each toy
