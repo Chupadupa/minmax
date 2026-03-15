@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { getNumberName, formatZerosWithCommas } from "./numberNaming.js";
 import { useAutoFitFontSize } from "../shared/useAutoFitFontSize.js";
 import { NB_COLORS, NB_SOLID, getNumberBlockStyle } from "../shared/numberblockColors.js";
