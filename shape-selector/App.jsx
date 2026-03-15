@@ -148,11 +148,10 @@ const SHAPES = [
     const shapes = [];
     for (let sides = 10; sides <= 100; sides++) {
       const style = getNumberBlockStyle(sides);
-      const ones = sides % 10;
       shapes.push({
         name: polygonNameForSides(sides),
         sides,
-        color: ones === 7 ? "rainbow" : style.background,
+        color: style.rainbow ? "rainbow" : style.background,
         borderColor: style.border,
         render: "polygon",
       });
@@ -379,13 +378,12 @@ export default function ShapeSelector() {
     const sides = parseInt(customValue, 10);
     if (!sides || sides < 3) return;
     const style = getNumberBlockStyle(sides);
-    const ones = sides % 10;
     const name = sides <= 9999 ? polygonNameForSides(sides) : `${sides}-gon`;
     const shape = {
       name,
       sides,
       displayNum: sides,
-      color: ones === 7 ? "rainbow" : style.background,
+      color: style.rainbow ? "rainbow" : style.background,
       borderColor: style.border,
       render: "circle",
     };

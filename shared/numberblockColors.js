@@ -19,7 +19,7 @@ export const NB_COLORS = {
   "40": "#90EE90",  // Light Green
   "50": "#5BCFEF",  // Light Blue/Cyan
   "60": "#9B59B6",  // Purple/Violet
-  "70": "#C39BD3",  // Light Purple
+  "70": "linear-gradient(135deg, #E41E20, #FF8C1A, #FFD030, #4AAF4E, #29B6A8, #3F51B5, #9B59B6)",  // Rainbow (same as digit 7)
   "80": "#F48FB1",  // Pink
   "90": "#8E8E93",  // Grey
   "100": "#FFCDD2", // Pale Red (Red/Pink outline — use NB_OUTLINE["100"] for border)
@@ -55,12 +55,14 @@ export const NB_OUTLINE = {
 export function getNumberBlockStyle(n) {
   const ones = n % 10;
   const tens = n - ones; // e.g. 23 → 20, 7 → 0
+  const hasDigit7 = String(n).includes("7");
 
   // Single digits 1–9: solid color, no border
   if (n >= 1 && n <= 9) {
     return {
       background: NB_COLORS[String(n)],
       border: null,
+      rainbow: n === 7,
     };
   }
 
@@ -73,6 +75,7 @@ export function getNumberBlockStyle(n) {
     return {
       background,
       border: NB_OUTLINE[bgKey] || null,
+      rainbow: hasDigit7,
     };
   }
 
@@ -80,6 +83,7 @@ export function getNumberBlockStyle(n) {
   return {
     background,
     border: NB_SOLID[String(ones)],
+    rainbow: hasDigit7,
   };
 }
 
