@@ -482,7 +482,9 @@ export default function ShapeSelector() {
                     ? isGradient
                       ? { background: color, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }
                       : { color }
-                    : {};
+                    : colorNames
+                      ? { color: "#fff" }
+                      : {};
                   return (
                     <span key={i} style={{ display: "inline-block" }}>
                       <span style={colorStyle}>{seg.text}</span>
