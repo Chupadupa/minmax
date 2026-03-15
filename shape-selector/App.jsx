@@ -143,41 +143,15 @@ const SHAPES = [
   { name: "Heptagon",             sides: 7,  color: "rainbow",     render: "polygon" },
   { name: "Octagon",              sides: 8,  color: NB_SOLID["8"], render: "polygon" },
   { name: "Nonagon",              sides: 9,  color: NB_SOLID["9"], render: "polygon" },
-  ...(() => {
-    const teens = [
-      { name: "Decagon",       sides: 10 },
-      { name: "Hendecagon",    sides: 11 },
-      { name: "Dodecagon",     sides: 12 },
-      { name: "Tridecagon",    sides: 13 },
-      { name: "Tetradecagon",  sides: 14 },
-      { name: "Pentadecagon",  sides: 15 },
-      { name: "Hexadecagon",   sides: 16 },
-      { name: "Heptadecagon",  sides: 17 },
-      { name: "Octadecagon",   sides: 18 },
-      { name: "Enneadecagon",  sides: 19 },
-      { name: "Icosagon",      sides: 20 },
-    ];
-    return teens.map((s) => {
-      const style = getNumberBlockStyle(s.sides);
-      const ones = s.sides % 10;
-      return {
-        ...s,
-        color: ones === 7 ? "rainbow" : style.background,
-        borderColor: style.border,
-        render: "polygon",
-      };
-    });
-  })(),
-  // 21–100: generated from polygon naming
+  // 10–100: generated from polygon naming
   ...(() => {
     const shapes = [];
-    for (let sides = 21; sides <= 100; sides++) {
+    for (let sides = 10; sides <= 100; sides++) {
       const style = getNumberBlockStyle(sides);
-      const ones = sides % 10;
       shapes.push({
         name: polygonNameForSides(sides),
         sides,
-        color: ones === 7 ? "rainbow" : style.background,
+        color: style.rainbow ? "rainbow" : style.background,
         borderColor: style.border,
         render: "polygon",
       });
@@ -404,13 +378,12 @@ export default function ShapeSelector() {
     const sides = parseInt(customValue, 10);
     if (!sides || sides < 3) return;
     const style = getNumberBlockStyle(sides);
-    const ones = sides % 10;
     const name = sides <= 9999 ? polygonNameForSides(sides) : `${sides}-gon`;
     const shape = {
       name,
       sides,
       displayNum: sides,
-      color: ones === 7 ? "rainbow" : style.background,
+      color: style.rainbow ? "rainbow" : style.background,
       borderColor: style.border,
       render: "circle",
     };
@@ -586,7 +559,7 @@ export default function ShapeSelector() {
       {/* Reveal overlay */}
       {selected && (() => {
         const fallbackColor = selected.color === "rainbow" ? NB_SOLID["7"] : selected.borderColor || (selected.color === "#FFFFFF" ? "#E41E20" : selected.color);
-        const segments = selected.sides >= 21 && selected.sides <= 9999
+        const segments = selected.sides >= 10 && selected.sides <= 9999
           ? polygonNameSegments(selected.sides)
           : null;
         const nameLen = selected.name.length;

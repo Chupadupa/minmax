@@ -22,6 +22,9 @@
   /* Rainbow gradient (title text, accents) */
   --gradient-rainbow: linear-gradient(135deg, #E41E20, #FF8C1A, #FFD030, #4AAF4E, #3A8FDE, #9B59B6, #F472B6);
 
+  /* Numberblocks 7 rainbow (used for any digit-7 coloring site-wide) */
+  --nb-7-gradient: linear-gradient(135deg, #E41E20, #FF8C1A, #FFD030, #4AAF4E, #29B6A8, #3F51B5, #9B59B6);
+
   /* Frosted glass */
   --glass-bg: rgba(255, 255, 255, 0.07);
   --glass-border: rgba(255, 255, 255, 0.1);
