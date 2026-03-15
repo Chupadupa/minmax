@@ -347,14 +347,9 @@ export default function Calculator() {
     <div className="toy-container" style={{ gap: 12 }}>
       <style>{`
         .calc-btn {
-          width: 100%; aspect-ratio: 1; border-radius: 50%; border: none;
-          font-size: 28px; font-weight: 700; font-family: var(--font-heading);
-          color: #fff; cursor: pointer; display: flex; align-items: center;
-          justify-content: center; user-select: none; -webkit-user-select: none;
-          transition: transform 0.1s ease;
-          text-shadow: 0 2px 4px rgba(0,0,0,0.25);
+          width: 100%; aspect-ratio: 1;
+          border-radius: 50%; font-size: 28px;
         }
-        .calc-btn:active { transform: scale(0.9); }
         .calc-btn[data-span="2"] {
           aspect-ratio: auto;
           border-radius: 999px;
@@ -386,7 +381,7 @@ export default function Calculator() {
         {BUTTONS.map((btn, i) => (
           <button
             key={i}
-            className="calc-btn"
+            className="toy-btn calc-btn"
             data-span={btn.span || 1}
             style={getButtonStyle(btn)}
             onClick={() => handleButton(btn)}

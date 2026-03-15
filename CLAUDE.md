@@ -53,7 +53,9 @@ There are no test, lint, or format commands.
 ├── color-mixer/                # Color Mixer toy
 │   ├── index.html
 │   ├── main.jsx
-│   └── App.jsx                 # Color mixing UI (tap colors to blend)
+│   ├── App.jsx                 # Color mixing UI (tap colors to blend)
+│   ├── colorData.js            # Color palette, named colors dictionary, RYB cube, button border colors
+│   └── colorMixing.js          # Pure mixing logic (subtractive/additive) and closest-name matching
 ├── fraction-combiner/          # Fraction Combiner toy
 │   ├── index.html
 │   ├── main.jsx
@@ -61,9 +63,12 @@ There are no test, lint, or format commands.
 ├── shape-selector/             # Shape Selector toy
 │   ├── index.html
 │   ├── main.jsx
-│   └── App.jsx                 # Shape grid, SVG rendering, polygon naming (single-file toy)
+│   ├── App.jsx                 # Shape grid, SVG rendering, overlay
+│   └── shapeNaming.js          # Latin-based polygon naming system (3–10,000 sides), number-to-word
 ├── shared/
-│   ├── base.css                # Shared stylesheet: tokens, resets, fonts, animations, utilities
+│   ├── base.css                # Shared stylesheet: tokens, resets, fonts, animations, utilities, .toy-btn
+│   ├── colorUtils.js           # Shared color helpers: luminance, contrastTextColor, rgbToHex, textColorForRgb
+│   ├── mathUtils.js            # Shared math helpers: gcd, simplify (fraction reduction)
 │   ├── useAutoFitFontSize.js   # Generic auto-fit font hook (reusable across toys)
 │   ├── useScrollLock.js        # Scroll lock hook for overlays (toggles overlay-open class)
 │   ├── numberblockColors.js    # Shared NB_COLORS, NB_SOLID, NB_OUTLINE, NB7_STOPS, NB7_GRADIENT, getNumberBlockStyle
@@ -121,23 +126,46 @@ A colorful calculator with big Numberblocks-inspired buttons.
 
 Tap colors from a palette to mix them together and see the resulting color name.
 
-- **`App.jsx`** — Single-file toy; additive RGB mixing, named color matching, clear/undo
+- **`colorData.js`** — Pure data module with no React dependency. Contains:
+  - `RYB_CUBE` and `rybToRgb()` — RYB-to-RGB trilinear interpolation for subtractive mixing
+  - `PALETTE` — the 14 mixable colors with RGB, hex, and RYB coordinates
+  - `NAMED_COLORS` — comprehensive color name dictionary (~230 entries) for closest-match lookup
+  - `BUTTON_BORDER_COLORS` — darker border colors for each palette button
+- **`colorMixing.js`** — Pure mixing logic (no React dependency):
+  - `mixSubtractive(colorList)` — paint-like mixing via RYB space
+  - `mixAdditive(colorList)` — light-like mixing via screen blend
+  - `findClosestColorName(rgb)` — nearest-neighbor color name matching
+- **`App.jsx`** — UI component: color grid, swatch display, settings overlay, undo/clear
 
 ### Fraction Combiner (`fraction-combiner/`)
 
 A pie chart game for learning fractions. Combine fraction pieces to fill a whole circle.
 
-- **`App.jsx`** — Single-file toy; SVG pie chart, fraction selection (halves through tenths), Numberblocks-inspired colors, LCD-based fraction arithmetic (LCD = 2520 for 1–10)
+- **`App.jsx`** — SVG pie chart, fraction selection (halves through tenths), Numberblocks-inspired colors, LCD-based fraction arithmetic (LCD = 2520 for 1–10). Uses `simplify()` from `shared/mathUtils.js` for fraction reduction.
 
 ### Shape Selector (`shape-selector/`)
 
 A shape exploration toy. Tap shapes from a grid to see them enlarged with their name and side count.
 
-- **`App.jsx`** — Single-file toy; SVG shape rendering (circles, ovals, footballs, triangles, quadrilaterals, regular polygons up to 100 sides), Latin-based polygon naming system (up to 9,999 sides via thousands/hundreds/tens/ones prefixes), custom polygon input for any side count 3–10,000, Numberblocks-inspired colors with `getNumberBlockStyle`, color-coded name segments, hyphenation toggle
+- **`shapeNaming.js`** — Pure naming logic (no React dependency):
+  - `polygonNameForSides(sides)` — Latin-based name for 3–10,000 sides
+  - `polygonNameSegments(sides)` — name broken into colored/hyphenatable segments
+  - `numberToWord(n)` — English word form for a number (0–10,000)
+- **`App.jsx`** — SVG shape rendering (circles, ovals, footballs, triangles, quadrilaterals, regular polygons up to 100 sides), custom polygon input for any side count 3–10,000, Numberblocks-inspired colors with `getNumberBlockStyle`, color-coded name segments, hyphenation toggle. Uses `contrastTextColor()` from `shared/colorUtils.js`.
 
 ### Shared Utilities (`shared/`)
 
-- **`base.css`** — Shared stylesheet providing design tokens (CSS custom properties), global resets, font loading (Fredoka & Outfit via Google Fonts), dark gradient background, shared keyframe animations (`popIn`, `fadeIn`, `float`, `flash`, `btnPress`), utility CSS classes (`.gradient-text`, `.frosted-card`, `.back-btn`, `.gear-btn`, `.page-header`, `.safe-area-container`, `.toy-container`, `.bg-dots`), page header defaults (`.page-header h1`, `.page-header .subtitle`), `.overlay-open` scroll-lock class (used by `useScrollLock` hook), and global user-select prevention. Toys import this to get the Doodads look for free, override CSS variables for tweaks, or skip the import entirely for a custom look.
+- **`base.css`** — Shared stylesheet providing design tokens (CSS custom properties), global resets, font loading (Fredoka & Outfit via Google Fonts), dark gradient background, shared keyframe animations (`popIn`, `fadeIn`, `float`, `flash`, `btnPress`, `shake`), utility CSS classes (`.gradient-text`, `.frosted-card`, `.toy-btn`, `.back-btn`, `.gear-btn`, `.page-header`, `.safe-area-container`, `.toy-container`, `.bg-dots`), page header defaults (`.page-header h1`, `.page-header .subtitle`), `.overlay-open` scroll-lock class (used by `useScrollLock` hook), and global user-select prevention. Toys import this to get the Doodads look for free, override CSS variables for tweaks, or skip the import entirely for a custom look.
+
+- **`colorUtils.js`** — Shared color helper functions used across multiple toys. Exports:
+  - `luminance(hex)` — relative luminance of a hex color (WCAG 2.0 sRGB formula)
+  - `contrastTextColor(color)` — readable text color (dark or light) for a hex background
+  - `rgbToHex(rgb)` — convert `[r, g, b]` array to hex string
+  - `textColorForRgb(rgb)` — readable text color for an RGB array (ITU-R BT.601 luma)
+
+- **`mathUtils.js`** — Shared math helper functions. Exports:
+  - `gcd(a, b)` — greatest common divisor (Euclidean algorithm)
+  - `simplify(num, den)` — reduce a fraction to lowest terms, returns `[n, d]`
 
 - **`useAutoFitFontSize.js`** — Binary search algorithm for dynamic font scaling within a container, with oscillation prevention via ceiling tracking. Accepts `{ maxFont, minFont }` options. Available for use by any toy.
 
@@ -169,7 +197,8 @@ A shape exploration toy. Tap shapes from a grid to see them enlarged with their 
 - **Shared base styles** live in `shared/base.css` — design tokens (CSS custom properties), global resets, font loading, background, shared animations, and utility classes. Import it in new toys to inherit the Doodads look. Override CSS variables for tweaks, or skip the import entirely for a custom look.
 - **Toy-specific styling is inline** via JavaScript style objects for dynamic/component-specific styles
 - **Use CSS variables** (`var(--font-heading)`, `var(--glass-bg)`, etc.) instead of hardcoding shared values
-- **Use shared CSS classes** (`.gradient-text`, `.back-btn`, `.gear-btn`, `.page-header`, `.frosted-card`, `.toy-container`, `.bg-dots`) for common UI patterns instead of duplicating inline styles
+- **Use shared CSS classes** (`.gradient-text`, `.toy-btn`, `.back-btn`, `.gear-btn`, `.page-header`, `.frosted-card`, `.toy-container`, `.bg-dots`) for common UI patterns instead of duplicating inline styles
+- **Use `.toy-btn`** base class for all interactive buttons across toys. It provides border-radius, font, color, cursor, flex centering, user-select prevention, active-press scale, and disabled cursor. Each toy adds a modifier class (e.g. `.nb-btn`, `.calc-btn`, `.clock-btn`, `.frac-btn`, `.color-btn`) for size/shape overrides only.
 - **Use `.toy-container`** class on the outermost div of every toy for consistent layout and safe-area padding. Add toy-specific overrides (e.g. `justifyContent`, `gap`) as inline styles.
 - **Use `<StickyHeader />`** component for the toy header — provides a consistent sticky header with frosted-glass background, drop shadow, back button, optional gear button, gradient title, and subtitle. Stays pinned at the top when scrolling.
 - **Use `<BackgroundDots />`** component for floating dot decorations instead of defining the useMemo + render pattern inline
@@ -177,13 +206,16 @@ A shape exploration toy. Tap shapes from a grid to see them enlarged with their 
 - **Use the shared `SettingsOverlay`** shell for settings modals; pass toy-specific toggles and about content as children
 - **Use `useScrollLock`** hook when showing full-screen overlays to prevent background scrolling
 - **Import Numberblocks colors from `shared/numberblockColors.js`** instead of redefining the palette in each toy
+- **Import color utilities from `shared/colorUtils.js`** for luminance, contrast text color, and hex conversion instead of redefining in each toy
+- **Import math utilities from `shared/mathUtils.js`** for GCD and fraction simplification
+- **Extract pure logic into separate files** — keep App.jsx focused on React components and state; move data dictionaries, algorithms, and naming systems into sibling `.js` files (e.g. `colorData.js`, `colorMixing.js`, `shapeNaming.js`)
 - **Section delimiters**: `// ── Section Name ──` with box-drawing characters
 - **Constants**: `UPPER_SNAKE_CASE` for arrays/objects
 - **Functions/variables**: `camelCase`
 - **React hooks**: Standard hooks (`useState`, `useRef`, `useEffect`, `useLayoutEffect`, `useMemo`, `useCallback`) used extensively
 - **Component structure**: Functional components only, no class components
 - **Fonts**: Fredoka (headings/buttons) and Outfit (body text), loaded via `shared/base.css`
-- **Animations**: Shared animations (`popIn`, `fadeIn`, `float`, `flash`) live in `base.css`; toy-specific `@keyframes` are defined in a `<style>` tag within the component JSX
+- **Animations**: Shared animations (`popIn`, `fadeIn`, `float`, `flash`, `btnPress`, `shake`) live in `base.css`; toy-specific `@keyframes` are defined in a `<style>` tag within the component JSX
 - **No external utility libraries** — vanilla JS throughout
 - **Mobile-first**: Touch-friendly button sizes, viewport meta tags, responsive grid layouts with `maxWidth` constraints
 
@@ -223,5 +255,5 @@ The service worker cache version is **auto-generated at build time** — no manu
 4. Add a card link in the root `index.html` grid
 5. **Import `shared/base.css`** — either via `<link rel="stylesheet" href="shared/base.css" />` in HTML, or `import '../shared/base.css'` in a JS/JSX entry point. This gives you fonts, resets, background, animations, and utility classes. Skip this import if you want a fully custom look.
 6. **Use `<StickyHeader />`** for the header (required for PWA navigation — see UI Conventions above). This provides the back button, title, subtitle, and optional gear button in a consistent sticky container.
-7. **Use shared resources**: `.toy-container` class for layout, `<BackgroundDots />` for decorations, `numberblockColors.js` for the Numberblocks palette, `<SettingsOverlay>` for settings modals, `.frosted-card` for glass card displays, `useScrollLock` hook for overlays.
+7. **Use shared resources**: `.toy-container` class for layout, `.toy-btn` class for buttons, `<BackgroundDots />` for decorations, `numberblockColors.js` for the Numberblocks palette, `colorUtils.js` for color helpers, `mathUtils.js` for math helpers, `<SettingsOverlay>` for settings modals, `.frosted-card` for glass card displays, `useScrollLock` hook for overlays.
 8. The toy will be built and deployed automatically

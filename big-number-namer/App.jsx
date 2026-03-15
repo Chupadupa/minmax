@@ -225,24 +225,12 @@ export default function BigNumberNamer() {
           100% { transform: translateX(-50%) scale(0.7); opacity: 0; }
         }
         .nb-btn {
-          width: 100%; aspect-ratio: 1.4; border-radius: 18px; border: none;
-          font-size: 30px; font-weight: 700; font-family: var(--font-heading);
-          color: #fff; cursor: pointer; display: flex; align-items: center;
-          justify-content: center; user-select: none; -webkit-user-select: none;
-          transition: transform 0.1s ease, opacity 0.15s ease;
-          text-shadow: 0 2px 4px rgba(0,0,0,0.25);
+          width: 100%; aspect-ratio: 1.4;
+          border-radius: 18px; font-size: 30px;
         }
-        .nb-btn:active:not([disabled]) { transform: scale(0.9); }
-        .nb-btn[disabled] { cursor: default; }
         .pm-btn {
-          border-radius: 16px; border: none; font-size: 26px; font-weight: 700;
-          font-family: var(--font-heading); color: #fff; cursor: pointer;
-          display: flex; align-items: center; justify-content: center;
-          user-select: none; -webkit-user-select: none; transition: transform 0.1s ease;
-          padding: 12px 0; text-shadow: 0 2px 4px rgba(0,0,0,0.25);
+          font-size: 26px; padding: 12px 0;
         }
-        .pm-btn:active:not([disabled]) { transform: scale(0.9); }
-        .pm-btn[disabled] { cursor: default; }
       `}</style>
 
       <BackgroundDots count={20} />
@@ -309,14 +297,14 @@ export default function BigNumberNamer() {
 
       {/* Plus / Minus row */}
       <div style={styles.pmRow}>
-        <button className="pm-btn" disabled={atMin} style={{
+        <button className="toy-btn pm-btn" disabled={atMin} style={{
           background: "linear-gradient(135deg, #E41E20, #FF8C1A)",
           boxShadow: "0 4px 12px rgba(228,30,32,0.3), inset 0 2px 0 rgba(255,255,255,0.2)",
           flex: 1, opacity: atMin ? 0.35 : 1,
         }} onClick={handleMinusOne}>
           − 1
         </button>
-        <button className="pm-btn" disabled={atMax} style={{
+        <button className="toy-btn pm-btn" disabled={atMax} style={{
           background: "linear-gradient(135deg, #3A8FDE, #9B59B6)",
           boxShadow: "0 4px 12px rgba(58,143,222,0.3), inset 0 2px 0 rgba(255,255,255,0.2)",
           flex: 1, opacity: atMax ? 0.35 : 1,
@@ -327,7 +315,7 @@ export default function BigNumberNamer() {
 
       {/* Clear / Delete row */}
       <div style={styles.actionRow}>
-        <button className="pm-btn" disabled={!hasContent} style={{
+        <button className="toy-btn pm-btn" disabled={!hasContent} style={{
           background: "rgba(255,255,255,0.18)",
           boxShadow: "0 4px 10px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.15)",
           fontSize: 16, letterSpacing: 1,
@@ -337,7 +325,7 @@ export default function BigNumberNamer() {
         }} onClick={handleClear}>
           CLR
         </button>
-        <button className="pm-btn" disabled={!hasContent} style={{
+        <button className="toy-btn pm-btn" disabled={!hasContent} style={{
           background: "rgba(255,255,255,0.18)",
           boxShadow: "0 4px 10px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.15)",
           fontSize: 26,
@@ -355,7 +343,7 @@ export default function BigNumberNamer() {
           const style = getNumberBlockStyle(d);
           const hasBorder = !!style.border;
           return (
-            <button key={d} className="nb-btn" disabled={atMax} style={{
+            <button key={d} className="toy-btn nb-btn" disabled={atMax} style={{
               background: style.background,
               border: hasBorder ? `3px solid ${style.border}` : undefined,
               boxShadow: hasBorder
@@ -370,7 +358,7 @@ export default function BigNumberNamer() {
             </button>
           );
         })}
-        <button className="nb-btn" disabled={atMax} style={{
+        <button className="toy-btn nb-btn" disabled={atMax} style={{
           background: "#FFFFFF",
           border: "3px solid #E41E20",
           boxShadow: "0 5px 14px rgba(228,30,32,0.25), inset 0 2px 0 rgba(255,255,255,0.5)",

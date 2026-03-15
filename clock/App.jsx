@@ -295,7 +295,7 @@ function TimeKeypad({ digitBuffer, onDigit, onBackspace, onClear, disabled }) {
       {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => (
         <button
           key={d}
-          className="clock-btn"
+          className="toy-btn clock-btn"
           disabled={disabled}
           style={{
             ...styles.keypadBtn,
@@ -309,7 +309,7 @@ function TimeKeypad({ digitBuffer, onDigit, onBackspace, onClear, disabled }) {
         </button>
       ))}
       <button
-        className="clock-btn"
+        className="toy-btn clock-btn"
         disabled={digitBuffer.length === 0}
         style={{
           ...styles.keypadBtn,
@@ -324,7 +324,7 @@ function TimeKeypad({ digitBuffer, onDigit, onBackspace, onClear, disabled }) {
         CLR
       </button>
       <button
-        className="clock-btn"
+        className="toy-btn clock-btn"
         disabled={disabled}
         style={{
           ...styles.keypadBtn,
@@ -339,7 +339,7 @@ function TimeKeypad({ digitBuffer, onDigit, onBackspace, onClear, disabled }) {
         0
       </button>
       <button
-        className="clock-btn"
+        className="toy-btn clock-btn"
         disabled={digitBuffer.length === 0}
         style={{
           ...styles.keypadBtn,
@@ -364,7 +364,7 @@ function AmPmToggle({ isAM, onToggle, use24Hour }) {
   return (
     <div style={styles.ampmCol}>
       <button
-        className="clock-btn"
+        className="toy-btn clock-btn"
         style={{
           ...styles.ampmBtn,
           background: isAM
@@ -377,7 +377,7 @@ function AmPmToggle({ isAM, onToggle, use24Hour }) {
         AM
       </button>
       <button
-        className="clock-btn"
+        className="toy-btn clock-btn"
         style={{
           ...styles.ampmBtn,
           background: !isAM
@@ -609,23 +609,11 @@ export default function ClockToy() {
   return (
     <div className="toy-container">
       <style>{`
-        @keyframes clockShake {
-          0%, 100% { transform: translateX(0); }
-          20% { transform: translateX(-6px); }
-          40% { transform: translateX(6px); }
-          60% { transform: translateX(-4px); }
-          80% { transform: translateX(4px); }
-        }
+        /* clockShake — uses shared @keyframes shake from base.css */
         .clock-btn {
-          border-radius: 14px; border: none;
-          font-size: 22px; font-weight: 700; font-family: var(--font-heading);
-          color: #fff; cursor: pointer; display: flex; align-items: center;
-          justify-content: center; user-select: none; -webkit-user-select: none;
-          transition: transform 0.1s ease, opacity 0.15s ease;
-          text-shadow: 0 2px 4px rgba(0,0,0,0.25);
+          font-size: 22px;
+          border-radius: 14px;
         }
-        .clock-btn:active:not([disabled]) { transform: scale(0.9); }
-        .clock-btn[disabled] { cursor: default; }
       `}</style>
 
       <BackgroundDots count={16} />
@@ -646,7 +634,7 @@ export default function ClockToy() {
       />
 
       {/* Analog Clock */}
-      <div style={{ ...styles.clockContainer, animation: shake ? "clockShake 0.4s ease-out" : "none" }}>
+      <div style={{ ...styles.clockContainer, animation: shake ? "shake 0.4s ease-out" : "none" }}>
         <AnalogClock
           hours={hours}
           minutes={minutes}
@@ -675,7 +663,7 @@ export default function ClockToy() {
       {/* Reset to current time */}
       {!editMode && (
         <button
-          className="clock-btn"
+          className="toy-btn clock-btn"
           style={styles.resetBtn}
           onClick={handleResetToNow}
         >
@@ -687,7 +675,7 @@ export default function ClockToy() {
       {editMode && (
         <div style={styles.keypadArea}>
           <button
-            className="clock-btn"
+            className="toy-btn clock-btn"
             style={styles.doneBtn}
             onClick={handleExitEdit}
           >
