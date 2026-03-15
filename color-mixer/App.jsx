@@ -75,7 +75,7 @@ const PALETTE = [
 
 const NAMED_COLORS = [
   // ── Whites & Near-Whites ──
-  { name: "White",            rgb: [255, 255, 255] },
+  { name: "White",            rgb: [245, 245, 245] },
   { name: "Snow",             rgb: [255, 250, 250] },
   { name: "Ivory",            rgb: [255, 255, 240] },
   { name: "Floral White",     rgb: [255, 250, 240] },
@@ -103,12 +103,11 @@ const NAMED_COLORS = [
   { name: "Steel Grey",       rgb: [130, 130, 130] },
 
   // ── Blacks ──
-  { name: "Black",            rgb: [0, 0, 0] },
-  { name: "Almost Black",     rgb: [20, 20, 20] },
+  { name: "Black",            rgb: [30, 30, 30] },
   { name: "Jet Black",        rgb: [52, 52, 52] },
 
   // ── Reds ──
-  { name: "Red",              rgb: [255, 0, 0] },
+  { name: "Red",              rgb: [220, 40, 40] },
   { name: "Scarlet",          rgb: [255, 36, 0] },
   { name: "Crimson",          rgb: [220, 20, 60] },
   { name: "Fire Engine Red",  rgb: [206, 32, 41] },
@@ -126,7 +125,7 @@ const NAMED_COLORS = [
   { name: "Oxblood",          rgb: [76, 0, 9] },
 
   // ── Pinks ──
-  { name: "Pink",             rgb: [255, 192, 203] },
+  { name: "Pink",             rgb: [240, 130, 170] },
   { name: "Hot Pink",         rgb: [255, 105, 180] },
   { name: "Deep Pink",        rgb: [255, 20, 147] },
   { name: "Light Pink",       rgb: [255, 182, 193] },
@@ -141,7 +140,7 @@ const NAMED_COLORS = [
   { name: "Misty Rose",       rgb: [255, 228, 225] },
 
   // ── Oranges ──
-  { name: "Orange",           rgb: [255, 165, 0] },
+  { name: "Orange",           rgb: [240, 140, 20] },
   { name: "Dark Orange",      rgb: [255, 140, 0] },
   { name: "Red-Orange",       rgb: [255, 83, 73] },
   { name: "Tangerine",        rgb: [255, 159, 0] },
@@ -156,7 +155,7 @@ const NAMED_COLORS = [
   { name: "Copper",           rgb: [184, 115, 51] },
 
   // ── Browns ──
-  { name: "Brown",            rgb: [150, 75, 0] },
+  { name: "Brown",            rgb: [140, 80, 30] },
   { name: "Chocolate",        rgb: [123, 63, 0] },
   { name: "Dark Brown",       rgb: [101, 67, 33] },
   { name: "Saddle Brown",     rgb: [139, 69, 19] },
@@ -180,7 +179,7 @@ const NAMED_COLORS = [
   { name: "Coffee",           rgb: [111, 78, 55] },
 
   // ── Yellows ──
-  { name: "Yellow",           rgb: [255, 255, 0] },
+  { name: "Yellow",           rgb: [250, 220, 20] },
   { name: "Gold",             rgb: [255, 215, 0] },
   { name: "Golden Yellow",    rgb: [255, 223, 0] },
   { name: "Goldenrod",        rgb: [218, 165, 32] },
@@ -196,7 +195,7 @@ const NAMED_COLORS = [
   { name: "Maize",            rgb: [251, 236, 93] },
 
   // ── Greens ──
-  { name: "Green",            rgb: [0, 128, 0] },
+  { name: "Green",            rgb: [40, 170, 60] },
   { name: "Lime",             rgb: [0, 255, 0] },
   { name: "Lime Green",       rgb: [50, 205, 50] },
   { name: "Lawn Green",       rgb: [124, 252, 0] },
@@ -228,9 +227,9 @@ const NAMED_COLORS = [
 
   // ── Teals & Cyans ──
   { name: "Teal",             rgb: [0, 128, 128] },
-  { name: "Cyan",             rgb: [0, 255, 255] },
+  { name: "Cyan",             rgb: [20, 190, 220] },
   { name: "Dark Cyan",        rgb: [0, 139, 139] },
-  { name: "Aqua",             rgb: [0, 200, 200] },
+  { name: "Aqua",             rgb: [0, 255, 255] },
   { name: "Aquamarine",       rgb: [127, 255, 212] },
   { name: "Turquoise",        rgb: [64, 224, 208] },
   { name: "Dark Turquoise",   rgb: [0, 206, 209] },
@@ -239,7 +238,7 @@ const NAMED_COLORS = [
   { name: "Caribbean Green",  rgb: [28, 211, 162] },
 
   // ── Blues ──
-  { name: "Blue",             rgb: [0, 0, 255] },
+  { name: "Blue",             rgb: [30, 100, 210] },
   { name: "Royal Blue",       rgb: [65, 105, 225] },
   { name: "Cobalt Blue",      rgb: [0, 71, 171] },
   { name: "Cornflower Blue",  rgb: [100, 149, 237] },
@@ -262,7 +261,7 @@ const NAMED_COLORS = [
   // ── Purples & Violets ──
   { name: "Purple",           rgb: [150, 50, 150] },
   { name: "Dark Purple",      rgb: [48, 0, 48] },
-  { name: "Violet",           rgb: [148, 0, 211] },
+  { name: "Violet",           rgb: [140, 50, 180] },
   { name: "Dark Violet",      rgb: [128, 0, 200] },
   { name: "Blue-Violet",      rgb: [138, 43, 226] },
   { name: "Indigo",           rgb: [75, 0, 130] },
@@ -280,7 +279,7 @@ const NAMED_COLORS = [
   { name: "Royal Purple",     rgb: [120, 81, 169] },
 
   // ── Magentas & Fuchsias ──
-  { name: "Magenta",          rgb: [255, 0, 255] },
+  { name: "Magenta",          rgb: [220, 30, 160] },
   { name: "Fuchsia",          rgb: [255, 0, 128] },
   { name: "Dark Magenta",     rgb: [139, 0, 139] },
   { name: "Medium Violet Red",rgb: [199, 21, 133] },
