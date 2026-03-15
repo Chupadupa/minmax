@@ -321,7 +321,7 @@ function sideDescription(shape) {
   if (shape.render === "oval") return "No straight sides — a stretched circle!";
   if (shape.render === "football") return "Two curved sides that meet at points!";
   if (shape.sides > 100) {
-    return `${shape.sides.toLocaleString()} sides — looks like a circle!`;
+    return `${shape.sides.toLocaleString()} sides — that's a lot of sides!`;
   }
   const word = numberToWord(shape.sides);
   const capitalized = word.charAt(0).toUpperCase() + word.slice(1);
