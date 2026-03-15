@@ -9,6 +9,7 @@
 - **Calculator** — Colorful calculator with Numberblocks-inspired button colors
 - **Color Mixer** — Tap colors to mix them together and see what you get
 - **Fraction Combiner** — Combine fraction pie pieces to fill a circle; a pie chart game for learning fractions
+- **Shape Selector** — Tap shapes to see them up close and learn their names, from circles to custom polygons with up to 10,000 sides
 
 ## Tech Stack
 
@@ -57,10 +58,15 @@ There are no test, lint, or format commands.
 │   ├── index.html
 │   ├── main.jsx
 │   └── App.jsx                 # Fraction pie chart game
+├── shape-selector/             # Shape Selector toy
+│   ├── index.html
+│   ├── main.jsx
+│   └── App.jsx                 # Shape grid, SVG rendering, polygon naming (single-file toy)
 ├── shared/
 │   ├── base.css                # Shared stylesheet: tokens, resets, fonts, animations, utilities
 │   ├── useAutoFitFontSize.js   # Generic auto-fit font hook (reusable across toys)
-│   ├── numberblockColors.js    # Shared NB_COLORS, NB_SOLID, NB7_STOPS, NB7_GRADIENT constants
+│   ├── useScrollLock.js        # Scroll lock hook for overlays (toggles overlay-open class)
+│   ├── numberblockColors.js    # Shared NB_COLORS, NB_SOLID, NB_OUTLINE, NB7_STOPS, NB7_GRADIENT, getNumberBlockStyle
 │   ├── BackgroundDots.jsx      # Floating background dots decoration component
 │   ├── StickyHeader.jsx        # Consistent sticky header component for all toys
 │   └── SettingsOverlay.jsx     # Reusable settings modal shell with toggle/divider/section helpers
@@ -123,15 +129,25 @@ A pie chart game for learning fractions. Combine fraction pieces to fill a whole
 
 - **`App.jsx`** — Single-file toy; SVG pie chart, fraction selection (halves through tenths), Numberblocks-inspired colors, LCD-based fraction arithmetic (LCD = 2520 for 1–10)
 
+### Shape Selector (`shape-selector/`)
+
+A shape exploration toy. Tap shapes from a grid to see them enlarged with their name and side count.
+
+- **`App.jsx`** — Single-file toy; SVG shape rendering (circles, ovals, footballs, triangles, quadrilaterals, regular polygons up to 100 sides), Latin-based polygon naming system (up to 9,999 sides via thousands/hundreds/tens/ones prefixes), custom polygon input for any side count 3–10,000, Numberblocks-inspired colors with `getNumberBlockStyle`, color-coded name segments, hyphenation toggle
+
 ### Shared Utilities (`shared/`)
 
-- **`base.css`** — Shared stylesheet providing design tokens (CSS custom properties), global resets, font loading (Fredoka & Outfit via Google Fonts), dark gradient background, shared keyframe animations (`popIn`, `fadeIn`, `float`, `flash`, `btnPress`), utility CSS classes (`.gradient-text`, `.frosted-card`, `.back-btn`, `.gear-btn`, `.page-header`, `.safe-area-container`, `.toy-container`, `.bg-dots`), page header defaults (`.page-header h1`, `.page-header .subtitle`), and global user-select prevention. Toys import this to get the Doodads look for free, override CSS variables for tweaks, or skip the import entirely for a custom look.
+- **`base.css`** — Shared stylesheet providing design tokens (CSS custom properties), global resets, font loading (Fredoka & Outfit via Google Fonts), dark gradient background, shared keyframe animations (`popIn`, `fadeIn`, `float`, `flash`, `btnPress`), utility CSS classes (`.gradient-text`, `.frosted-card`, `.back-btn`, `.gear-btn`, `.page-header`, `.safe-area-container`, `.toy-container`, `.bg-dots`), page header defaults (`.page-header h1`, `.page-header .subtitle`), `.overlay-open` scroll-lock class (used by `useScrollLock` hook), and global user-select prevention. Toys import this to get the Doodads look for free, override CSS variables for tweaks, or skip the import entirely for a custom look.
 
 - **`useAutoFitFontSize.js`** — Binary search algorithm for dynamic font scaling within a container, with oscillation prevention via ceiling tracking. Accepts `{ maxFont, minFont }` options. Available for use by any toy.
 
+- **`useScrollLock.js`** — Hook to prevent background scrolling when overlays are active. Toggles the `overlay-open` class on `<html>` and `<body>` (styled in `base.css`). Usage: `useScrollLock(isOverlayVisible)`.
+
 - **`numberblockColors.js`** — Shared Numberblocks-inspired color palette constants. Exports:
-  - `NB_COLORS` — digit-to-color/gradient map (string keys `"1"`–`"9"`, with `"7"` as a rainbow linear-gradient)
-  - `NB_SOLID` — digit-to-solid-hex map (for box-shadows where gradients can't be used)
+  - `NB_COLORS` — digit-to-color/gradient map (string keys `"1"`–`"100"` for ones and decade values, with `"7"` as a rainbow linear-gradient)
+  - `NB_SOLID` — digit-to-solid-hex map (for box-shadows where gradients can't be used; covers `"1"`–`"100"`)
+  - `NB_OUTLINE` — outline colors for exact multiples of 10 (`"10"`–`"100"`)
+  - `getNumberBlockStyle(n)` — returns `{ background, border }` for any number 1–100+, computing decade fill + ones-digit border colors
   - `NB7_STOPS` — array of rainbow gradient stop colors for Numberblocks 7
   - `NB7_GRADIENT` — the rainbow CSS linear-gradient string for Numberblocks 7
 
@@ -159,6 +175,7 @@ A pie chart game for learning fractions. Combine fraction pieces to fill a whole
 - **Use `<BackgroundDots />`** component for floating dot decorations instead of defining the useMemo + render pattern inline
 - **Use `.frosted-card`** class for frosted glass card displays instead of redefining `background`, `backdropFilter`, `border`, `borderRadius` inline
 - **Use the shared `SettingsOverlay`** shell for settings modals; pass toy-specific toggles and about content as children
+- **Use `useScrollLock`** hook when showing full-screen overlays to prevent background scrolling
 - **Import Numberblocks colors from `shared/numberblockColors.js`** instead of redefining the palette in each toy
 - **Section delimiters**: `// ── Section Name ──` with box-drawing characters
 - **Constants**: `UPPER_SNAKE_CASE` for arrays/objects
@@ -206,5 +223,5 @@ The service worker cache version is **auto-generated at build time** — no manu
 4. Add a card link in the root `index.html` grid
 5. **Import `shared/base.css`** — either via `<link rel="stylesheet" href="shared/base.css" />` in HTML, or `import '../shared/base.css'` in a JS/JSX entry point. This gives you fonts, resets, background, animations, and utility classes. Skip this import if you want a fully custom look.
 6. **Use `<StickyHeader />`** for the header (required for PWA navigation — see UI Conventions above). This provides the back button, title, subtitle, and optional gear button in a consistent sticky container.
-7. **Use shared resources**: `.toy-container` class for layout, `<BackgroundDots />` for decorations, `numberblockColors.js` for the Numberblocks palette, `<SettingsOverlay>` for settings modals, `.frosted-card` for glass card displays.
+7. **Use shared resources**: `.toy-container` class for layout, `<BackgroundDots />` for decorations, `numberblockColors.js` for the Numberblocks palette, `<SettingsOverlay>` for settings modals, `.frosted-card` for glass card displays, `useScrollLock` hook for overlays.
 8. The toy will be built and deployed automatically
