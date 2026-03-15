@@ -3,6 +3,7 @@ import { useAutoFitFontSize } from "../shared/useAutoFitFontSize.js";
 import { formatDisplay, parseDisplay, compute, MAX_DISPLAY_DIGITS } from "./calcEngine.js";
 import { NB_COLORS as DIGIT_COLORS, NB_SOLID as DIGIT_SOLID, getNumberBlockStyle } from "../shared/numberblockColors.js";
 import { BackgroundDots } from "../shared/BackgroundDots.jsx";
+import { StickyHeader } from "../shared/StickyHeader.jsx";
 
 const OP_COLOR = "linear-gradient(135deg, #FF8C1A, #E41E20)";
 const OP_SOLID = "#E41E20";
@@ -343,7 +344,7 @@ export default function Calculator() {
   // ── Render ──
 
   return (
-    <div className="toy-container" style={{ justifyContent: "flex-end", gap: 12 }}>
+    <div className="toy-container" style={{ gap: 12 }}>
       <style>{`
         .calc-btn {
           width: 100%; aspect-ratio: 1; border-radius: 50%; border: none;
@@ -363,14 +364,10 @@ export default function Calculator() {
       <BackgroundDots count={20} />
 
       {/* Header */}
-      <div className="page-header" style={styles.header}>
-        <a href="../" className="back-btn" aria-label="Back to home">⬅️</a>
-        <h1 className="gradient-text">Calculator</h1>
-        <p className="subtitle">Tap away!</p>
-      </div>
+      <StickyHeader title="Calculator" subtitle="Tap away!" />
 
       {/* Display */}
-      <div className="frosted-card" style={styles.displayCard}>
+      <div className="frosted-card" style={{ ...styles.displayCard, marginTop: "auto" }}>
         {historyEquation && (
           <div style={styles.historyText}>{historyEquation}</div>
         )}
@@ -405,9 +402,6 @@ export default function Calculator() {
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const styles = {
-  header: {
-    width: "100%", maxWidth: 340,
-  },
   displayCard: {
     padding: "20px 24px",
     width: "100%", maxWidth: 340,

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { BackgroundDots } from "../shared/BackgroundDots.jsx";
+import { StickyHeader } from "../shared/StickyHeader.jsx";
 import { NB_SOLID, NB7_STOPS, getNumberBlockStyle } from "../shared/numberblockColors.js";
 import { useScrollLock } from "../shared/useScrollLock.js";
 
@@ -460,11 +461,10 @@ export default function ShapeSelector() {
       <BackgroundDots />
 
       {/* Header */}
-      <div className="page-header" style={styles.header}>
-        <a href="../" className="back-btn" aria-label="Back to home">⬅️</a>
-        <h1 className="gradient-text">Shape Selector</h1>
-        <p className="subtitle">Tap a shape to see it up close!</p>
-      </div>
+      <StickyHeader
+        title="Shape Selector"
+        subtitle="Tap a shape to see it up close!"
+      />
 
       {/* Shape grid */}
       <div style={styles.grid}>
@@ -555,11 +555,6 @@ export default function ShapeSelector() {
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const styles = {
-  header: {
-    marginBottom: 8,
-    width: "100%",
-    maxWidth: 400,
-  },
   grid: {
     display: "grid",
     gridTemplateColumns: "repeat(3, 1fr)",

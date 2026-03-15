@@ -6,6 +6,7 @@ import {
   SettingsSection,
   SettingsAboutText,
 } from "../shared/SettingsOverlay.jsx";
+import { StickyHeader } from "../shared/StickyHeader.jsx";
 
 // ── RYB Cube Corners ────────────────────────────────────────────────────────
 //
@@ -493,18 +494,11 @@ export default function ColorMixer() {
       `}</style>
 
       {/* Header */}
-      <div className="page-header" style={styles.header}>
-        <a href="../" className="back-btn" aria-label="Back to home">⬅️</a>
-        <button
-          className="gear-btn"
-          aria-label="Settings"
-          onClick={() => setShowSettings(true)}
-        >
-          ⚙️
-        </button>
-        <h1 className="gradient-text">Color Combiner</h1>
-        <p className="subtitle">Tap colors to mix them together!</p>
-      </div>
+      <StickyHeader
+        title="Color Combiner"
+        subtitle="Tap colors to mix them together!"
+        onGearClick={() => setShowSettings(true)}
+      />
 
       {/* Color swatch display */}
       <div style={{
@@ -641,10 +635,6 @@ export default function ColorMixer() {
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const styles = {
-  header: {
-    marginBottom: 16,
-    width: "100%", maxWidth: 400,
-  },
   swatchCard: {
     width: "100%", maxWidth: 400, minHeight: 180,
     borderRadius: 24,
