@@ -11,6 +11,10 @@ export function useScrollLock(active) {
   useEffect(() => {
     if (!active) return;
     document.body.classList.add("overlay-open");
-    return () => document.body.classList.remove("overlay-open");
+    document.documentElement.classList.add("overlay-open");
+    return () => {
+      document.body.classList.remove("overlay-open");
+      document.documentElement.classList.remove("overlay-open");
+    };
   }, [active]);
 }

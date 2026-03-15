@@ -65,7 +65,10 @@ body {
 }
 
 /* Prevent background scrolling when a full-screen overlay/popup is active.
-   Any component can toggle this class on <body> via the useScrollLock hook. */
+   The useScrollLock hook toggles `overlay-open` on both <html> and <body>.
+   Must target both — on some browsers/devices the scroll lives on <html>,
+   and overflow:hidden on <body> alone is not enough. */
+html.overlay-open,
 body.overlay-open {
   overflow: hidden;
 }
