@@ -212,6 +212,13 @@ export default function ShapeSelector() {
   function handleCustomConfirm() {
     const sides = parseInt(customValue, 10);
     if (!sides || sides < 3) return;
+    const existing = SHAPES.find((s) => s.sides === sides && s.render === "polygon");
+    if (existing) {
+      setShowCustomInput(false);
+      setCustomValue("");
+      setSelected(existing);
+      return;
+    }
     const style = getNumberBlockStyle(sides);
     const name = sides <= 9999 ? polygonNameForSides(sides) : `${sides}-gon`;
     const shape = {
@@ -220,7 +227,7 @@ export default function ShapeSelector() {
       displayNum: sides,
       color: style.rainbow ? "rainbow" : style.background,
       borderColor: style.border,
-      render: "circle",
+      render: "polygon",
     };
     setShowCustomInput(false);
     setCustomValue("");
@@ -427,7 +434,7 @@ export default function ShapeSelector() {
                   return (
                     <span key={i} style={{ display: "inline-block" }}>
                       <span style={colorStyle}>{seg.text}</span>
-                      {showHyphen && <span style={colorStyle}>-</span>}
+                      {showHyphen && <span style={{ color: "#fff", WebkitTextFillColor: "#fff" }}>-</span>}
                     </span>
                   );
                 })
