@@ -513,10 +513,9 @@ const styles = {
     width: "100%", maxWidth: 460,
     padding: "12px 14px", position: "relative", zIndex: 1,
     display: "flex", flexDirection: "column",
-    // Grow to fill the leftover viewport height (so there's no dead space on
-    // tall screens / installed PWA) and shrink when short (so the numpad stays
-    // on-screen). The grid re-virtualizes to whatever height it ends up.
-    height: 348, minHeight: 132, flex: "1 1 auto",
+    // Preferred height, but allowed to shrink (never grow) so the numpad below
+    // stays on-screen on short viewports. The grid re-virtualizes to fit.
+    height: 348, minHeight: 132, flex: "0 1 auto",
   },
   fullHeader: {
     display: "flex", alignItems: "baseline", justifyContent: "center",
