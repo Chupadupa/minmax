@@ -10,7 +10,7 @@
 - **Color Mixer** — Tap colors to mix them together and see what you get
 - **Fraction Combiner** — Combine fraction pie pieces to fill a circle; a pie chart game for learning fractions
 - **Shape Selector** — Tap shapes to see them up close and learn their names, from circles to custom polygons with up to 10,000 sides
-- **Pi Digits** — Enter how many digits of π you want to see and watch them appear, from 3 up to a thousand
+- **Pi Digits** — Enter how many digits of π you want to see; the specific digit is shown big and the full number scrolls below, all the way up to a million
 
 ## Tech Stack
 
@@ -71,8 +71,9 @@ There are no test, lint, or format commands.
 ├── pi-digits/                  # Pi Digits toy
 │   ├── index.html
 │   ├── main.jsx
-│   ├── App.jsx                 # Numpad, auto-fit color-coded π display, settings
-│   └── piDigits.js             # Pure BigInt spigot algorithm for π digits (cached)
+│   ├── App.jsx                 # Numpad, big specific-digit display, virtualized full-number grid, settings
+│   ├── piDigits.js             # Pure Chudnovsky (binary splitting) BigInt π computation
+│   └── piWorker.js             # Web Worker wrapper so large computations don't block the UI
 ├── shared/
 │   ├── base.css                # Shared stylesheet: tokens, resets, fonts, animations, utilities, .toy-btn
 │   ├── colorUtils.js           # Shared color helpers: luminance, contrastTextColor, rgbToHex, textColorForRgb
@@ -167,17 +168,25 @@ A shape exploration toy. Tap shapes from a grid to see them enlarged with their 
 
 ### Pi Digits (`pi-digits/`)
 
-Enter a digit count on the Numberblocks-inspired numpad and see π rendered to that
-many digits (leading 3 + decimals), color-coded by digit and auto-fit to the display.
+Enter a digit count on the Numberblocks-inspired numpad. The specific requested
+digit (the Nth digit of π) is shown large and color-coded up top; the full number
+scrolls below the numpad, color-coded per digit and grouped in tens — all the way
+up to a million digits.
 
-- **`piDigits.js`** — Pure logic (no React dependency): `getPiDigits(count)` returns the
-  first `count` digits of π using Jeremy Gibbons' unbounded spigot algorithm with BigInt.
-  Caches the longest run computed so far so repeated or growing requests stay cheap.
-  Exports `MAX_DIGITS` (1000).
+- **`piDigits.js`** — Pure logic (no React dependency): `computePiString(total)` returns
+  the first `total` digits of π (leading 3 + decimals) as a digit string using the
+  Chudnovsky algorithm with binary splitting and a BigInt integer square root.
+  A few guard digits are computed and discarded so the last digit is exact.
+  Exports `MAX_DIGITS` (1,000,000).
+- **`piWorker.js`** — A Web Worker that calls `computePiString` off the main thread, so
+  large requests (a million digits takes a few seconds) never freeze the UI. Messages
+  carry a `reqId` so stale results are ignored.
 - **`App.jsx`** — Numpad + ±1/clear/backspace controls (shared with the Big Number Namer
-  layout), auto-fit display via `useAutoFitFontSize`, per-digit Numberblocks colors,
-  settings toggles for coloring and grouping digits in fives, and milestone fun facts
-  via the shared `Toast`.
+  layout), a big **specific-digit** display, and a **virtualized full-number grid**
+  (only the rows in view are mounted, so a million colored digits scroll smoothly).
+  Seeds a baseline of digits synchronously so small requests are instant, then extends
+  the cache via the worker (debounced) for larger ones. Per-digit Numberblocks colors,
+  settings toggles for coloring and grouping, and milestone fun facts via the shared `Toast`.
 
 ### Shared Utilities (`shared/`)
 
