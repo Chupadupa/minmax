@@ -325,7 +325,11 @@ export default function PiDigits() {
   };
 
   return (
-    <div className="toy-container" style={{ justifyContent: "flex-start" }}>
+    <div className="toy-container" style={{
+      justifyContent: "flex-start",
+      height: "var(--app-height, 100dvh)",
+      overflowY: "auto",
+    }}>
       <style>{`
         @keyframes factPop {
           0% { transform: translateX(-50%) scale(0.7); opacity: 0; }
@@ -457,24 +461,28 @@ export default function PiDigits() {
 const styles = {
   funFactAnchor: {
     width: "100%", maxWidth: 380, height: 20,
-    position: "relative", zIndex: 2,
+    position: "relative", zIndex: 2, flexShrink: 0,
   },
   numpad: {
     display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10,
     width: "100%", maxWidth: 300, marginTop: 10, position: "relative", zIndex: 1,
+    flexShrink: 0,
   },
   pmRow: {
     display: "flex", gap: 10, width: "100%", maxWidth: 300,
-    position: "relative", zIndex: 1,
+    position: "relative", zIndex: 1, flexShrink: 0,
   },
   actionRow: {
     display: "flex", gap: 10, width: "100%", maxWidth: 300,
-    marginTop: 10, position: "relative", zIndex: 1,
+    marginTop: 10, position: "relative", zIndex: 1, flexShrink: 0,
   },
   displayCard: {
     width: "100%", maxWidth: 460,
     padding: "12px 14px", position: "relative", zIndex: 1,
     display: "flex", flexDirection: "column",
+    // Preferred height, but allowed to shrink (never grow) so the numpad below
+    // stays on-screen on short viewports. The grid re-virtualizes to fit.
+    height: 348, minHeight: 132, flex: "0 1 auto",
   },
   fullHeader: {
     display: "flex", alignItems: "baseline", justifyContent: "center",
@@ -491,7 +499,7 @@ const styles = {
     WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
   },
   fullEmpty: {
-    height: 300, borderRadius: 10, background: "rgba(0,0,0,0.18)",
+    flex: 1, minHeight: 0, borderRadius: 10, background: "rgba(0,0,0,0.18)",
     display: "flex", flexDirection: "column",
     alignItems: "center", justifyContent: "center", gap: 14,
   },
@@ -507,7 +515,7 @@ const styles = {
 
 const grid = {
   scroller: {
-    width: "100%", height: 300,
+    width: "100%", flex: 1, minHeight: 0,
     overflowY: "auto", overflowX: "hidden",
     background: "rgba(0,0,0,0.18)", borderRadius: 10,
     padding: "4px 0",
