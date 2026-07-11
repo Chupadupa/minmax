@@ -23,12 +23,6 @@ const DIGIT_COLORS = {
   5: "#29B6A8", 6: "#5C6BC0", 7: "#9B59B6", 8: "#D6268E", 9: "#B0B0B0",
 };
 
-function ordinal(n) {
-  const s = ["th", "st", "nd", "rd"];
-  const v = n % 100;
-  return n.toLocaleString() + (s[(v - 20) % 10] || s[v] || s[0]);
-}
-
 function getFunFact(n) {
   if (n === 1) return "🥧 Just 3 — the whole-number part of π!";
   if (n === 3) return "🎉 3.14 — that's Pi Day, March 14th!";
@@ -143,33 +137,40 @@ function PiGrid({ value, count, colorize, group }) {
   );
 }
 
-// ── Specific-Digit Display ─────────────────────────────────────────────────────
+// ── Full-Number Display ────────────────────────────────────────────────────────
 
-function SpecificDigit({ count, value, ready, colorize }) {
-  if (count === 0) {
-    return (
-      <div className="frosted-card" style={sd.card}>
-        <div style={sd.piBig}>π</div>
-        <div style={sd.prompt}>Type how many digits below</div>
-      </div>
-    );
-  }
-  if (!ready) {
-    return (
-      <div className="frosted-card" style={sd.card}>
-        <div style={sd.computing}>
-          Computing π to<br />
-          <strong style={{ color: "#FFD030" }}>{count.toLocaleString()}</strong> digits…
-        </div>
-      </div>
-    );
-  }
-  const digit = value[count - 1];
-  const color = colorize ? DIGIT_COLORS[+digit] : "#FFFFFF";
+function FullNumberDisplay({ count, value, ready, colorize, group }) {
   return (
-    <div className="frosted-card" style={sd.card}>
-      <div style={sd.label}>the {ordinal(count)} digit of π is</div>
-      <div style={{ ...sd.bigDigit, color, textShadow: `0 0 44px ${color}66` }}>{digit}</div>
+    <div className="frosted-card" style={styles.displayCard}>
+      <div style={styles.fullHeader}>
+        <span style={styles.fullTitle}>
+          {count <= 1
+            ? "the digits of π"
+            : `π to ${count.toLocaleString()} digits`}
+        </span>
+      </div>
+      {count === 0 && (
+        <div style={styles.fullEmpty}>
+          <span style={styles.lead3}>3.14159…</span>
+          <span style={styles.emptyHint}>Type how many digits below</span>
+        </div>
+      )}
+      {count === 1 && (
+        <div style={styles.fullEmpty}>
+          <span style={styles.lead3}>3</span>
+          <span style={styles.emptyHint}>Just the 3 so far — add more digits!</span>
+        </div>
+      )}
+      {count > 1 && !ready && (
+        <div style={styles.fullEmpty}>
+          <span style={{ ...styles.emptyHint, animation: "softPulse 1.4s ease-in-out infinite" }}>
+            Computing {(count - 1).toLocaleString()} decimal places…
+          </span>
+        </div>
+      )}
+      {count > 1 && ready && (
+        <PiGrid value={value} count={count} colorize={colorize} group={group} />
+      )}
     </div>
   );
 }
@@ -337,11 +338,6 @@ export default function PiDigits() {
           0% { transform: translateX(-50%) scale(1); opacity: 1; }
           100% { transform: translateX(-50%) scale(0.7); opacity: 0; }
         }
-        @keyframes digitPop {
-          0% { transform: scale(0.6); opacity: 0; }
-          60% { transform: scale(1.08); }
-          100% { transform: scale(1); opacity: 1; }
-        }
         @keyframes softPulse { 0%,100% { opacity: 0.45; } 50% { opacity: 1; } }
         .nb-btn {
           width: 100%; aspect-ratio: 1.4;
@@ -367,8 +363,8 @@ export default function PiDigits() {
         setGroup={setGroup}
       />
 
-      {/* The specific digit */}
-      <SpecificDigit count={count} value={piCache.value} ready={ready} colorize={colorize} />
+      {/* The full number, scrollable, up top */}
+      <FullNumberDisplay count={count} value={piCache.value} ready={ready} colorize={colorize} group={group} />
 
       {/* Fun fact overlay */}
       <div style={styles.funFactAnchor}>
@@ -456,25 +452,6 @@ export default function PiDigits() {
           0
         </button>
       </div>
-
-      {/* Full number, below the numpad */}
-      <div className="frosted-card" style={styles.fullCard}>
-        <div style={styles.fullHeader}>
-          <span style={styles.fullTitle}>π to {count.toLocaleString()} {count === 1 ? "digit" : "digits"}</span>
-        </div>
-        {count === 0 && (
-          <div style={styles.fullEmpty}>3.14159 26535 89793 …</div>
-        )}
-        {count === 1 && (
-          <div style={styles.fullEmpty}>Just the 3 so far — add more digits!</div>
-        )}
-        {count > 1 && !ready && (
-          <div style={styles.fullEmpty}>Computing {(count - 1).toLocaleString()} decimal places…</div>
-        )}
-        {count > 1 && ready && (
-          <PiGrid value={piCache.value} count={count} colorize={colorize} group={group} />
-        )}
-      </div>
     </div>
   );
 }
@@ -496,8 +473,8 @@ const styles = {
     display: "flex", gap: 10, width: "100%", maxWidth: 300,
     marginTop: 10, position: "relative", zIndex: 1,
   },
-  fullCard: {
-    width: "100%", maxWidth: 460, marginTop: 18,
+  displayCard: {
+    width: "100%", maxWidth: 460,
     padding: "12px 14px", position: "relative", zIndex: 1,
     display: "flex", flexDirection: "column",
   },
@@ -510,43 +487,17 @@ const styles = {
     color: "rgba(255,255,255,0.45)", fontFamily: "var(--font-body)", fontWeight: 600,
   },
   fullEmpty: {
-    color: "rgba(255,255,255,0.3)", textAlign: "center",
-    padding: "24px 0", fontSize: 16, letterSpacing: 1,
-    fontFamily: "'Fredoka', monospace",
-  },
-};
-
-const sd = {
-  card: {
-    width: "100%", maxWidth: 380, height: 210,
-    padding: "12px 16px", position: "relative", zIndex: 1,
+    height: 300, borderRadius: 10, background: "rgba(0,0,0,0.18)",
     display: "flex", flexDirection: "column",
-    alignItems: "center", justifyContent: "center", gap: 6,
+    alignItems: "center", justifyContent: "center", gap: 14,
   },
-  label: {
-    fontSize: 14, textTransform: "uppercase", letterSpacing: 1.5,
-    color: "rgba(255,255,255,0.55)", fontFamily: "var(--font-body)",
-    fontWeight: 600, textAlign: "center",
+  lead3: {
+    fontSize: 64, fontWeight: 700, color: "#FFD030",
+    fontFamily: "'Fredoka', sans-serif", lineHeight: 1,
   },
-  bigDigit: {
-    fontSize: 128, fontWeight: 700, lineHeight: 1,
-    fontFamily: "'Fredoka', sans-serif",
-    animation: "digitPop 0.28s ease-out",
-  },
-  piBig: {
-    fontSize: 96, fontWeight: 700, lineHeight: 1,
-    background: "linear-gradient(135deg, #FF8C1A, #FFD030, #4AAF4E, #3A8FDE)",
-    WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-    fontFamily: "'Fredoka', sans-serif",
-  },
-  prompt: {
+  emptyHint: {
     fontSize: 15, color: "rgba(255,255,255,0.4)",
-    fontFamily: "var(--font-body)",
-  },
-  computing: {
-    fontSize: 20, color: "rgba(255,255,255,0.7)", textAlign: "center",
-    lineHeight: 1.5, fontFamily: "var(--font-body)",
-    animation: "softPulse 1.2s ease-in-out infinite",
+    fontFamily: "var(--font-body)", textAlign: "center", padding: "0 16px",
   },
 };
 

@@ -71,7 +71,7 @@ There are no test, lint, or format commands.
 ├── pi-digits/                  # Pi Digits toy
 │   ├── index.html
 │   ├── main.jsx
-│   ├── App.jsx                 # Numpad, big specific-digit display, virtualized full-number grid, settings
+│   ├── App.jsx                 # Scrollable virtualized full-number display, numpad, settings
 │   ├── piDigits.js             # Pure Chudnovsky (binary splitting) BigInt π computation
 │   └── piWorker.js             # Web Worker wrapper so large computations don't block the UI
 ├── shared/
@@ -168,10 +168,10 @@ A shape exploration toy. Tap shapes from a grid to see them enlarged with their 
 
 ### Pi Digits (`pi-digits/`)
 
-Enter a digit count on the Numberblocks-inspired numpad. The specific requested
-digit (the Nth digit of π) is shown large and color-coded up top; the full number
-scrolls below the numpad, color-coded per digit and grouped in tens — all the way
-up to a million digits.
+Enter a digit count on the Numberblocks-inspired numpad. The full number is shown
+up top in a scrollable display — color-coded per digit, grouped in tens, with a
+place-number gutter and the leading "3." as its first line — all the way up to a
+million digits.
 
 - **`piDigits.js`** — Pure logic (no React dependency): `computePiString(total)` returns
   the first `total` digits of π (leading 3 + decimals) as a digit string using the
@@ -181,12 +181,12 @@ up to a million digits.
 - **`piWorker.js`** — A Web Worker that calls `computePiString` off the main thread, so
   large requests (a million digits takes a few seconds) never freeze the UI. Messages
   carry a `reqId` so stale results are ignored.
-- **`App.jsx`** — Numpad + ±1/clear/backspace controls (shared with the Big Number Namer
-  layout), a big **specific-digit** display, and a **virtualized full-number grid**
-  (only the rows in view are mounted, so a million colored digits scroll smoothly).
-  Seeds a baseline of digits synchronously so small requests are instant, then extends
-  the cache via the worker (debounced) for larger ones. Per-digit Numberblocks colors,
-  settings toggles for coloring and grouping, and milestone fun facts via the shared `Toast`.
+- **`App.jsx`** — A scrollable **virtualized full-number display** up top (only the rows
+  in view are mounted, so a million colored digits scroll smoothly) plus a numpad with
+  ±1/clear/backspace controls (shared with the Big Number Namer layout). Seeds a baseline
+  of digits synchronously so small requests are instant, then extends the cache via the
+  worker (debounced) for larger ones. Per-digit Numberblocks colors, settings toggles for
+  coloring and grouping, and milestone fun facts via the shared `Toast`.
 
 ### Shared Utilities (`shared/`)
 
