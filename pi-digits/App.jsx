@@ -1,6 +1,5 @@
-import { useState, useRef, Fragment } from "react";
-import { getPiDigits, MAX_DIGITS } from "./piDigits.js";
-import { useAutoFitFontSize } from "../shared/useAutoFitFontSize.js";
+import { useState, useRef, useEffect } from "react";
+import { computePiString, MAX_DIGITS } from "./piDigits.js";
 import { NB_SOLID, getNumberBlockStyle } from "../shared/numberblockColors.js";
 import { BackgroundDots } from "../shared/BackgroundDots.jsx";
 import {
@@ -12,6 +11,10 @@ import { Toast } from "../shared/Toast.jsx";
 
 const MAX_INPUT_LEN = String(MAX_DIGITS).length;
 
+// Digits computed synchronously up front so small, common requests are instant
+// (no worker round-trip, no "computing…" flash). ~2 ms.
+const BASELINE = 2000;
+
 // Numberblocks-inspired color for each single digit 0–9. Zero has no
 // Numberblocks color of its own, so it gets a clean white.
 const DIGIT_COLORS = {
@@ -20,48 +23,145 @@ const DIGIT_COLORS = {
   5: "#29B6A8", 6: "#5C6BC0", 7: "#9B59B6", 8: "#D6268E", 9: "#B0B0B0",
 };
 
+function ordinal(n) {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n.toLocaleString() + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
 function getFunFact(n) {
   if (n === 1) return "🥧 Just 3 — the whole-number part of π!";
   if (n === 3) return "🎉 3.14 — that's Pi Day, March 14th!";
-  if (n === 5) return "✨ 3.1415 — five digits!";
+  if (n === 5) return "✨ Five digits of π!";
   if (n === 10) return "🔟 Ten digits of π!";
-  if (n === 50) return "🌟 Fifty digits!";
-  if (n === 100) return "💯 One hundred digits of π!";
+  if (n === 100) return "💯 One hundred digits!";
   if (n === 314) return "🥧 Digit 314 — very pi!";
-  if (n === 500) return "🚀 Five hundred digits!";
-  if (n === MAX_DIGITS) return "🏆 One thousand digits — the most here!";
+  if (n === 1000) return "🌟 One thousand digits!";
+  if (n === 10000) return "🚀 Ten thousand digits!";
+  if (n === 100000) return "🌌 A hundred thousand digits!";
+  if (n === MAX_DIGITS) return "🏆 One MILLION digits of π!";
   return null;
 }
 
-// ── Pi Value Rendering ─────────────────────────────────────────────────────────
+// ── Full-Number Grid (virtualized) ─────────────────────────────────────────────
+//
+// Renders the decimal digits in fixed rows with a place-number gutter. Only the
+// rows in view are mounted, so even a million colored digits scroll smoothly.
 
-function PiValue({ digits, colorize, group }) {
-  if (digits.length === 0) {
-    return <span style={{ color: "rgba(255,255,255,0.18)" }}>3.14159265…</span>;
+const FONT = 18;
+const ROW_H = 30;
+const GUTTER = 58;
+const GROUP = 10;
+const GAP = 10;
+
+function renderRow(chunk, colorize, group) {
+  if (!group) {
+    return [...chunk].map((ch, j) => (
+      <span key={j} style={{ color: colorize ? DIGIT_COLORS[+ch] : "rgba(255,255,255,0.72)" }}>{ch}</span>
+    ));
+  }
+  const groups = [];
+  for (let i = 0; i < chunk.length; i += GROUP) {
+    const grp = chunk.slice(i, i + GROUP);
+    groups.push(
+      <span key={i} style={{ marginRight: GAP }}>
+        {[...grp].map((ch, j) => (
+          <span key={j} style={{ color: colorize ? DIGIT_COLORS[+ch] : "rgba(255,255,255,0.72)" }}>{ch}</span>
+        ))}
+      </span>
+    );
+  }
+  return groups;
+}
+
+function PiGrid({ value, count, colorize, group }) {
+  const scrollRef = useRef(null);
+  const [perRow, setPerRow] = useState(30);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [viewH, setViewH] = useState(300);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const measure = () => {
+      const charW = FONT * 0.62;
+      const avail = el.clientWidth - GUTTER - 12;
+      const perGroupW = GROUP * charW + (group ? GAP : 0);
+      const groups = Math.max(1, Math.floor((avail + (group ? GAP : 0)) / perGroupW));
+      setPerRow(groups * GROUP);
+      setViewH(el.clientHeight);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [group]);
+
+  // Reset scroll to top whenever the number changes so the user sees the start.
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+    setScrollTop(0);
+  }, [count]);
+
+  const decimals = count > 1 ? value.slice(1, count) : "";
+  const total = decimals.length;
+  const rows = Math.ceil(total / perRow);
+  const totalH = rows * ROW_H;
+
+  const overscan = 4;
+  const startRow = Math.max(0, Math.floor(scrollTop / ROW_H) - overscan);
+  const endRow = Math.min(rows, Math.ceil((scrollTop + viewH) / ROW_H) + overscan);
+
+  const visible = [];
+  for (let r = startRow; r < endRow; r++) {
+    const from = r * perRow;
+    visible.push(
+      <div key={r} style={{ ...grid.row, top: r * ROW_H }}>
+        <span style={grid.idx}>{(from + 1).toLocaleString()}</span>
+        <span style={grid.digits}>{renderRow(decimals.slice(from, from + perRow), colorize, group)}</span>
+      </div>
+    );
   }
 
-  const intDigit = digits[0];
-  const decimals = digits.slice(1);
-
   return (
-    <>
-      <span style={{
-        fontWeight: 700,
-        color: colorize ? DIGIT_COLORS[intDigit] : "rgba(255,255,255,0.9)",
-      }}>{intDigit}</span>
-      {decimals.length > 0 && (
-        <span style={{ color: "rgba(255,255,255,0.4)" }}>.</span>
-      )}
-      {decimals.map((d, i) => {
-        const needsGap = group && i > 0 && i % 5 === 0;
-        return (
-          <Fragment key={i}>
-            {needsGap && <span style={{ display: "inline-block", width: "0.35em" }} />}
-            <span style={{ color: colorize ? DIGIT_COLORS[d] : "rgba(255,255,255,0.55)" }}>{d}</span>
-          </Fragment>
-        );
-      })}
-    </>
+    <div
+      ref={scrollRef}
+      onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}
+      style={grid.scroller}
+    >
+      <div style={{ height: totalH, position: "relative" }}>{visible}</div>
+    </div>
+  );
+}
+
+// ── Specific-Digit Display ─────────────────────────────────────────────────────
+
+function SpecificDigit({ count, value, ready, colorize }) {
+  if (count === 0) {
+    return (
+      <div className="frosted-card" style={sd.card}>
+        <div style={sd.piBig}>π</div>
+        <div style={sd.prompt}>Type how many digits below</div>
+      </div>
+    );
+  }
+  if (!ready) {
+    return (
+      <div className="frosted-card" style={sd.card}>
+        <div style={sd.computing}>
+          Computing π to<br />
+          <strong style={{ color: "#FFD030" }}>{count.toLocaleString()}</strong> digits…
+        </div>
+      </div>
+    );
+  }
+  const digit = value[count - 1];
+  const color = colorize ? DIGIT_COLORS[+digit] : "#FFFFFF";
+  return (
+    <div className="frosted-card" style={sd.card}>
+      <div style={sd.label}>the {ordinal(count)} digit of π is</div>
+      <div style={{ ...sd.bigDigit, color, textShadow: `0 0 44px ${color}66` }}>{digit}</div>
+    </div>
   );
 }
 
@@ -81,8 +181,8 @@ function PiSettings({ show, onClose, colorize, setColorize, group, setGroup }) {
         <SettingsToggle
           checked={group}
           onChange={() => setGroup(g => !g)}
-          label="Group digits in fives"
-          hint={group ? "e.g. 3.14159 26535 89793" : "e.g. 3.141592653589793"}
+          label="Space digits into groups of ten"
+          hint={group ? "1415926535 8979323846 …" : "14159265358979323846 …"}
         />
       </div>
 
@@ -95,18 +195,22 @@ function PiSettings({ show, onClose, colorize, setColorize, group, setGroup }) {
         </SettingsAboutText>
         <SettingsAboutText>
           Made for my son, who loves numbers and wanted to see just how many
-          digits of π we could show. Type a number and watch them appear!
+          digits of π we could show — all the way up to a million.
         </SettingsAboutText>
       </SettingsSection>
 
       <SettingsDivider />
       <SettingsSection title="Credits">
         <SettingsAboutText>
-          The digits are computed live using{" "}
-          <SettingsLink href="https://www.cs.ox.ac.uk/jeremy.gibbons/publications/spigot.pdf">
-            Jeremy Gibbons' unbounded spigot algorithm
+          The digits are computed live with the{" "}
+          <SettingsLink href="https://en.wikipedia.org/wiki/Chudnovsky_algorithm">
+            Chudnovsky algorithm
           </SettingsLink>
-          {" "}for π.
+          {" "}(binary splitting), inspired by the{" "}
+          <SettingsLink href="https://www.exeter.ac.uk/research-centres/quantum-systems-and-nanomaterials/pi/">
+            million digits of π
+          </SettingsLink>
+          {" "}from the University of Exeter.
         </SettingsAboutText>
         <SettingsAboutText>
           Digit colors based on the{" "}
@@ -134,73 +238,86 @@ function PiSettings({ show, onClose, colorize, setColorize, group, setGroup }) {
 export default function PiDigits() {
   const [input, setInput] = useState("");
   const [bounce, setBounce] = useState(null);
-  const [valueFlash, setValueFlash] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [colorize, setColorize] = useState(true);
-  const [group, setGroup] = useState(false);
-  const outerRef = useRef(null);
-  const innerRef = useRef(null);
+  const [group, setGroup] = useState(true);
+
+  // Longest run of π computed so far. Seeded synchronously so small requests
+  // are instant; grows via the worker for large ones.
+  const [piCache, setPiCache] = useState(() => ({
+    count: BASELINE,
+    value: computePiString(BASELINE),
+  }));
+
+  const workerRef = useRef(null);
+  const reqIdRef = useRef(0);
+  const debounceRef = useRef(null);
 
   const count = input === "" ? 0 : Math.min(parseInt(input, 10), MAX_DIGITS);
-  const digits = getPiDigits(count);
   const funFact = getFunFact(count);
   const atMax = count >= MAX_DIGITS;
   const atMin = count <= 0;
   const hasContent = count > 0;
+  const ready = count <= piCache.count;
 
-  const triggerFlash = () => {
-    setValueFlash(true);
-    setTimeout(() => setValueFlash(false), 300);
-  };
+  // Spin up the compute worker once.
+  useEffect(() => {
+    const worker = new Worker(new URL("./piWorker.js", import.meta.url), { type: "module" });
+    worker.onmessage = (e) => {
+      const { reqId, digits, value } = e.data;
+      if (reqId !== reqIdRef.current) return; // ignore stale results
+      setPiCache({ count: digits, value });
+    };
+    workerRef.current = worker;
+    return () => worker.terminate();
+  }, []);
+
+  // Ask the worker to extend the cache when the request outgrows it (debounced
+  // so typing toward a big number doesn't fire a compute for every keystroke).
+  useEffect(() => {
+    if (count <= piCache.count) return;
+    clearTimeout(debounceRef.current);
+    const id = ++reqIdRef.current;
+    const target = count;
+    debounceRef.current = setTimeout(() => {
+      workerRef.current?.postMessage({ reqId: id, digits: target });
+    }, 250);
+    return () => clearTimeout(debounceRef.current);
+  }, [count, piCache.count]);
 
   const handleDigit = (d) => {
     if (atMax) return;
     const next = input + d;
     if (next.length > MAX_INPUT_LEN) return;
     const val = parseInt(next, 10);
-    if (val > MAX_DIGITS) {
-      setInput(String(MAX_DIGITS));
-    } else {
-      setInput(String(val));
-    }
+    setInput(val > MAX_DIGITS ? String(MAX_DIGITS) : String(val));
     setBounce(d);
-    triggerFlash();
     setTimeout(() => setBounce(null), 200);
   };
 
   const handleBackspace = () => {
     if (!hasContent) return;
     setInput(input.slice(0, -1));
-    triggerFlash();
   };
 
   const handleClear = () => {
     if (!hasContent) return;
     setInput("");
-    triggerFlash();
   };
 
   const handlePlusOne = () => {
     if (atMax) return;
-    const next = Math.min(count + 1, MAX_DIGITS);
-    setInput(String(next));
-    triggerFlash();
+    setInput(String(Math.min(count + 1, MAX_DIGITS)));
   };
 
   const handleMinusOne = () => {
     if (atMin) return;
     const next = count - 1;
     setInput(next <= 0 ? "" : String(next));
-    triggerFlash();
   };
 
-  // Character count for the auto-fit: digits + decimal point + grouping gaps
-  const gapCount = group && count > 1 ? Math.floor((count - 1) / 5) : 0;
-  const displayCharCount = count === 0 ? 11 : count + 1 + gapCount;
-  const valueFontSize = useAutoFitFontSize(outerRef, innerRef, displayCharCount);
-
   return (
-    <div className="toy-container">
+    <div className="toy-container" style={{ justifyContent: "flex-start" }}>
       <style>{`
         @keyframes factPop {
           0% { transform: translateX(-50%) scale(0.7); opacity: 0; }
@@ -211,25 +328,27 @@ export default function PiDigits() {
           0% { transform: translateX(-50%) scale(1); opacity: 1; }
           100% { transform: translateX(-50%) scale(0.7); opacity: 0; }
         }
+        @keyframes digitPop {
+          0% { transform: scale(0.6); opacity: 0; }
+          60% { transform: scale(1.08); }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes softPulse { 0%,100% { opacity: 0.45; } 50% { opacity: 1; } }
         .nb-btn {
           width: 100%; aspect-ratio: 1.4;
           border-radius: 18px; font-size: 30px;
         }
-        .pm-btn {
-          font-size: 26px; padding: 12px 0;
-        }
+        .pm-btn { font-size: 26px; padding: 12px 0; }
       `}</style>
 
       <BackgroundDots count={20} />
 
-      {/* Header */}
       <StickyHeader
         title="Pi Digits"
         subtitle="How many digits of π?"
         onGearClick={() => setShowSettings(true)}
       />
 
-      {/* Settings overlay */}
       <PiSettings
         show={showSettings}
         onClose={() => setShowSettings(false)}
@@ -239,34 +358,8 @@ export default function PiDigits() {
         setGroup={setGroup}
       />
 
-      {/* Display Area */}
-      <div className="frosted-card" style={styles.displayCard}>
-        <div style={styles.bigSymbol}>π</div>
-        <div style={styles.secondaryRow}>
-          <span style={styles.countLabel}>
-            {count.toLocaleString()} {count === 1 ? "digit" : "digits"}
-          </span>
-          {count > 1 && (
-            <>
-              <span style={styles.notationDot}>·</span>
-              <span style={styles.placesLabel}>
-                {(count - 1).toLocaleString()} decimal {count - 1 === 1 ? "place" : "places"}
-              </span>
-            </>
-          )}
-        </div>
-
-        <div ref={outerRef} style={styles.valueOuter}>
-          <div ref={innerRef} style={{
-            ...styles.valueInner,
-            fontSize: valueFontSize,
-            lineHeight: valueFontSize >= 14 ? 1.6 : 1.15,
-            animation: valueFlash ? "flash 0.3s ease-out" : "none",
-          }}>
-            <PiValue digits={digits} colorize={colorize} group={group} />
-          </div>
-        </div>
-      </div>
+      {/* The specific digit */}
+      <SpecificDigit count={count} value={piCache.value} ready={ready} colorize={colorize} />
 
       {/* Fun fact overlay */}
       <div style={styles.funFactAnchor}>
@@ -354,48 +447,31 @@ export default function PiDigits() {
           0
         </button>
       </div>
+
+      {/* Full number, below the numpad */}
+      <div className="frosted-card" style={styles.fullCard}>
+        <div style={styles.fullHeader}>
+          <span style={styles.fullTitle}>π to {count.toLocaleString()} {count === 1 ? "digit" : "digits"}</span>
+          <span style={styles.fullLead}>3.</span>
+        </div>
+        {count === 0 && (
+          <div style={styles.fullEmpty}>3.14159 26535 89793 …</div>
+        )}
+        {count === 1 && (
+          <div style={styles.fullEmpty}>Just the 3 so far — add more digits!</div>
+        )}
+        {count > 1 && !ready && (
+          <div style={styles.fullEmpty}>Computing {(count - 1).toLocaleString()} decimal places…</div>
+        )}
+        {count > 1 && ready && (
+          <PiGrid value={piCache.value} count={count} colorize={colorize} group={group} />
+        )}
+      </div>
     </div>
   );
 }
 
 const styles = {
-  displayCard: {
-    padding: "14px 16px",
-    width: "100%", maxWidth: 380, height: 280,
-    position: "relative", zIndex: 1,
-    display: "flex", flexDirection: "column",
-  },
-  bigSymbol: {
-    fontSize: 40, fontWeight: 700, textAlign: "center", lineHeight: 1,
-    marginBottom: 2,
-    background: "linear-gradient(135deg, #FF8C1A, #FFD030, #4AAF4E, #3A8FDE)",
-    WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-  },
-  secondaryRow: {
-    display: "flex", alignItems: "center", justifyContent: "center",
-    gap: 6, marginBottom: 8, flexShrink: 0,
-  },
-  countLabel: {
-    fontSize: 13, textTransform: "uppercase", letterSpacing: 1.5,
-    color: "#FFD030", fontFamily: "var(--font-body)", fontWeight: 600,
-  },
-  notationDot: { color: "rgba(255,255,255,0.2)", fontSize: 12 },
-  placesLabel: {
-    fontSize: 12, color: "rgba(255,255,255,0.35)",
-    fontFamily: "var(--font-body)",
-  },
-  valueOuter: {
-    flex: 1, minHeight: 0,
-    background: "rgba(0,0,0,0.15)", borderRadius: 10,
-    overflow: "hidden",
-    display: "flex", alignItems: "center", justifyContent: "center",
-    padding: "6px 8px",
-  },
-  valueInner: {
-    wordBreak: "break-all", textAlign: "center",
-    maxHeight: "100%", overflow: "hidden",
-    fontFamily: "'Fredoka', sans-serif", fontWeight: 600,
-  },
   funFactAnchor: {
     width: "100%", maxWidth: 380, height: 20,
     position: "relative", zIndex: 2,
@@ -411,5 +487,85 @@ const styles = {
   actionRow: {
     display: "flex", gap: 10, width: "100%", maxWidth: 300,
     marginTop: 10, position: "relative", zIndex: 1,
+  },
+  fullCard: {
+    width: "100%", maxWidth: 460, marginTop: 18,
+    padding: "12px 14px", position: "relative", zIndex: 1,
+    display: "flex", flexDirection: "column",
+  },
+  fullHeader: {
+    display: "flex", alignItems: "baseline", justifyContent: "space-between",
+    marginBottom: 8, gap: 10,
+  },
+  fullTitle: {
+    fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5,
+    color: "rgba(255,255,255,0.45)", fontFamily: "var(--font-body)", fontWeight: 600,
+  },
+  fullLead: {
+    fontSize: 22, fontWeight: 700, color: "#FFD030",
+    fontFamily: "'Fredoka', sans-serif",
+  },
+  fullEmpty: {
+    color: "rgba(255,255,255,0.3)", textAlign: "center",
+    padding: "24px 0", fontSize: 16, letterSpacing: 1,
+    fontFamily: "'Fredoka', monospace",
+  },
+};
+
+const sd = {
+  card: {
+    width: "100%", maxWidth: 380, height: 210,
+    padding: "12px 16px", position: "relative", zIndex: 1,
+    display: "flex", flexDirection: "column",
+    alignItems: "center", justifyContent: "center", gap: 6,
+  },
+  label: {
+    fontSize: 14, textTransform: "uppercase", letterSpacing: 1.5,
+    color: "rgba(255,255,255,0.55)", fontFamily: "var(--font-body)",
+    fontWeight: 600, textAlign: "center",
+  },
+  bigDigit: {
+    fontSize: 128, fontWeight: 700, lineHeight: 1,
+    fontFamily: "'Fredoka', sans-serif",
+    animation: "digitPop 0.28s ease-out",
+  },
+  piBig: {
+    fontSize: 96, fontWeight: 700, lineHeight: 1,
+    background: "linear-gradient(135deg, #FF8C1A, #FFD030, #4AAF4E, #3A8FDE)",
+    WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+    fontFamily: "'Fredoka', sans-serif",
+  },
+  prompt: {
+    fontSize: 15, color: "rgba(255,255,255,0.4)",
+    fontFamily: "var(--font-body)",
+  },
+  computing: {
+    fontSize: 20, color: "rgba(255,255,255,0.7)", textAlign: "center",
+    lineHeight: 1.5, fontFamily: "var(--font-body)",
+    animation: "softPulse 1.2s ease-in-out infinite",
+  },
+};
+
+const grid = {
+  scroller: {
+    width: "100%", height: 300,
+    overflowY: "auto", overflowX: "hidden",
+    background: "rgba(0,0,0,0.18)", borderRadius: 10,
+    padding: "4px 0",
+  },
+  row: {
+    position: "absolute", left: 0, right: 0, height: ROW_H,
+    display: "flex", alignItems: "center", gap: 8,
+    padding: "0 10px",
+  },
+  idx: {
+    width: GUTTER - 18, flexShrink: 0, textAlign: "right",
+    fontSize: 11, color: "rgba(255,255,255,0.28)",
+    fontFamily: "monospace",
+  },
+  digits: {
+    fontFamily: "'DM Mono', 'Courier New', monospace",
+    fontSize: FONT, fontWeight: 500, letterSpacing: 0.5,
+    whiteSpace: "nowrap", overflow: "hidden",
   },
 };
