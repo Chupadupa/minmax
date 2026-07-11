@@ -119,20 +119,42 @@ function PiGrid({ value, count, colorize, group }) {
     );
   }
 
+  // Scroll affordances: fade the digits at whichever edge has more to reveal,
+  // and show a bouncing chevron while there's more below.
+  const FADE = 28;
+  const canUp = totalH > viewH && scrollTop > 1;
+  const canDown = totalH > viewH && scrollTop + viewH < totalH - 1;
+  let mask = "none";
+  if (canUp && canDown) {
+    mask = `linear-gradient(to bottom, transparent 0, #000 ${FADE}px, #000 calc(100% - ${FADE}px), transparent 100%)`;
+  } else if (canDown) {
+    mask = `linear-gradient(to bottom, #000 calc(100% - ${FADE}px), transparent 100%)`;
+  } else if (canUp) {
+    mask = `linear-gradient(to bottom, transparent 0, #000 ${FADE}px, #000 100%)`;
+  }
+
   return (
-    <div
-      ref={scrollRef}
-      onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}
-      style={grid.scroller}
-    >
-      <div style={{ height: totalH, position: "relative" }}>
-        {/* Leading integer part, aligned above the decimals so it reads "3.1415…" */}
-        <div style={{ ...grid.row, top: 0 }}>
-          <span style={grid.idx} />
-          <span style={{ ...grid.digits, color: "#FFD030", fontWeight: 700 }}>3.</span>
+    <div style={grid.wrapper}>
+      <div
+        ref={scrollRef}
+        className="pi-scroller"
+        onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}
+        style={{ ...grid.scroller, WebkitMaskImage: mask, maskImage: mask }}
+      >
+        <div style={{ height: totalH, position: "relative" }}>
+          {/* Leading integer part, aligned above the decimals so it reads "3.1415…" */}
+          <div style={{ ...grid.row, top: 0 }}>
+            <span style={grid.idx} />
+            <span style={{ ...grid.digits, color: "#FFD030", fontWeight: 700 }}>3.</span>
+          </div>
+          {visible}
         </div>
-        {visible}
       </div>
+      {canDown && (
+        <div style={grid.moreCue}>
+          <span style={grid.chevron}>⌄</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -341,6 +363,17 @@ export default function PiDigits() {
           100% { transform: translateX(-50%) scale(0.7); opacity: 0; }
         }
         @keyframes softPulse { 0%,100% { opacity: 0.45; } 50% { opacity: 1; } }
+        @keyframes moreBounce {
+          0%, 100% { transform: translate(-50%, 0); opacity: 0.7; }
+          50% { transform: translate(-50%, 3px); opacity: 1; }
+        }
+        .pi-scroller::-webkit-scrollbar { width: 9px; }
+        .pi-scroller::-webkit-scrollbar-track { background: transparent; }
+        .pi-scroller::-webkit-scrollbar-thumb {
+          background: rgba(255,255,255,0.28); border-radius: 5px;
+          border: 2px solid transparent; background-clip: content-box;
+        }
+        .pi-scroller::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.45); background-clip: content-box; }
         .nb-btn {
           width: 100%; aspect-ratio: 1.4;
           border-radius: 18px; font-size: 30px;
@@ -514,11 +547,27 @@ const styles = {
 };
 
 const grid = {
-  scroller: {
-    width: "100%", flex: 1, minHeight: 0,
-    overflowY: "auto", overflowX: "hidden",
+  wrapper: {
+    position: "relative", flex: 1, minHeight: 0, display: "flex",
     background: "rgba(0,0,0,0.18)", borderRadius: 10,
+  },
+  scroller: {
+    width: "100%", height: "100%",
+    overflowY: "auto", overflowX: "hidden",
+    borderRadius: 10,
     padding: "4px 0",
+  },
+  moreCue: {
+    position: "absolute", bottom: 4, left: "50%", transform: "translateX(-50%)",
+    pointerEvents: "none", zIndex: 3,
+    width: 30, height: 22, borderRadius: 11,
+    display: "flex", alignItems: "center", justifyContent: "center",
+    background: "rgba(255,255,255,0.14)",
+    animation: "moreBounce 1.3s ease-in-out infinite",
+  },
+  chevron: {
+    color: "#FFD030", fontSize: 22, fontWeight: 700, lineHeight: 1,
+    marginTop: -6, fontFamily: "'Fredoka', sans-serif",
   },
   row: {
     position: "absolute", left: 0, right: 0, height: ROW_H,
