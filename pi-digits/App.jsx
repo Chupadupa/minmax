@@ -143,11 +143,9 @@ function FullNumberDisplay({ count, value, ready, colorize, group }) {
   return (
     <div className="frosted-card" style={styles.displayCard}>
       <div style={styles.fullHeader}>
-        <span style={styles.fullTitle}>
-          {count <= 1
-            ? "the digits of π"
-            : `π to ${count.toLocaleString()} digits`}
-        </span>
+        <span style={styles.headLabel}>π to</span>
+        <span style={styles.headCount}>{count.toLocaleString()}</span>
+        <span style={styles.headLabel}>{count === 1 ? "digit" : "digits"}</span>
       </div>
       {count === 0 && (
         <div style={styles.fullEmpty}>
@@ -479,12 +477,18 @@ const styles = {
     display: "flex", flexDirection: "column",
   },
   fullHeader: {
-    display: "flex", alignItems: "baseline",
-    marginBottom: 8, gap: 10,
+    display: "flex", alignItems: "baseline", justifyContent: "center",
+    marginBottom: 10, gap: 10,
   },
-  fullTitle: {
-    fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5,
-    color: "rgba(255,255,255,0.45)", fontFamily: "var(--font-body)", fontWeight: 600,
+  headLabel: {
+    fontSize: 13, textTransform: "uppercase", letterSpacing: 1.5,
+    color: "rgba(255,255,255,0.5)", fontFamily: "var(--font-body)", fontWeight: 600,
+  },
+  headCount: {
+    fontSize: 34, fontWeight: 700, lineHeight: 1,
+    fontFamily: "'Fredoka', sans-serif",
+    background: "linear-gradient(135deg, #FF8C1A, #FFD030, #4AAF4E, #3A8FDE)",
+    WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
   },
   fullEmpty: {
     height: 300, borderRadius: 10, background: "rgba(0,0,0,0.18)",
