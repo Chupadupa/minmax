@@ -10,6 +10,7 @@
 - **Color Mixer** — Tap colors to mix them together and see what you get
 - **Fraction Combiner** — Combine fraction pie pieces to fill a circle; a pie chart game for learning fractions
 - **Shape Selector** — Tap shapes to see them up close and learn their names, from circles to custom polygons with up to 10,000 sides
+- **Pi Digits** — Enter how many digits of π you want to see and watch them appear, from 3 up to a thousand
 
 ## Tech Stack
 
@@ -67,6 +68,11 @@ There are no test, lint, or format commands.
 │   ├── App.jsx                 # Shape grid, SVG rendering, overlay
 │   ├── shapeData.js            # Shape definitions, SVG helpers, color helpers (pure logic)
 │   └── shapeNaming.js          # Latin-based polygon naming system (3–10,000 sides), number-to-word
+├── pi-digits/                  # Pi Digits toy
+│   ├── index.html
+│   ├── main.jsx
+│   ├── App.jsx                 # Numpad, auto-fit color-coded π display, settings
+│   └── piDigits.js             # Pure BigInt spigot algorithm for π digits (cached)
 ├── shared/
 │   ├── base.css                # Shared stylesheet: tokens, resets, fonts, animations, utilities, .toy-btn
 │   ├── colorUtils.js           # Shared color helpers: luminance, contrastTextColor, rgbToHex, textColorForRgb
@@ -158,6 +164,20 @@ A shape exploration toy. Tap shapes from a grid to see them enlarged with their 
   - `numberToWord(n)` — English word form for a number (0–10,000)
 - **`shapeData.js`** — Pure data/logic (no React dependency): `SHAPES` array (17 hand-defined + 91 generated polygons), `shapeTextColor()`, `segmentColor()`, `polygonPoints()` SVG helper
 - **`App.jsx`** — SVG shape rendering (circles, ovals, footballs, triangles, quadrilaterals, regular polygons up to 100 sides), custom polygon input for any side count 3–10,000, Numberblocks-inspired colors with `getNumberBlockStyle`, color-coded name segments, hyphenation toggle.
+
+### Pi Digits (`pi-digits/`)
+
+Enter a digit count on the Numberblocks-inspired numpad and see π rendered to that
+many digits (leading 3 + decimals), color-coded by digit and auto-fit to the display.
+
+- **`piDigits.js`** — Pure logic (no React dependency): `getPiDigits(count)` returns the
+  first `count` digits of π using Jeremy Gibbons' unbounded spigot algorithm with BigInt.
+  Caches the longest run computed so far so repeated or growing requests stay cheap.
+  Exports `MAX_DIGITS` (1000).
+- **`App.jsx`** — Numpad + ±1/clear/backspace controls (shared with the Big Number Namer
+  layout), auto-fit display via `useAutoFitFontSize`, per-digit Numberblocks colors,
+  settings toggles for coloring and grouping digits in fives, and milestone fun facts
+  via the shared `Toast`.
 
 ### Shared Utilities (`shared/`)
 
