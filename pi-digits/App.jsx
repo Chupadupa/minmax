@@ -106,17 +106,19 @@ function PiGrid({ value, count, colorize, group }) {
   const decimals = count > 1 ? value.slice(1, count) : "";
   const total = decimals.length;
   const rows = Math.ceil(total / perRow);
-  const totalH = rows * ROW_H;
+  // Row 0 is the leading "3." so the number reads top-to-bottom as one string;
+  // the decimal rows sit beneath it (shifted down by one row).
+  const totalH = (rows + 1) * ROW_H;
 
   const overscan = 4;
-  const startRow = Math.max(0, Math.floor(scrollTop / ROW_H) - overscan);
+  const startRow = Math.max(0, Math.floor(scrollTop / ROW_H) - 1 - overscan);
   const endRow = Math.min(rows, Math.ceil((scrollTop + viewH) / ROW_H) + overscan);
 
   const visible = [];
   for (let r = startRow; r < endRow; r++) {
     const from = r * perRow;
     visible.push(
-      <div key={r} style={{ ...grid.row, top: r * ROW_H }}>
+      <div key={r} style={{ ...grid.row, top: (r + 1) * ROW_H }}>
         <span style={grid.idx}>{(from + 1).toLocaleString()}</span>
         <span style={grid.digits}>{renderRow(decimals.slice(from, from + perRow), colorize, group)}</span>
       </div>
@@ -129,7 +131,14 @@ function PiGrid({ value, count, colorize, group }) {
       onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}
       style={grid.scroller}
     >
-      <div style={{ height: totalH, position: "relative" }}>{visible}</div>
+      <div style={{ height: totalH, position: "relative" }}>
+        {/* Leading integer part, aligned above the decimals so it reads "3.1415…" */}
+        <div style={{ ...grid.row, top: 0 }}>
+          <span style={grid.idx} />
+          <span style={{ ...grid.digits, color: "#FFD030", fontWeight: 700 }}>3.</span>
+        </div>
+        {visible}
+      </div>
     </div>
   );
 }
@@ -452,7 +461,6 @@ export default function PiDigits() {
       <div className="frosted-card" style={styles.fullCard}>
         <div style={styles.fullHeader}>
           <span style={styles.fullTitle}>π to {count.toLocaleString()} {count === 1 ? "digit" : "digits"}</span>
-          <span style={styles.fullLead}>3.</span>
         </div>
         {count === 0 && (
           <div style={styles.fullEmpty}>3.14159 26535 89793 …</div>
@@ -494,16 +502,12 @@ const styles = {
     display: "flex", flexDirection: "column",
   },
   fullHeader: {
-    display: "flex", alignItems: "baseline", justifyContent: "space-between",
+    display: "flex", alignItems: "baseline",
     marginBottom: 8, gap: 10,
   },
   fullTitle: {
     fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5,
     color: "rgba(255,255,255,0.45)", fontFamily: "var(--font-body)", fontWeight: 600,
-  },
-  fullLead: {
-    fontSize: 22, fontWeight: 700, color: "#FFD030",
-    fontFamily: "'Fredoka', sans-serif",
   },
   fullEmpty: {
     color: "rgba(255,255,255,0.3)", textAlign: "center",
