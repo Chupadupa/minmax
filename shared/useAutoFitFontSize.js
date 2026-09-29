@@ -1,6 +1,8 @@
 import { useState, useRef, useCallback, useLayoutEffect, useEffect } from "react";
 
-export function useAutoFitFontSize(containerRef, contentRef, charCount, { maxFont = 20, minFont = 3.8 } = {}) {
+// `fitKey` (optional) forces a refit when the content changes but its character
+// count doesn't — useful for proportional glyphs, e.g. "III" → "XXX".
+export function useAutoFitFontSize(containerRef, contentRef, charCount, { maxFont = 20, minFont = 3.8, fitKey } = {}) {
   const [fontSize, setFontSize] = useState(maxFont);
   const ceilingRef = useRef(maxFont);
   const prevCharCountRef = useRef(0);
@@ -56,7 +58,7 @@ export function useAutoFitFontSize(containerRef, contentRef, charCount, { maxFon
 
   useLayoutEffect(() => {
     fit(charCount);
-  }, [charCount, fit]);
+  }, [charCount, fit, fitKey]);
 
   // Also re-fit on resize (reset ceiling and stable height since container changed)
   useEffect(() => {
