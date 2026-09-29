@@ -11,6 +11,7 @@
 - **Fraction Combiner** — Combine fraction pie pieces to fill a circle; a pie chart game for learning fractions
 - **Shape Selector** — Tap shapes to see them up close and learn their names, from circles to custom polygons with up to 10,000 sides
 - **Pi Digits** — Enter how many digits of π you want to see; the specific digit is shown big and the full number scrolls below, all the way up to a million
+- **Roman Numerals** — Type any number and see it written in Roman numerals, broken into place-value parts, up to 3,999,999,999,999 using stacked bars (vinculum)
 
 ## Tech Stack
 
@@ -74,6 +75,11 @@ There are no test, lint, or format commands.
 │   ├── App.jsx                 # Scrollable virtualized full-number display, numpad, settings
 │   ├── piDigits.js             # Pure Chudnovsky (binary splitting) BigInt π computation
 │   └── piWorker.js             # Web Worker wrapper so large computations don't block the UI
+├── roman-numerals/             # Roman Numerals toy
+│   ├── index.html              # Also loads the Cinzel font (Roman-inscription lettering)
+│   ├── main.jsx
+│   ├── App.jsx                 # Numpad, auto-fit barred numeral display, place-value parts, settings
+│   └── romanNumerals.js        # Pure Roman numeral conversion (place-value parts, vinculum bars)
 ├── shared/
 │   ├── base.css                # Shared stylesheet: tokens, resets, fonts, animations, utilities, .toy-btn
 │   ├── colorUtils.js           # Shared color helpers: luminance, contrastTextColor, rgbToHex, textColorForRgb
@@ -188,6 +194,27 @@ million digits.
   worker (debounced) for larger ones. Per-digit Numberblocks colors, settings toggles for
   coloring and grouping, and milestone fun facts via the shared `Toast`.
 
+### Roman Numerals (`roman-numerals/`)
+
+Type a number on the Numberblocks-inspired numpad (same layout as the Big Number Namer)
+and see it written in Roman numerals, with each letter in its own rainbow color. Below the
+numeral, the number is broken into place-value parts (e.g. M + CM + XC + IV). Numbers of
+4,000 and up use the vinculum: each bar over a letter multiplies it by 1,000, and bars stack
+(two bars = × 1,000,000, three = × 1,000,000,000).
+
+- **`romanNumerals.js`** — Pure logic (no React dependency). Key exports:
+  - `toRomanParts(n)` — place-value parts, biggest first, as `{ letters, bars, value }`
+    (e.g. 12,345 → X̄, ĪĪ, CCC, XL, V). Plain letters cover 1–3,999; bigger numbers put their
+    thousands under one more bar, recursively.
+  - `toRomanLetters(parts)` — flattens parts into `{ letter, bars }` for rendering
+  - `ROMAN_LETTERS` — the seven letters and their values; `MAX_NUMBER` (3,999,999,999,999)
+- **`App.jsx`** — Numeral display auto-fit via `useAutoFitFontSize` (with `fitKey`, since
+  letters vary in width), bars drawn as positioned spans that join into one line across a
+  barred group, a place-value parts row (auto-fit down to a readable minimum, then scrolls),
+  a letter key when empty, "nulla" for zero, settings toggles for letter colors and commas,
+  and milestone fun facts via the shared `Toast`. Letters use the Cinzel font loaded in
+  `index.html`.
+
 ### Shared Utilities (`shared/`)
 
 - **`base.css`** — Shared stylesheet providing design tokens (CSS custom properties), global resets, font loading (Fredoka & Outfit via Google Fonts), dark gradient background, shared keyframe animations (`popIn`, `fadeIn`, `float`, `flash`, `btnPress`, `shake`), utility CSS classes (`.gradient-text`, `.frosted-card`, `.toy-btn`, `.back-btn`, `.gear-btn`, `.page-header`, `.safe-area-container`, `.toy-container`, `.bg-dots`), page header defaults (`.page-header h1`, `.page-header .subtitle`), `.overlay-open` scroll-lock class (used by `useScrollLock` hook), and global user-select prevention. Toys import this to get the Doodads look for free, override CSS variables for tweaks, or skip the import entirely for a custom look.
@@ -202,7 +229,7 @@ million digits.
   - `gcd(a, b)` — greatest common divisor (Euclidean algorithm)
   - `simplify(num, den)` — reduce a fraction to lowest terms, returns `[n, d]`
 
-- **`useAutoFitFontSize.js`** — Binary search algorithm for dynamic font scaling within a container, with oscillation prevention via ceiling tracking. Accepts `{ maxFont, minFont }` options. Available for use by any toy.
+- **`useAutoFitFontSize.js`** — Binary search algorithm for dynamic font scaling within a container, with oscillation prevention via ceiling tracking. Accepts `{ maxFont, minFont, fitKey }` options; `fitKey` forces a refit when content changes without its character count changing (e.g. proportional letters). Available for use by any toy.
 
 - **`useScrollLock.js`** — Hook to prevent background scrolling when overlays are active. Toggles the `overlay-open` class on `<html>` and `<body>` (styled in `base.css`). Usage: `useScrollLock(isOverlayVisible)`.
 
