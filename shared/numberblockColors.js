@@ -33,6 +33,16 @@ export const NB_SOLID = {
   "90": "#8E8E93", "100": "#FFCDD2",
 };
 
+// Text colors for single digits 0–9 (e.g. coloring digits in a number). Seven
+// gets a solid purple since text can't take the rainbow gradient, Six a lighter
+// indigo so it reads on dark backgrounds, and zero — which has no Numberblocks
+// color of its own — a clean white.
+export const NB_DIGIT_TEXT = {
+  0: "#FFFFFF",
+  1: "#E41E20", 2: "#FF8C1A", 3: "#FFD030", 4: "#4AAF4E",
+  5: "#29B6A8", 6: "#5C6BC0", 7: "#9B59B6", 8: "#D6268E", 9: "#B0B0B0",
+};
+
 // Outline colors for exact multiples of 10
 export const NB_OUTLINE = {
   "10": "#B71C1C",  // Darker red (distinguishes from 11's bright red border)
