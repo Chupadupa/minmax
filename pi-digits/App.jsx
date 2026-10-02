@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { computePiString, MAX_DIGITS } from "./piDigits.js";
-import { NB_SOLID, getNumberBlockStyle } from "../shared/numberblockColors.js";
+import { NB_SOLID, NB_DIGIT_TEXT, getNumberBlockStyle } from "../shared/numberblockColors.js";
 import { BackgroundDots } from "../shared/BackgroundDots.jsx";
 import {
   SettingsOverlay, SettingsToggle, SettingsDivider,
@@ -14,14 +14,6 @@ const MAX_INPUT_LEN = String(MAX_DIGITS).length;
 // Digits computed synchronously up front so small, common requests are instant
 // (no worker round-trip, no "computing…" flash). ~2 ms.
 const BASELINE = 2000;
-
-// Numberblocks-inspired color for each single digit 0–9. Zero has no
-// Numberblocks color of its own, so it gets a clean white.
-const DIGIT_COLORS = {
-  0: "#FFFFFF",
-  1: "#E41E20", 2: "#FF8C1A", 3: "#FFD030", 4: "#4AAF4E",
-  5: "#29B6A8", 6: "#5C6BC0", 7: "#9B59B6", 8: "#D6268E", 9: "#B0B0B0",
-};
 
 function getFunFact(n) {
   if (n === 1) return "🥧 Just 3 — the whole-number part of π!";
@@ -51,7 +43,7 @@ const GAP = 10;
 function renderRow(chunk, colorize, group) {
   if (!group) {
     return [...chunk].map((ch, j) => (
-      <span key={j} style={{ color: colorize ? DIGIT_COLORS[+ch] : "rgba(255,255,255,0.72)" }}>{ch}</span>
+      <span key={j} style={{ color: colorize ? NB_DIGIT_TEXT[+ch] : "rgba(255,255,255,0.72)" }}>{ch}</span>
     ));
   }
   const groups = [];
@@ -60,7 +52,7 @@ function renderRow(chunk, colorize, group) {
     groups.push(
       <span key={i} style={{ marginRight: GAP }}>
         {[...grp].map((ch, j) => (
-          <span key={j} style={{ color: colorize ? DIGIT_COLORS[+ch] : "rgba(255,255,255,0.72)" }}>{ch}</span>
+          <span key={j} style={{ color: colorize ? NB_DIGIT_TEXT[+ch] : "rgba(255,255,255,0.72)" }}>{ch}</span>
         ))}
       </span>
     );

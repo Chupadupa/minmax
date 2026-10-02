@@ -12,6 +12,7 @@
 - **Shape Selector** — Tap shapes to see them up close and learn their names, from circles to custom polygons with up to 10,000 sides
 - **Pi Digits** — Enter how many digits of π you want to see; the specific digit is shown big and the full number scrolls below, all the way up to a million
 - **Roman Numerals** — Type any number and see it written in Roman numerals, broken into place-value parts, up to 3,999,999,999,999 using stacked bars (vinculum)
+- **Chinese Numbers** — Type any number and see it in Chinese characters with pinyin over each one, hear it spoken, and see how Chinese groups digits in fours, up to 不可思议 (10⁶⁴)
 
 ## Tech Stack
 
@@ -80,6 +81,11 @@ There are no test, lint, or format commands.
 │   ├── main.jsx
 │   ├── App.jsx                 # Numpad, auto-fit barred numeral display, place-value parts, settings
 │   └── romanNumerals.js        # Pure Roman numeral conversion (place-value parts, vinculum bars)
+├── chinese-numbers/            # Chinese Numbers toy
+│   ├── index.html              # Also loads LXGW WenKai TC (characters) and Andika (pinyin) fonts
+│   ├── main.jsx
+│   ├── App.jsx                 # Numpad + ×万 key, auto-fit pinyin-over-character reading, group chips, speech, settings
+│   └── chineseNumbers.js       # Pure Chinese number reading (myriad groups, 零 rules, 两, 一 tone changes)
 ├── shared/
 │   ├── base.css                # Shared stylesheet: tokens, resets, fonts, animations, utilities, .toy-btn
 │   ├── colorUtils.js           # Shared color helpers: luminance, contrastTextColor, rgbToHex, textColorForRgb
@@ -215,6 +221,34 @@ numeral, the number is broken into place-value parts (e.g. M + CM + XC + IV). Nu
   and milestone fun facts via the shared `Toast`. Letters use the Cinzel font loaded in
   `index.html`.
 
+### Chinese Numbers (`chinese-numbers/`)
+
+Type a number on the Numberblocks-inspired numpad (same layout as the Big Number Namer, plus a
+red-and-gold ×万 key that adds four zeros) and see it written in Chinese characters with pinyin
+over each one. Digits share their Numberblocks color between the Arabic number and the
+characters (3 ↔ 三); big words (万, 亿, …) sit in a gold pill. Below, the number is broken into
+its four-digit groups (e.g. 一亿 + 二千三百四十五万 + 六千七百八十九). Numbers are digit strings
+(BigInt for ±1), up to 68 digits.
+
+- **`chineseNumbers.js`** — Pure logic (no React dependency). Key exports:
+  - `toChineseParts(digits, { traditional, useLiang })` — the reading as parts, one per
+    four-digit group, biggest first: `{ syllables, value, unit }`. Each syllable is
+    `{ char, pinyin, kind }` with kind `"digit"` (plus `digit`), `"place"` (十百千, plus `place`)
+    or `"unit"` (a big word; multi-character words give one syllable per character). Handles the
+    zero rules (zeros at a group's end are silent, any other run reads as one 零), dropping 一 before
+    a leading 十, 两 for a leading two, and 一's tone changes in the pinyin (yì bǎi, yí wàn).
+  - `toChineseText(parts)`, `formatDigits(digits, groupSize)`, `readDigitByDigit(digits)`,
+    `bigUnitIndex(digits)`, `bigUnitChars(k, traditional)`
+  - `DIGITS`, `PLACES`, `BIG_UNITS` (万 10⁴ through 不可思议 10⁶⁴, simplified + traditional +
+    pinyin), `MAX_DIGITS` (68), `MAX_NUMBER`
+- **`App.jsx`** — Arabic number auto-fit via `useAutoFitFontSize`, the pinyin-over-character
+  reading (auto-fit with `fitKey`, down to a readable minimum, then scrolls), a character key when
+  empty, group chips (past 京 the value reads "9,999 and 64 zeros"), a 🔊 button using the Web
+  Speech API with the device's Mandarin voice (hidden if it has none), settings toggles (digit
+  colors, pinyin, traditional characters, 两, grouping digits in fours), a big-words reference
+  table, and milestone fun facts via the shared `Toast`. The shared fonts lack pinyin tone marks
+  (ǎ ǐ ǒ ǔ ǚ), hence Andika.
+
 ### Shared Utilities (`shared/`)
 
 - **`base.css`** — Shared stylesheet providing design tokens (CSS custom properties), global resets, font loading (Fredoka & Outfit via Google Fonts), dark gradient background, shared keyframe animations (`popIn`, `fadeIn`, `float`, `flash`, `btnPress`, `shake`), utility CSS classes (`.gradient-text`, `.frosted-card`, `.toy-btn`, `.back-btn`, `.gear-btn`, `.page-header`, `.safe-area-container`, `.toy-container`, `.bg-dots`), page header defaults (`.page-header h1`, `.page-header .subtitle`), `.overlay-open` scroll-lock class (used by `useScrollLock` hook), and global user-select prevention. Toys import this to get the Doodads look for free, override CSS variables for tweaks, or skip the import entirely for a custom look.
@@ -237,6 +271,7 @@ numeral, the number is broken into place-value parts (e.g. M + CM + XC + IV). Nu
   - `NB_COLORS` — digit-to-color/gradient map (string keys `"1"`–`"100"` for ones and decade values, with `"7"` as a rainbow linear-gradient)
   - `NB_SOLID` — digit-to-solid-hex map (for box-shadows where gradients can't be used; covers `"1"`–`"100"`)
   - `NB_OUTLINE` — outline colors for exact multiples of 10 (`"10"`–`"100"`)
+  - `NB_DIGIT_TEXT` — text colors for single digits 0–9 (solid purple for 7, white for 0); used by pi-digits and chinese-numbers
   - `getNumberBlockStyle(n)` — returns `{ background, border }` for any number 1–100+, computing decade fill + ones-digit border colors
   - `NB7_STOPS` — array of rainbow gradient stop colors for Numberblocks 7
   - `NB7_GRADIENT` — the rainbow CSS linear-gradient string for Numberblocks 7
