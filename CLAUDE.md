@@ -13,6 +13,7 @@
 - **Pi Digits** — Enter how many digits of π you want to see; the specific digit is shown big and the full number scrolls below, all the way up to a million
 - **Roman Numerals** — Type any number and see it written in Roman numerals, broken into place-value parts, up to 3,999,999,999,999 using stacked bars (vinculum)
 - **Chinese Numbers** — Type any number and see it in Chinese characters with pinyin over each one, hear it spoken, and see how Chinese groups digits in fours, up to 不可思议 (10⁶⁴)
+- **Prime Checker** — Type any number and find out if it's prime; see it lined up as rows of blocks, split it into prime factors, and hop from prime to prime, up to nearly a septillion (24 digits)
 
 ## Tech Stack
 
@@ -86,6 +87,12 @@ There are no test, lint, or format commands.
 │   ├── main.jsx
 │   ├── App.jsx                 # Numpad + ×万 key, auto-fit pinyin-over-character reading, group chips, speech, settings
 │   └── chineseNumbers.js       # Pure Chinese number reading (myriad groups, 零 rules, 两, 一 tone changes)
+├── prime-checker/              # Prime Checker toy
+│   ├── index.html
+│   ├── main.jsx
+│   ├── App.jsx                 # Numpad + prime-jump keys, verdict, rows-of-blocks picture, prime-factor tiles, settings
+│   ├── primes.js               # Pure prime logic (Miller–Rabin, Pollard's rho factoring, prime index sieve)
+│   └── factorWorker.js         # Web Worker for numbers whose prime factors are all big
 ├── shared/
 │   ├── base.css                # Shared stylesheet: tokens, resets, fonts, animations, utilities, .toy-btn
 │   ├── colorUtils.js           # Shared color helpers: luminance, contrastTextColor, rgbToHex, textColorForRgb
@@ -249,6 +256,34 @@ its four-digit groups (e.g. 一亿 + 二千三百四十五万 + 六千七百八�
   table, and milestone fun facts via the shared `Toast`. The shared fonts lack pinyin tone marks
   (ǎ ǐ ǒ ǔ ǚ), hence Andika.
 
+### Prime Checker (`prime-checker/`)
+
+Type a number on the Numberblocks-inspired numpad (same layout as the Big Number Namer, with
+◀/▶ prime keys flanking 0 that jump to the previous/next prime) and see a big PRIME! or NOT PRIME
+verdict. The picture lines the number up as equal rows of blocks (rows wear the Numberblocks
+colors; a prime only makes one gold line) — tap it to try another rectangle. Below, a composite
+number is split into its prime factors as Numberblocks-style tiles. Numbers are digit strings
+(BigInt), up to 24 digits.
+
+- **`primes.js`** — Pure logic (no React dependency). Key exports:
+  - `isPrime(n)` — Miller–Rabin with the first 13 primes as bases, exact (not probabilistic)
+    for every n < 3.3 × 10²⁴
+  - `factorize(n, maxSteps?)` — `[[prime, power], …]`, smallest first: trial division by primes
+    under 10,000, then Pollard's rho (Brent). Returns `null` if rho runs past `maxSteps`
+  - `nextPrime(n)`, `prevPrime(n)` (null past `MAX_NUMBER` / below 2), `factorCount(factors)`,
+    `rectangleSides(n, factors)` (the shorter side of every rectangle, most square first)
+  - `primeIndex(p)` — which prime it is (97 → 25), for primes under 2²⁴ (past the millionth
+    prime); its sieve grows in steps as bigger primes come up
+  - `PRIMES_UNDER_100`, `MAX_DIGITS` (24), `MAX_NUMBER`
+- **`factorWorker.js`** — Web Worker that factors numbers whose prime factors are all big (two
+  12-digit primes take a second or more). The app first tries `factorize` with a small step budget
+  on the main thread, and only on `null` starts a worker, terminating it if the number changes.
+- **`App.jsx`** — Auto-fit number display, verdict pill (glows gold for primes), "Nth prime · k
+  factors" line, the picture (SVG blocks up to 100, a not-to-scale rectangle or thin line beyond),
+  prime-factor tiles (auto-fit, then scrolls), the 25 primes under 100 as tappable tiles when empty,
+  settings toggles (group repeated primes as powers, commas), and fun facts (twin, Mersenne and
+  palindrome primes, milestones) via the shared `Toast`.
+
 ### Shared Utilities (`shared/`)
 
 - **`base.css`** — Shared stylesheet providing design tokens (CSS custom properties), global resets, font loading (Fredoka & Outfit via Google Fonts), dark gradient background, shared keyframe animations (`popIn`, `fadeIn`, `float`, `flash`, `btnPress`, `shake`), utility CSS classes (`.gradient-text`, `.frosted-card`, `.toy-btn`, `.back-btn`, `.gear-btn`, `.page-header`, `.safe-area-container`, `.toy-container`, `.bg-dots`), page header defaults (`.page-header h1`, `.page-header .subtitle`), `.overlay-open` scroll-lock class (used by `useScrollLock` hook), and global user-select prevention. Toys import this to get the Doodads look for free, override CSS variables for tweaks, or skip the import entirely for a custom look.
@@ -271,7 +306,7 @@ its four-digit groups (e.g. 一亿 + 二千三百四十五万 + 六千七百八�
   - `NB_COLORS` — digit-to-color/gradient map (string keys `"1"`–`"100"` for ones and decade values, with `"7"` as a rainbow linear-gradient)
   - `NB_SOLID` — digit-to-solid-hex map (for box-shadows where gradients can't be used; covers `"1"`–`"100"`)
   - `NB_OUTLINE` — outline colors for exact multiples of 10 (`"10"`–`"100"`)
-  - `NB_DIGIT_TEXT` — text colors for single digits 0–9 (solid purple for 7, white for 0); used by pi-digits and chinese-numbers
+  - `NB_DIGIT_TEXT` — text colors for single digits 0–9 (solid purple for 7, white for 0); used by pi-digits, chinese-numbers, and prime-checker
   - `getNumberBlockStyle(n)` — returns `{ background, border }` for any number 1–100+, computing decade fill + ones-digit border colors
   - `NB7_STOPS` — array of rainbow gradient stop colors for Numberblocks 7
   - `NB7_GRADIENT` — the rainbow CSS linear-gradient string for Numberblocks 7
