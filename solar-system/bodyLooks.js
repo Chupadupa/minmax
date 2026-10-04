@@ -1,73 +1,13 @@
 // ── Body Looks ───────────────────────────────────────────────────────────────
 //
-// What each body looks like, described as data that BodyPicture.jsx draws.
-// Coordinates are in units of the body's radius (the body is the unit circle,
-// y pointing down), so one look works at every size from a map dot to the big
-// close-up. Pure data, no React.
-//
-//   colors   [light, mid, dark] — a lit sphere, brightest at the top-left
-//   shape    "circle" (default), { ellipse: ry, rotate } or { potato: 0–2, rotate }
-//   bands    [{ y0, y1, color, opacity }] horizontal stripes (gas giants)
-//   spots    [{ x, y, rx, ry, color, opacity, rotate }] soft ellipses
-//   shapes   [{ d, color, opacity }] filled paths (continents, Pluto's heart)
-//   lines    [{ d, color, width, opacity }] stroked paths (cracks, stripes)
-//   caps     { north, south, color } polar caps, sized as a fraction of the radius
-//   craters  [{ x, y, r }], or just a number to scatter that many
-//   bright   craters drawn as bright splashes instead of dark bowls (Callisto)
-//   half     { color, rotate } one dark hemisphere (Iapetus)
-//   rings    { bands: [{ r0, r1, color, opacity }], tilt, rotate }
-//   glow     { color, extent } a halo around the body (the Sun)
-//   shade    0–1, how deep the shadow on the far side is (default 0.7)
+// What each body looks like, described as data that the shared BodyPicture
+// draws (the format is documented in shared/bodyArt.js). Coordinates are in
+// units of the body's radius, so one look works at every size from a map dot
+// to the big close-up. Pure data, no React.
 
 import { bodyById } from "./bodies.js";
+import { hashString, finishLook, GREY } from "../shared/bodyArt.js";
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-function hash(str) {
-  let h = 2166136261;
-  for (const c of str) {
-    h ^= c.charCodeAt(0);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-}
-
-// mulberry32 — a tiny seeded random, so craters land in the same places every time
-function seeded(seed) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-export function craterField(seed, count, { minR = 0.05, maxR = 0.16 } = {}) {
-  const rnd = seeded(seed);
-  const craters = [];
-  let tries = 0;
-  while (craters.length < count && tries++ < count * 30) {
-    const r = minR + rnd() * (maxR - minR);
-    const angle = rnd() * Math.PI * 2;
-    const dist = Math.sqrt(rnd()) * (0.95 - r);
-    const x = Math.cos(angle) * dist;
-    const y = Math.sin(angle) * dist;
-    if (craters.some((c) => Math.hypot(c.x - x, c.y - y) < c.r + r + 0.02)) continue;
-    craters.push({ x, y, r });
-  }
-  return craters;
-}
-
-// Three lumpy outlines for the small moons that gravity never rounded off.
-export const POTATOES = [
-  "M -1 -0.15 C -0.95 -0.7 -0.45 -1 0.1 -0.92 C 0.65 -0.85 1.02 -0.45 0.95 0.1 C 0.9 0.6 0.5 0.98 -0.05 0.95 C -0.6 0.92 -1.05 0.45 -1 -0.15 Z",
-  "M -0.9 -0.4 C -0.6 -0.95 0.2 -1.05 0.7 -0.7 C 1.05 -0.45 1 0.2 0.8 0.6 C 0.55 1 -0.2 1.02 -0.6 0.75 C -1.05 0.45 -1.1 -0.05 -0.9 -0.4 Z",
-  "M -0.95 0.05 C -1.05 -0.5 -0.5 -0.9 0 -0.85 C 0.4 -0.82 0.75 -1 0.95 -0.6 C 1.1 -0.2 0.85 0.3 0.7 0.65 C 0.5 1 0 1.05 -0.4 0.85 C -0.8 0.65 -0.9 0.5 -0.95 0.05 Z",
-];
-
-const GREY = ["#e6e6e6", "#a6a6a6", "#474747"];
 const DARK_GREY = ["#a0a0a0", "#606060", "#222222"];
 const ICE = ["#ffffff", "#e2ecf4", "#8fa6ba"];
 const RUST_GREY = ["#d8ccc0", "#9a8878", "#4a3c32"];
@@ -216,6 +156,23 @@ const LOOKS = {
   eris: { colors: ["#ffffff", "#e8e8ec", "#9a9aa8"], craters: 3 },
   sedna: { colors: ["#ff9f86", "#c0392b", "#5a1a10"] },
 
+  // ── Asteroids ──
+  vesta: {
+    colors: ["#d8d0c4", "#8e8478", "#3c3630"],
+    craters: [{ x: 0.1, y: 0.62, r: 0.34 }, { x: -0.45, y: -0.3, r: 0.1 }, { x: 0.4, y: -0.4, r: 0.08 }],
+    shape: { ellipse: 0.9, rotate: 10 },
+  },
+  juno: { colors: ["#c8c0b4", "#7e766c", "#34302a"], shape: potato(2, 35), craters: 4 },
+  pallas: { colors: ["#c4c4c8", "#7a7a80", "#303034"], shape: { ellipse: 0.88, rotate: -15 }, craters: 6 },
+  ida: { colors: ["#b8aa98", "#78685a", "#2e2620"], shape: potato(1, 80), craters: 5 },
+  psyche: {
+    colors: ["#f4f4f8", "#a8aab4", "#44464e"],
+    shape: potato(0, -20),
+    spots: [{ x: -0.3, y: -0.3, rx: 0.25, ry: 0.12, color: "#ffffff", opacity: 0.5, rotate: -25 }],
+    craters: 3,
+  },
+  hygiea: { colors: ["#9a9a9a", "#5a5a5a", "#1e1e1e"], craters: 5 },
+
   // ── Moons ──
   moon: {
     colors: ["#ececec", "#aaaaaa", "#4a4a4a"],
@@ -304,23 +261,15 @@ const LOOKS = {
 // ── Lookup ───────────────────────────────────────────────────────────────────
 
 function defaultLook(body) {
-  if (body && body.radiusKm < 120) return { colors: GREY, shape: potato(hash(body.id) % 3), craters: 3 };
-  return { colors: GREY, craters: 8 };
+  if (body && body.radiusKm < 120) return { shape: potato(hashString(body.id) % 3), craters: 3 };
+  return { craters: 8 };
 }
 
 const cache = new Map();
 
 // The finished look for a body: defaults filled in, craters scattered, and the
-// `extent` (how far rings or glow reach past the body, in radii) worked out.
+// `extent` (how far rings or a glow reach past the body, in radii) worked out.
 export function lookFor(id) {
-  if (cache.has(id)) return cache.get(id);
-  const body = bodyById(id);
-  const look = { shade: 0.7, ...(LOOKS[id] ?? defaultLook(body)) };
-  if (typeof look.craters === "number") {
-    look.craters = craterField(hash(id), look.craters, look.shape?.potato !== undefined ? { minR: 0.06, maxR: 0.2 } : {});
-  }
-  const ringReach = look.rings ? Math.max(...look.rings.bands.map((b) => b.r1)) : 1;
-  look.extent = Math.max(1.05, ringReach, look.glow?.extent ?? 1);
-  cache.set(id, look);
-  return look;
+  if (!cache.has(id)) cache.set(id, finishLook(id, LOOKS[id] ?? defaultLook(bodyById(id))));
+  return cache.get(id);
 }
