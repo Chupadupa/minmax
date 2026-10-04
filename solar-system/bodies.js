@@ -8,7 +8,8 @@
 // Fields:
 //   id         unique key (also the key for its look in bodyLooks.js)
 //   name       display name
-//   kind       "star" | "planet" | "dwarf" | "moon"
+//   say        how to say it, spelled out for the speech button (when the name trips it up)
+//   kind       "star" | "planet" | "dwarf" | "asteroid" | "moon"
 //   parent     id of what it goes round (null for the Sun)
 //   radiusKm   mean radius
 //   orbitKm    mean distance from its parent (semi-major axis)
@@ -22,6 +23,10 @@
 //
 // Sources: NASA planetary fact sheets; moon counts from the IAU Minor Planet
 // Center (March 2026 announcement). Candidate dwarf planets have rougher numbers.
+
+import { trimTo, formatNumber, formatDays, formatHours, ordinal } from "../shared/formatUtils.js";
+
+export { formatNumber, formatDays, formatHours, ordinal };
 
 export const MOONS_AS_OF = "March 2026";
 export const AU_KM = 149_597_870.7;
@@ -78,7 +83,7 @@ const PLANETS = [
 
 const DWARF_PLANETS = [
   {
-    id: "ceres", name: "Ceres", kind: "dwarf", parent: "sun", region: "asteroid",
+    id: "ceres", name: "Ceres", say: "Seer-eez", kind: "dwarf", parent: "sun", region: "asteroid",
     radiusKm: 469.7, orbitKm: 413_690_000, orbitDays: 1680, dayHours: 9.07, tempC: -105, moonCount: 0,
     fact: "Ceres is the biggest thing in the asteroid belt. It has bright white spots of salt shining inside one of its craters.",
   },
@@ -93,22 +98,22 @@ const DWARF_PLANETS = [
     fact: "Pluto was called the ninth planet until 2006. It has a big white heart on its surface, made of frozen nitrogen.",
   },
   {
-    id: "haumea", name: "Haumea", kind: "dwarf", parent: "sun", region: "kuiper",
+    id: "haumea", name: "Haumea", say: "How-may-ah", kind: "dwarf", parent: "sun", region: "kuiper",
     radiusKm: 780, orbitKm: 6_452_000_000, orbitDays: 103_400, dayHours: 3.92, tempC: -241, moonCount: 2,
     fact: "Haumea spins so fast — once every 4 hours — that it has been stretched into an egg shape, about 2,000 km long but only 1,000 km thick. It even has a ring!",
   },
   {
-    id: "quaoar", name: "Quaoar", kind: "dwarf", parent: "sun", region: "kuiper", candidate: true,
+    id: "quaoar", name: "Quaoar", say: "Kwah-war", kind: "dwarf", parent: "sun", region: "kuiper", candidate: true,
     radiusKm: 555, orbitKm: 6_537_000_000, orbitDays: 105_500, dayHours: 17.7, tempC: -230, moonCount: 1,
     fact: "Quaoar has two thin rings — much further out from it than anyone thought rings could be.",
   },
   {
-    id: "makemake", name: "Makemake", kind: "dwarf", parent: "sun", region: "kuiper",
+    id: "makemake", name: "Makemake", say: "Mah-kay mah-kay", kind: "dwarf", parent: "sun", region: "kuiper",
     radiusKm: 715, orbitKm: 6_847_000_000, orbitDays: 111_800, dayHours: 22.8, tempC: -239, moonCount: 1,
     fact: "Makemake is reddish-brown and covered in frozen methane. It is named after the creator god of the people of Easter Island.",
   },
   {
-    id: "gonggong", name: "Gonggong", kind: "dwarf", parent: "sun", region: "scattered", candidate: true,
+    id: "gonggong", name: "Gonggong", say: "Gong-gong", kind: "dwarf", parent: "sun", region: "scattered", candidate: true,
     radiusKm: 615, orbitKm: 10_070_000_000, orbitDays: 202_500, dayHours: 22.4, tempC: -243, moonCount: 1,
     fact: "Gonggong is named after a Chinese water god with a red face. Its name was chosen by a public vote in 2019.",
   },
@@ -121,6 +126,40 @@ const DWARF_PLANETS = [
     id: "sedna", name: "Sedna", kind: "dwarf", parent: "sun", region: "scattered", candidate: true,
     radiusKm: 500, orbitKm: 75_700_000_000, orbitDays: 4_160_000, dayHours: 10.3, tempC: -240, moonCount: 0,
     fact: "Sedna is so far away that one trip round the Sun takes more than 11,000 years! It is one of the reddest things in the Solar System.",
+  },
+];
+
+// The best-known lumps in the asteroid belt, nearest the Sun first.
+const ASTEROIDS = [
+  {
+    id: "vesta", name: "Vesta", kind: "asteroid", parent: "sun", region: "asteroid",
+    radiusKm: 262.7, orbitKm: 353_000_000, orbitDays: 1325, dayHours: 5.34, tempC: -100, moonCount: 0,
+    fact: "Vesta is the brightest asteroid — on a dark night you can just see it with your own eyes. A giant crater at its south pole is almost as wide as Vesta itself.",
+  },
+  {
+    id: "juno", name: "Juno", kind: "asteroid", parent: "sun", region: "asteroid",
+    radiusKm: 123, orbitKm: 399_000_000, orbitDays: 1594, dayHours: 7.21, moonCount: 0,
+    fact: "Juno was the third asteroid ever found, in 1804. For a while astronomers thought it was a brand-new planet!",
+  },
+  {
+    id: "pallas", name: "Pallas", kind: "asteroid", parent: "sun", region: "asteroid",
+    radiusKm: 256, orbitKm: 414_000_000, orbitDays: 1686, dayHours: 7.81, moonCount: 0,
+    fact: "Pallas was the second asteroid found, in 1802. Its orbit is tilted, so it swoops up above the rest of the belt and back down again.",
+  },
+  {
+    id: "ida", name: "Ida", say: "Eye-dah", kind: "asteroid", parent: "sun", region: "asteroid",
+    radiusKm: 15.7, orbitKm: 428_000_000, orbitDays: 1768, dayHours: 4.63, moonCount: 1,
+    fact: "Ida was the first asteroid found to have a moon of its own. The Galileo spacecraft spotted little Dactyl next to it in 1993.",
+  },
+  {
+    id: "psyche", name: "Psyche", say: "Sy-kee", kind: "asteroid", parent: "sun", region: "asteroid",
+    radiusKm: 111, orbitKm: 437_000_000, orbitDays: 1825, dayHours: 4.2, moonCount: 0,
+    fact: "Psyche is made mostly of metal — iron and nickel, like the middle of the Earth. A NASA spacecraft is flying there right now and arrives in 2029.",
+  },
+  {
+    id: "hygiea", name: "Hygiea", say: "Hy-jee-ah", kind: "asteroid", parent: "sun", region: "asteroid",
+    radiusKm: 217, orbitKm: 470_000_000, orbitDays: 2030, dayHours: 13.8, moonCount: 0,
+    fact: "Hygiea is very nearly round, so it might count as a dwarf planet too — it would be the smallest one of all.",
   },
 ];
 
@@ -138,18 +177,18 @@ const MOONS = [
     fact: "Phobos zooms round Mars three times a day! It is slowly spiralling inwards and will one day break apart into a ring.",
   },
   {
-    id: "deimos", name: "Deimos", kind: "moon", parent: "mars",
+    id: "deimos", name: "Deimos", say: "Dye-moss", kind: "moon", parent: "mars",
     radiusKm: 6.2, orbitKm: 23_460, orbitDays: 1.263,
     fact: "Deimos is tiny — only about 12 km across. From Mars it would look like a bright star in the sky.",
   },
   // Jupiter
   {
-    id: "amalthea", name: "Amalthea", kind: "moon", parent: "jupiter",
+    id: "amalthea", name: "Amalthea", say: "Am-al-thee-ah", kind: "moon", parent: "jupiter",
     radiusKm: 83.5, orbitKm: 181_366, orbitDays: 0.498,
     fact: "Amalthea is a potato-shaped moon, and the reddest thing in the whole Solar System.",
   },
   {
-    id: "io", name: "Io", kind: "moon", parent: "jupiter",
+    id: "io", name: "Io", say: "Eye-oh", kind: "moon", parent: "jupiter",
     radiusKm: 1821.6, orbitKm: 421_700, orbitDays: 1.769, tempC: -143,
     fact: "Io has hundreds of volcanoes — more than anywhere else in the Solar System. Its lava fountains shoot hundreds of km high.",
   },
@@ -159,7 +198,7 @@ const MOONS = [
     fact: "Under Europa's cracked icy shell is a salty ocean with more water than all of Earth's oceans put together.",
   },
   {
-    id: "ganymede", name: "Ganymede", kind: "moon", parent: "jupiter",
+    id: "ganymede", name: "Ganymede", say: "Gan-ih-meed", kind: "moon", parent: "jupiter",
     radiusKm: 2634.1, orbitKm: 1_070_412, orbitDays: 7.155, tempC: -163,
     fact: "Ganymede is the biggest moon in the Solar System — it is even bigger than the planet Mercury!",
   },
@@ -169,28 +208,28 @@ const MOONS = [
     fact: "Callisto is the most cratered world we know of. Its surface has hardly changed in 4 billion years.",
   },
   {
-    id: "himalia", name: "Himalia", kind: "moon", parent: "jupiter",
+    id: "himalia", name: "Himalia", say: "Hi-may-lee-ah", kind: "moon", parent: "jupiter",
     radiusKm: 85, orbitKm: 11_460_000, orbitDays: 250.6,
     fact: "Himalia is the biggest of Jupiter's many small, far-off moons — the rest are only a few km across.",
   },
   // Saturn
   {
-    id: "mimas", name: "Mimas", kind: "moon", parent: "saturn",
+    id: "mimas", name: "Mimas", say: "My-mass", kind: "moon", parent: "saturn",
     radiusKm: 198.2, orbitKm: 185_539, orbitDays: 0.942,
     fact: "Mimas has a crater so huge that it makes the whole moon look like the Death Star from Star Wars.",
   },
   {
-    id: "enceladus", name: "Enceladus", kind: "moon", parent: "saturn",
+    id: "enceladus", name: "Enceladus", say: "En-sell-ah-duss", kind: "moon", parent: "saturn",
     radiusKm: 252.1, orbitKm: 237_948, orbitDays: 1.37, tempC: -198,
     fact: "Enceladus shoots jets of water into space from cracks near its south pole. It is the shiniest world in the Solar System.",
   },
   {
-    id: "tethys", name: "Tethys", kind: "moon", parent: "saturn",
+    id: "tethys", name: "Tethys", say: "Tee-thiss", kind: "moon", parent: "saturn",
     radiusKm: 531.1, orbitKm: 294_619, orbitDays: 1.888,
     fact: "Tethys is made almost entirely of ice. A giant canyon stretches three-quarters of the way round it.",
   },
   {
-    id: "dione", name: "Dione", kind: "moon", parent: "saturn",
+    id: "dione", name: "Dione", say: "Dye-oh-nee", kind: "moon", parent: "saturn",
     radiusKm: 561.4, orbitKm: 377_396, orbitDays: 2.737,
     fact: "Dione has bright wispy streaks on one side — they are enormous cliffs of ice.",
   },
@@ -210,7 +249,7 @@ const MOONS = [
     fact: "Hyperion looks like a sponge and tumbles about as it orbits — nobody can predict which way it will be facing.",
   },
   {
-    id: "iapetus", name: "Iapetus", kind: "moon", parent: "saturn",
+    id: "iapetus", name: "Iapetus", say: "Eye-ap-eh-tuss", kind: "moon", parent: "saturn",
     radiusKm: 734.5, orbitKm: 3_560_820, orbitDays: 79.32,
     fact: "Iapetus is two-toned: one side is bright white and the other is as dark as coal.",
   },
@@ -236,7 +275,7 @@ const MOONS = [
     fact: "Ariel is the brightest of Uranus's moons, criss-crossed with long valleys.",
   },
   {
-    id: "umbriel", name: "Umbriel", kind: "moon", parent: "uranus",
+    id: "umbriel", name: "Umbriel", say: "Um-bree-el", kind: "moon", parent: "uranus",
     radiusKm: 584.7, orbitKm: 266_300, orbitDays: 4.144,
     fact: "Umbriel is the darkest of Uranus's big moons, with a mysterious bright ring near its edge.",
   },
@@ -252,7 +291,7 @@ const MOONS = [
   },
   // Neptune
   {
-    id: "proteus", name: "Proteus", kind: "moon", parent: "neptune",
+    id: "proteus", name: "Proteus", say: "Pro-tee-uss", kind: "moon", parent: "neptune",
     radiusKm: 210, orbitKm: 117_647, orbitDays: 1.122,
     fact: "Proteus is about as big as a moon can get without its own gravity squashing it into a ball.",
   },
@@ -262,13 +301,13 @@ const MOONS = [
     fact: "Triton goes round Neptune backwards and has geysers of nitrogen. It is one of the coldest places we know of.",
   },
   {
-    id: "nereid", name: "Nereid", kind: "moon", parent: "neptune",
+    id: "nereid", name: "Nereid", say: "Neer-ee-id", kind: "moon", parent: "neptune",
     radiusKm: 178, orbitKm: 5_513_800, orbitDays: 360.1,
     fact: "Nereid has one of the most stretched-out orbits of any moon — it swings far away from Neptune and back again.",
   },
   // Pluto
   {
-    id: "charon", name: "Charon", kind: "moon", parent: "pluto",
+    id: "charon", name: "Charon", say: "Share-on", kind: "moon", parent: "pluto",
     radiusKm: 606, orbitKm: 19_591, orbitDays: 6.387,
     fact: "Charon is half as wide as Pluto, so the two of them wobble round each other like a pair of dancers.",
   },
@@ -283,7 +322,7 @@ const MOONS = [
     fact: "Nix tumbles about chaotically as it orbits — it doesn't have a proper day at all.",
   },
   {
-    id: "kerberos", name: "Kerberos", kind: "moon", parent: "pluto",
+    id: "kerberos", name: "Kerberos", say: "Kur-ber-oss", kind: "moon", parent: "pluto",
     radiusKm: 6, orbitKm: 57_783, orbitDays: 32.17,
     fact: "Kerberos is named after the three-headed dog that guards the underworld in Greek myths.",
   },
@@ -299,38 +338,44 @@ const MOONS = [
     fact: "Vanth is a huge moon for a world the size of Orcus — nearly half as wide as Orcus itself.",
   },
   {
-    id: "namaka", name: "Namaka", kind: "moon", parent: "haumea",
+    id: "namaka", name: "Namaka", say: "Nah-mah-kah", kind: "moon", parent: "haumea",
     radiusKm: 85, orbitKm: 25_657, orbitDays: 18.28,
     fact: "Namaka is named after a Hawaiian sea goddess, one of Haumea's daughters.",
   },
   {
-    id: "hiiaka", name: "Hiʻiaka", kind: "moon", parent: "haumea",
+    id: "hiiaka", name: "Hiʻiaka", say: "Hee-ee-ah-kah", kind: "moon", parent: "haumea",
     radiusKm: 155, orbitKm: 49_880, orbitDays: 49.12,
     fact: "Hiʻiaka is Haumea's bigger moon, named after the Hawaiian goddess of dance.",
   },
   {
-    id: "weywot", name: "Weywot", kind: "moon", parent: "quaoar",
+    id: "weywot", name: "Weywot", say: "Way-wot", kind: "moon", parent: "quaoar",
     radiusKm: 85, orbitKm: 13_289, orbitDays: 12.43,
     fact: "Weywot is named after the sky god of the Tongva people of California — the son of Quaoar.",
   },
   {
-    id: "mk2", name: "MK2", kind: "moon", parent: "makemake",
+    id: "mk2", name: "MK2", say: "Em Kay Two", kind: "moon", parent: "makemake",
     radiusKm: 87, orbitKm: 21_000, orbitDays: 12.4,
     fact: "Makemake's little moon is so dark and so new that it hasn't got a proper name yet — astronomers just call it MK2.",
   },
   {
-    id: "xiangliu", name: "Xiangliu", kind: "moon", parent: "gonggong",
+    id: "xiangliu", name: "Xiangliu", say: "Shyang-lyoo", kind: "moon", parent: "gonggong",
     radiusKm: 50, orbitKm: 24_021, orbitDays: 25.22,
     fact: "Xiangliu is named after a nine-headed snake monster from Chinese mythology.",
   },
   {
-    id: "dysnomia", name: "Dysnomia", kind: "moon", parent: "eris",
+    id: "dysnomia", name: "Dysnomia", say: "Dis-no-mee-ah", kind: "moon", parent: "eris",
     radiusKm: 307, orbitKm: 37_273, orbitDays: 15.79,
     fact: "Dysnomia is named after the daughter of Eris, the Greek goddess of trouble and strife.",
   },
+  // Asteroids
+  {
+    id: "dactyl", name: "Dactyl", say: "Dak-til", kind: "moon", parent: "ida",
+    radiusKm: 0.7, orbitKm: 108, orbitDays: 0.83,
+    fact: "Dactyl is only about 1.4 km across — you could walk all the way round it in an hour. It is the smallest world in here!",
+  },
 ];
 
-export const BODIES = [SUN, ...PLANETS, ...DWARF_PLANETS, ...MOONS];
+export const BODIES = [SUN, ...PLANETS, ...DWARF_PLANETS, ...ASTEROIDS, ...MOONS];
 
 const BY_ID = Object.fromEntries(BODIES.map((b) => [b.id, b]));
 const byDistance = (a, b) => a.orbitKm - b.orbitKm;
@@ -339,9 +384,11 @@ export function bodyById(id) {
   return BY_ID[id] ?? null;
 }
 
-// Everything that goes round the Sun, nearest first (planets and dwarf
-// planets mixed, so Ceres sits between Mars and Jupiter).
+// Everything that gets its own stop on the map, nearest the Sun first (planets
+// and dwarf planets mixed, so Ceres sits between Mars and Jupiter). Asteroids
+// live inside the belt instead.
 export const SUN_ORBITERS = [...PLANETS, ...DWARF_PLANETS].sort(byDistance);
+export const NOTABLE_ASTEROIDS = [...ASTEROIDS].sort(byDistance);
 
 // The moons of a planet or dwarf planet, nearest first.
 export function moonsOf(id) {
@@ -360,13 +407,6 @@ export const REGION_NAMES = {
   scattered: "way out past the Kuiper belt",
 };
 
-export function ordinal(n) {
-  const tens = n % 100;
-  if (tens >= 11 && tens <= 13) return `${n}th`;
-  const suffix = { 1: "st", 2: "nd", 3: "rd" }[n % 10] ?? "th";
-  return `${n}${suffix}`;
-}
-
 // A one-line answer to "what is it?"
 export function describe(body) {
   switch (body.kind) {
@@ -376,6 +416,8 @@ export function describe(body) {
       return `The ${ordinal(planetNumber(body))} planet from the Sun`;
     case "dwarf":
       return `A dwarf planet in ${REGION_NAMES[body.region]}`;
+    case "asteroid":
+      return "An asteroid in the asteroid belt";
     case "moon": {
       const parent = bodyById(body.parent);
       const siblings = moonsOf(body.parent);
@@ -390,41 +432,16 @@ export function describe(body) {
 
 // ── Numbers ──────────────────────────────────────────────────────────────────
 
-function trim(n, decimals) {
-  return Number(n.toFixed(decimals));
-}
-
-export function formatNumber(n, useCommas = true) {
-  return useCommas ? n.toLocaleString("en-US") : String(n);
-}
-
 // Sizes compared with Earth, e.g. "11× wider than Earth" or "Earth is 4× wider".
 export function sizeVsEarth(radiusKm, useCommas = true) {
   const ratio = radiusKm / EARTH_RADIUS_KM;
-  if (ratio >= 1.15) return `${formatNumber(trim(ratio, ratio < 10 ? 1 : 0), useCommas)}× wider than Earth`;
+  if (ratio >= 1.15) return `${formatNumber(trimTo(ratio, ratio < 10 ? 1 : 0), useCommas)}× wider than Earth`;
   if (ratio >= 0.87) return "About the same size as Earth";
   const inverse = 1 / ratio;
-  return `Earth is ${formatNumber(trim(inverse, inverse < 10 ? 1 : 0), useCommas)}× wider`;
-}
-
-function plural(n, unit) {
-  return `${n} ${unit}${n === "1" ? "" : "s"}`;
-}
-
-// Durations in the friendliest unit: hours, days or years.
-export function formatDays(days, useCommas = true) {
-  if (days < 1) return plural(formatNumber(trim(days * 24, 1), useCommas), "hour");
-  if (days < 730) return plural(formatNumber(trim(days, days < 10 ? 1 : 0), useCommas), "day");
-  const years = days / 365.25;
-  return plural(formatNumber(trim(years, years < 10 ? 1 : 0), useCommas), "year");
-}
-
-export function formatHours(hours, useCommas = true) {
-  if (hours < 48) return plural(formatNumber(trim(hours, 1), useCommas), "hour");
-  return formatDays(hours / 24, useCommas);
+  return `Earth is ${formatNumber(trimTo(inverse, inverse < 10 ? 1 : 0), useCommas)}× wider`;
 }
 
 export function formatAu(km) {
   const au = km / AU_KM;
-  return `${trim(au, au < 10 ? 2 : au < 100 ? 1 : 0)} AU`;
+  return `${trimTo(au, au < 10 ? 2 : au < 100 ? 1 : 0)} AU`;
 }

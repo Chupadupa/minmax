@@ -1,12 +1,14 @@
 import { useId } from "react";
-import { lookFor, POTATOES } from "./bodyLooks.js";
+import { POTATOES } from "./bodyArt.js";
 
 // ── Body Picture ─────────────────────────────────────────────────────────────
 //
-// Draws any body from its look (bodyLooks.js) as an SVG: a shaded sphere (or
-// egg, or potato) with its stripes, spots, craters, caps and rings. `size` is
-// the body's diameter in pixels; the SVG itself is bigger when rings or a glow
-// reach past the body (look.extent), and is centred on the body either way.
+// Draws any world from a finished look (see bodyArt.js) as an SVG: a shaded
+// sphere (or egg, or potato) with its stripes, spots, craters, caps and rings.
+// `size` is the body's diameter in pixels; the SVG itself is bigger when rings,
+// a glow or a companion reach past the body (look.extent), and is centred on
+// the body either way. It ignores pointer events, so whatever wraps it takes
+// the tap.
 
 const BAND_BLUR = 0.035;
 
@@ -61,17 +63,30 @@ function Cap({ size, south, color }) {
   return <ellipse cx={0} cy={cy} rx={size * 2.4} ry={size * 0.75} fill={color} fillOpacity={0.9} />;
 }
 
-export function BodyPicture({ id, size, style }) {
-  const look = lookFor(id);
+function Glow({ id, color, extent, cx = 0, cy = 0 }) {
+  return (
+    <>
+      <defs>
+        <radialGradient id={id} cx="50%" cy="50%" r="50%">
+          <stop offset="60%" stopColor={color} stopOpacity={0.5} />
+          <stop offset="100%" stopColor={color} stopOpacity={0} />
+        </radialGradient>
+      </defs>
+      <circle cx={cx} cy={cy} r={extent} fill={`url(#${id})`} />
+    </>
+  );
+}
+
+export function BodyPicture({ look, size, style }) {
   const ext = look.extent;
   const uid = useId().replace(/:/g, "");
   const ids = {
-    base: `${uid}b`, shade: `${uid}s`, clip: `${uid}c`,
-    front: `${uid}f`, glow: `${uid}g`, blur: `${uid}l`,
+    base: `${uid}b`, shade: `${uid}s`, clip: `${uid}c`, front: `${uid}f`,
+    glow: `${uid}g`, blur: `${uid}l`, companion: `${uid}p`, companionGlow: `${uid}q`,
   };
   const box = size * ext;
   const [light, mid, dark] = look.colors;
-  const { rings, glow } = look;
+  const { rings, glow, rays, companion } = look;
 
   return (
     <svg
@@ -100,10 +115,11 @@ export function BodyPicture({ id, size, style }) {
             <rect x={-ext} y={0} width={2 * ext} height={ext} />
           </clipPath>
         )}
-        {glow && (
-          <radialGradient id={ids.glow} cx="50%" cy="50%" r="50%">
-            <stop offset="60%" stopColor={glow.color} stopOpacity={0.5} />
-            <stop offset="100%" stopColor={glow.color} stopOpacity={0} />
+        {companion && (
+          <radialGradient id={ids.companion} cx="35%" cy="32%" r="78%">
+            <stop offset="0%" stopColor={companion.colors[0]} />
+            <stop offset="55%" stopColor={companion.colors[1]} />
+            <stop offset="100%" stopColor={companion.colors[2]} />
           </radialGradient>
         )}
         {look.bands && (
@@ -113,7 +129,25 @@ export function BodyPicture({ id, size, style }) {
         )}
       </defs>
 
-      {glow && <circle r={glow.extent} fill={`url(#${ids.glow})`} />}
+      {/* A second star, behind the main one */}
+      {companion && (
+        <g>
+          {companion.glow && (
+            <Glow id={ids.companionGlow} color={companion.glow.color} extent={companion.r * companion.glow.extent} cx={companion.x} cy={companion.y} />
+          )}
+          <circle cx={companion.x} cy={companion.y} r={companion.r} fill={`url(#${ids.companion})`} />
+        </g>
+      )}
+
+      {glow && <Glow id={ids.glow} color={glow.color} extent={glow.extent} />}
+
+      {/* Beams of light shooting out either side (a pulsar) */}
+      {rays && (
+        <g transform={`rotate(${rays.angle ?? -30})`} stroke={rays.color} strokeWidth={rays.width} strokeLinecap="round" strokeOpacity={0.8}>
+          <line x1={0} y1={0} x2={rays.length} y2={0} />
+          <line x1={0} y1={0} x2={-rays.length} y2={0} />
+        </g>
+      )}
 
       {/* The far side of the rings, behind the body */}
       {rings && (

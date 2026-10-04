@@ -1,11 +1,12 @@
-import { useState, useRef, useEffect, useMemo, useCallback, useLayoutEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import {
-  BODIES, SUN_ORBITERS, bodyById, moonsOf, planetNumber, describe, ordinal,
+  BODIES, SUN_ORBITERS, NOTABLE_ASTEROIDS, bodyById, moonsOf, planetNumber, describe, ordinal,
   sizeVsEarth, formatNumber, formatDays, formatHours, formatAu, MOONS_AS_OF,
 } from "./bodies.js";
 import { layoutMap } from "./layout.js";
 import { lookFor } from "./bodyLooks.js";
-import { BodyPicture } from "./BodyPicture.jsx";
+import { BodyPicture } from "../shared/BodyPicture.jsx";
+import { accentColor } from "../shared/bodyArt.js";
 import { SolarMap } from "./SolarMap.jsx";
 import { NB_SOLID } from "../shared/numberblockColors.js";
 import { BackgroundDots } from "../shared/BackgroundDots.jsx";
@@ -16,11 +17,14 @@ import {
 } from "../shared/SettingsOverlay.jsx";
 import { Toast } from "../shared/Toast.jsx";
 import { useScrollLock } from "../shared/useScrollLock.js";
+import { useSpeech } from "../shared/useSpeech.js";
+import { useElementWidth } from "../shared/useElementWidth.js";
 
 const SUN = bodyById("sun");
 const PLANET_IDS = SUN_ORBITERS.filter((b) => b.kind === "planet").map((b) => b.id);
 const OFFICIAL_DWARF_IDS = SUN_ORBITERS.filter((b) => b.kind === "dwarf" && !b.candidate).map((b) => b.id);
 const GALILEAN_IDS = ["io", "europa", "ganymede", "callisto"];
+const ASTEROID_IDS = NOTABLE_ASTEROIDS.map((b) => b.id);
 const MOON_ORBIT_KM = 384_400;
 const TOAST_MS = 3500;
 
@@ -43,7 +47,7 @@ function tempNote(tempC) {
 }
 
 function factsFor(body, commas) {
-  const km = (v) => `${formatNumber(Math.round(v), commas)} km`;
+  const km = (v) => `${formatNumber(v < 10 ? Number(v.toFixed(1)) : Math.round(v), commas)} km`;
   const ratio = (v, decimals) => formatNumber(Number(v.toFixed(decimals)), commas);
   const chips = [{ label: "How wide", value: km(body.radiusKm * 2), note: sizeVsEarth(body.radiusKm, commas) }];
 
@@ -89,54 +93,6 @@ function moonsTitle(body, moons) {
   return `${formatNumber(n)} known moons — the ${moons.length} biggest`;
 }
 
-// ── Speech ───────────────────────────────────────────────────────────────────
-
-function useSpeech() {
-  const synth = typeof window !== "undefined" && "speechSynthesis" in window ? window.speechSynthesis : null;
-  const [voices, setVoices] = useState([]);
-  const [speaking, setSpeaking] = useState(false);
-
-  useEffect(() => {
-    if (!synth) return;
-    const load = () => setVoices(synth.getVoices());
-    load();
-    synth.addEventListener?.("voiceschanged", load);
-    return () => {
-      synth.removeEventListener?.("voiceschanged", load);
-      synth.cancel();
-    };
-  }, [synth]);
-
-  const english = voices.filter((v) => /^en/i.test(v.lang));
-  const voice = english.find((v) => v.default) || english[0] || null;
-
-  const speak = useCallback((text) => {
-    if (!synth) return;
-    synth.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = voice?.lang ?? "en-US";
-    if (voice) u.voice = voice;
-    u.rate = 0.85;
-    u.onend = () => setSpeaking(false);
-    u.onerror = () => setSpeaking(false);
-    synth.speak(u);
-    setSpeaking(true);
-  }, [synth, voice]);
-
-  return { available: !!synth, speaking, speak };
-}
-
-function useElementWidth(ref, fallback = 360) {
-  const [width, setWidth] = useState(fallback);
-  useLayoutEffect(() => {
-    const update = () => { if (ref.current) setWidth(ref.current.clientWidth); };
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, [ref]);
-  return width;
-}
-
 // ── Close-Up Overlay ─────────────────────────────────────────────────────────
 
 function KindLine({ body }) {
@@ -151,7 +107,7 @@ function KindLine({ body }) {
 }
 
 function BodyOverlay({ body, siblings, useCommas, speech, onPick, onClose }) {
-  const accent = lookFor(body.id).colors[1];
+  const accent = accentColor(lookFor(body.id));
   const parent = body.parent ? bodyById(body.parent) : null;
   const moons = moonsOf(body.id);
   const index = siblings.findIndex((b) => b.id === body.id);
@@ -179,7 +135,7 @@ function BodyOverlay({ body, siblings, useCommas, speech, onPick, onClose }) {
             ◀
           </button>
           <div className="panel-pic" style={{ width: picSize, height: picSize }}>
-            <BodyPicture id={body.id} size={picSize} />
+            <BodyPicture look={lookFor(body.id)} size={picSize} />
           </div>
           <button
             className="toy-btn nav-btn" disabled={!next}
@@ -194,7 +150,7 @@ function BodyOverlay({ body, siblings, useCommas, speech, onPick, onClose }) {
           {speech.available && (
             <button
               className="toy-btn speak-btn"
-              onClick={() => speech.speak(body.name)}
+              onClick={() => speech.speak(body.say ?? body.name)}
               aria-label={`Say ${body.name}`}
               style={{ animation: speech.speaking ? "speakPulse 0.8s ease-in-out infinite" : "none" }}
             >
@@ -222,7 +178,7 @@ function BodyOverlay({ body, siblings, useCommas, speech, onPick, onClose }) {
             <div className="moons-row">
               {moons.map((m) => (
                 <button key={m.id} className="moon-chip" onClick={() => onPick(m.id)}>
-                  <span className="moon-chip-pic"><BodyPicture id={m.id} size={34} /></span>
+                  <span className="moon-chip-pic"><BodyPicture look={lookFor(m.id)} size={34} /></span>
                   <span className="moon-chip-name">{m.name}</span>
                 </button>
               ))}
@@ -249,7 +205,7 @@ function SolarSettings({ show, onClose, settings, update }) {
         {toggle("showNames", "Show names on the map", "Turn off to play a guessing game — tap to find out!")}
         {toggle("numberPlanets", "Number the planets", "1st to 8th from the Sun, in Numberblocks colors")}
         {toggle("showDwarfs", "Show the dwarf planets", "Ceres, Pluto, Haumea, Makemake and Eris")}
-        {settings.showDwarfs && toggle("showCandidates", "Show the maybe-dwarf planets", "Orcus, Quaoar, Gonggong and Sedna — most astronomers count them too")}
+        {settings.showDwarfs && toggle("showCandidates", "Show dwarf planet candidates", "Orcus, Quaoar, Gonggong and Sedna — most astronomers count them too")}
         {toggle("realSizes", "Real sizes", "Everything shrinks next to Jupiter — and the Sun is enormous")}
         {toggle("realDistances", "Real distances", "Space is mostly empty: keep scrolling to reach Neptune!")}
         {toggle("useCommas", "Show commas in numbers", `e.g. ${settings.useCommas ? "778,479,000" : "778479000"} → ${settings.useCommas ? "778479000" : "778,479,000"}`)}
@@ -267,7 +223,12 @@ function SolarSettings({ show, onClose, settings, update }) {
           official, and a few more are probably dwarf planets as well.
         </SettingsAboutText>
         <SettingsAboutText>
-          A <b>moon</b> goes round a planet or dwarf planet instead of the Sun. Astronomers find
+          An <b>asteroid</b> is a lump of rock or metal too small for gravity to squeeze into a
+          ball. Millions of them live in the asteroid belt between Mars and Jupiter; the biggest
+          few are in here.
+        </SettingsAboutText>
+        <SettingsAboutText>
+          A <b>moon</b> goes round a planet, dwarf planet or asteroid instead of the Sun. Astronomers find
           new tiny ones all the time, so the counts here are from {MOONS_AS_OF}.
         </SettingsAboutText>
         <SettingsAboutText>
@@ -279,9 +240,9 @@ function SolarSettings({ show, onClose, settings, update }) {
       <SettingsDivider />
       <SettingsSection title="About">
         <SettingsAboutText>
-          Made for my son, who loves numbers — and now the eight planets, nine dwarf planets and
-          {" "}{BODIES.filter((b) => b.kind === "moon").length} moons in here, from the biggest
-          (Ganymede) to a potato just 12 km across.
+          Made for my son, who loves numbers — and now the eight planets, nine dwarf planets,
+          six asteroids and {BODIES.filter((b) => b.kind === "moon").length} moons in here, from
+          the biggest (Ganymede) to a pebble just 1.4 km across.
         </SettingsAboutText>
       </SettingsSection>
 
@@ -319,7 +280,7 @@ const DEFAULT_SETTINGS = {
   showNames: true,
   numberPlanets: true,
   showDwarfs: true,
-  showCandidates: false,
+  showCandidates: true,
   realSizes: false,
   realDistances: false,
   useCommas: true,
@@ -335,7 +296,7 @@ export default function SolarSystem() {
   const milestonesFired = useRef(new Set());
   const mapRef = useRef(null);
   const width = useElementWidth(mapRef);
-  const speech = useSpeech();
+  const speech = useSpeech({ lang: "en" });
   useScrollLock(!!selectedId);
 
   const update = (key, value) => setSettings((s) => ({ ...s, [key]: value }));
@@ -348,17 +309,19 @@ export default function SolarSystem() {
   );
 
   const layout = useMemo(
-    () => layoutMap(orbiters, SUN, { width, realSizes: settings.realSizes, realDistances: settings.realDistances }),
+    () => layoutMap(orbiters, SUN, NOTABLE_ASTEROIDS, { width, realSizes: settings.realSizes, realDistances: settings.realDistances }),
     [orbiters, width, settings.realSizes, settings.realDistances]
   );
 
   const selected = selectedId ? bodyById(selectedId) : null;
 
   // ◀ ▶ flip through whatever the body shares its orbit with: the Sun and its
-  // orbiters, or the moons of the same world.
+  // orbiters, the asteroids of the belt, or the moons of the same world.
   const siblings = useMemo(() => {
     if (!selected) return [];
-    return selected.kind === "moon" ? moonsOf(selected.parent) : [SUN, ...orbiters];
+    if (selected.kind === "moon") return moonsOf(selected.parent);
+    if (selected.kind === "asteroid") return NOTABLE_ASTEROIDS;
+    return [SUN, ...orbiters];
   }, [selected, orbiters]);
 
   const showToast = (text) => {
@@ -382,6 +345,7 @@ export default function SolarSystem() {
     check("galilean", GALILEAN_IDS, "🔭 Galileo's four moons — found in 1610!");
     check("planets", PLANET_IDS, "🎉 You've visited all 8 planets!");
     check("dwarfs", OFFICIAL_DWARF_IDS, "🏆 All five dwarf planets!");
+    check("asteroids", ASTEROID_IDS, "🪨 Every asteroid in the belt!");
     check("everything", BODIES.map((b) => b.id), "🌌 You've seen every single one!");
   }, [visited]);
 
@@ -450,6 +414,46 @@ export default function SolarSystem() {
           text-shadow: 0 1px 3px rgba(0,0,0,0.6);
         }
         .map-label-hidden { color: rgba(255,255,255,0.4); }
+        .moon-row {
+          position: absolute; transform: translateY(-50%);
+          display: flex; flex-wrap: wrap; align-content: center;
+        }
+        .moon-dot, .belt-chip {
+          display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+          background: none; border: none; padding: 0; cursor: pointer;
+          -webkit-tap-highlight-color: transparent;
+          transition: transform 0.15s ease;
+        }
+        .moon-dot:active, .belt-chip:active { transform: scale(0.88); }
+        .belt-chip {
+          position: absolute; width: 56px; height: 40px;
+          transform: translate(-50%, -50%);
+        }
+        .belt-chip:active { transform: translate(-50%, -50%) scale(0.88); }
+        .chip-pic {
+          height: 26px; width: 100%; display: flex; align-items: center; justify-content: center;
+          overflow: visible;
+        }
+        .chip-name {
+          font-family: var(--font-heading); font-weight: 600; font-size: 8.5px; line-height: 1.1; letter-spacing: -0.2px;
+          color: rgba(255,255,255,0.85); white-space: nowrap; max-width: 100%;
+          overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+        }
+        .map-link {
+          position: absolute; left: 12px; right: 12px; height: 64px;
+          display: flex; align-items: center; gap: 12px; padding: 0 16px;
+          border-radius: 18px; text-decoration: none; color: #fff;
+          background: linear-gradient(135deg, rgba(99,102,241,0.35), rgba(168,85,247,0.35));
+          border: 1px solid rgba(255,255,255,0.18);
+          box-shadow: 0 6px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15);
+          transition: transform 0.15s ease;
+        }
+        .map-link:active { transform: scale(0.97); }
+        .map-link-stars { font-size: 26px; line-height: 1; }
+        .map-link > span:nth-child(2) { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+        .map-link-title { font-family: var(--font-heading); font-weight: 700; font-size: 17px; }
+        .map-link-sub { font-family: var(--font-body); font-size: 13px; color: rgba(255,255,255,0.7); }
+        .map-link-arrow { font-size: 20px; color: rgba(255,255,255,0.7); }
         .overlay-backdrop {
           position: fixed; inset: 0; z-index: 100;
           background: rgba(0,0,0,0.72);
@@ -471,9 +475,10 @@ export default function SolarSystem() {
           animation: popIn 0.3s ease-out;
         }
         .panel-btn {
-          background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.12);
+          background: rgba(52,48,112,0.92); border: 1px solid rgba(255,255,255,0.14);
           color: rgba(255,255,255,0.8); font-size: 14px; font-weight: 600;
           padding: 8px 14px; border-radius: 12px; min-height: 36px;
+          position: relative; z-index: 2; /* above the Sun's glow */
         }
         .nav-btn {
           width: 40px; height: 40px; border-radius: 50%; font-size: 15px; flex-shrink: 0;

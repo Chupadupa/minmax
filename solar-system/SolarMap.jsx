@@ -1,17 +1,20 @@
 import { useMemo } from "react";
-import { BodyPicture } from "./BodyPicture.jsx";
+import { BodyPicture } from "../shared/BodyPicture.jsx";
+import { lookFor } from "./bodyLooks.js";
 import { planetNumber } from "./bodies.js";
-import { HIT_RADIUS } from "./layout.js";
+import { HIT_RADIUS, MOON_CHIP_W, MOON_CHIP_H } from "./layout.js";
 import { NB_COLORS, NB_SOLID } from "../shared/numberblockColors.js";
 
 // ── Solar Map ────────────────────────────────────────────────────────────────
 //
 // The journey down the page: the Sun's edge at the top, then every planet and
-// dwarf planet in order along a dotted path, with the asteroid and Kuiper belts
-// drawn where they lie. Positions come ready-made from layout.js; this file
-// only draws them and reports taps.
+// dwarf planet in order along a dotted path with its moons in a row beside it,
+// the asteroid and Kuiper belts drawn where they lie (with the notable
+// asteroids tappable inside the first), and a signpost to the other stars at
+// the bottom. Positions come ready-made from layout.js; this file only draws
+// them and reports taps.
 
-// A gentle S-curve through the bodies, vertical as it leaves and arrives.
+// A gentle curve through the bodies, vertical as it leaves and arrives.
 function pathThrough(points) {
   return points
     .map(([x, y], i) => {
@@ -73,7 +76,7 @@ function MapBody({ item, label, number, onPick }) {
         {body.kind === "dwarf" && (
           <span className="map-dwarf-ring" style={{ width: 2 * r + 14, height: 2 * r + 14 }} />
         )}
-        <BodyPicture id={body.id} size={2 * r} />
+        <BodyPicture look={lookFor(body.id)} size={2 * r} />
         {number && (
           <span
             className="map-number"
@@ -88,8 +91,38 @@ function MapBody({ item, label, number, onPick }) {
   );
 }
 
+// A small tappable world with its name underneath: moons beside their planet,
+// asteroids in the belt.
+function SmallChip({ body, r, label, className, style, onPick }) {
+  return (
+    <button className={className} style={style} onClick={() => onPick(body.id)} aria-label={body.name}>
+      <span className="chip-pic">
+        <BodyPicture look={lookFor(body.id)} size={2 * r} />
+      </span>
+      <span className={`chip-name${label === "?" ? " map-label-hidden" : ""}`}>{label}</span>
+    </button>
+  );
+}
+
+function MoonRow({ item, labelFor, onPick }) {
+  if (!item.moons.length) return null;
+  return (
+    <div
+      className="moon-row"
+      style={{ left: item.moonsX, top: item.y, width: item.perRow * MOON_CHIP_W, maxWidth: item.moonsW }}
+    >
+      {item.moons.map((m) => (
+        <SmallChip
+          key={m.body.id} body={m.body} r={m.r} label={labelFor(m.body)}
+          className="moon-dot" style={{ width: MOON_CHIP_W, height: MOON_CHIP_H }} onPick={onPick}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function SolarMap({ layout, width, showNames, numberPlanets, onPick }) {
-  const { height, sun, items, belts, ticks, gap } = layout;
+  const { height, sun, items, belts, ticks, gap, link } = layout;
   const path = pathThrough([[sun.x, sun.y + sun.r], ...items.map((it) => [it.x, it.y])]);
   const labelFor = (body) => (showNames ? body.name : "?");
 
@@ -124,6 +157,26 @@ export function SolarMap({ layout, width, showNames, numberPlanets, onPick }) {
           onPick={onPick}
         />
       ))}
+      {items.map((item) => (
+        <MoonRow key={item.body.id} item={item} labelFor={labelFor} onPick={onPick} />
+      ))}
+      {belts.flatMap((belt) =>
+        belt.members.map((m) => (
+          <SmallChip
+            key={m.body.id} body={m.body} r={m.r} label={labelFor(m.body)}
+            className="belt-chip" style={{ left: m.x, top: m.y }} onPick={onPick}
+          />
+        ))
+      )}
+
+      <a className="map-link" href="../exoplanets/" style={{ top: link.y }}>
+        <span className="map-link-stars">✨</span>
+        <span>
+          <span className="map-link-title">Keep going…</span>
+          <span className="map-link-sub">Other stars have planets too!</span>
+        </span>
+        <span className="map-link-arrow">➜</span>
+      </a>
     </div>
   );
 }
