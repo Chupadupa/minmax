@@ -15,6 +15,7 @@
 - **Chinese Numbers** — Type any number and see it in Chinese characters with pinyin over each one, hear it spoken, and see how Chinese groups digits in fours, up to 不可思议 (10⁶⁴)
 - **Prime Checker** — Type any number and find out if it's prime; see it lined up as rows of blocks, split it into prime factors, and hop from prime to prime, up to nearly a septillion (24 digits)
 - **Odd or Even** — Type any number and find out if it's odd or even; see the blocks lined up in pairs (with the odd one out), shared between two, and the last digit lit up, up to 30 digits
+- **Solar System** — Tap the Sun, the planets, the dwarf planets and their best-known moons to see them up close and learn their names; the map scrolls outwards from the Sun, with real sizes and real distances as options
 
 ## Tech Stack
 
@@ -99,6 +100,15 @@ There are no test, lint, or format commands.
 │   ├── main.jsx
 │   ├── App.jsx                 # Numpad + ±2 pair keys, verdict, last-digit strip, pairs picture, halves tiles, settings
 │   └── oddEven.js              # Pure parity logic (last digit, pairs + leftover, every-digit check)
+├── solar-system/              # Solar System toy
+│   ├── index.html
+│   ├── main.jsx
+│   ├── App.jsx                 # Map page, close-up overlay (facts, moons row, ◀ ▶), settings, speech, milestone toasts
+│   ├── SolarMap.jsx            # The scrollable journey: Sun's edge, dotted path, belts, tappable bodies with number badges
+│   ├── BodyPicture.jsx         # Draws any body from its look: shaded sphere/egg/potato, stripes, spots, craters, caps, rings
+│   ├── bodies.js               # Pure data: 57 bodies (facts, hierarchy) + lookups, descriptions and number formatting
+│   ├── bodyLooks.js            # Pure data: per-body artwork descriptors (colors, bands, spots, rings…) + seeded craters
+│   └── layout.js               # Pure math: squashed/real sizes, evenly-spaced/real-distance positions, belts, AU ticks
 ├── shared/
 │   ├── base.css                # Shared stylesheet: tokens, resets, fonts, animations, utilities, .toy-btn
 │   ├── colorUtils.js           # Shared color helpers: luminance, contrastTextColor, rgbToHex, textColorForRgb
@@ -309,6 +319,52 @@ up to 30 digits.
   stack with a ⋮ break), "shared between two" tiles (auto-fit, then scrolls), the numbers 1–20 as
   tappable odd/even rows when empty, settings toggles (light up the last digit, commas), and fun
   facts via the shared `Toast`.
+
+### Solar System (`solar-system/`)
+
+Tap the Sun, a planet, a dwarf planet or a moon to see it up close and learn its name. The map is
+a journey down the page: the Sun's glowing edge at the top, then every planet and dwarf planet in
+order of distance along a dotted path, with the asteroid and Kuiper belts drawn where they lie.
+Planets wear a Numberblocks-colored badge for their order (Earth is the 3rd), and dwarf planets a
+dashed ring. Tapping opens a close-up: the body big, its name (with a 🔊 button), what it is ("The
+5th planet from the Sun", "The biggest moon of Jupiter"), fact chips with the real numbers (width
+and "11× wider than Earth", distance in km and AU, year, day, temperature, moon count), a fun fact,
+and its best-known moons as tappable chips. ◀ ▶ flip between neighbors (the Sun and its orbiters,
+or the moons of the same world), and "← Jupiter" climbs back up. Sizes are squashed by default so
+a 12 km moon and the Sun are both tappable; "Real sizes" and "Real distances" (1 AU = 180 px, so
+Neptune is 30 screens down and Sedna sits past a ⋮ break) show how empty space really is.
+
+The toy is split by concern so each file has one job:
+
+- **`bodies.js`** — Pure data: the Sun, 8 planets, 9 dwarf planets (5 official + 4 `candidate`)
+  and 39 moons as flat records with `id`, `kind`, `parent`, `radiusKm`, `orbitKm`, `orbitDays`,
+  `dayHours`, `tempC`, `moonCount`, `region` and a `fact`. The hierarchy is just `parent` ids.
+  Helpers: `bodyById`, `moonsOf(id)` (nearest first), `SUN_ORBITERS` (planets and dwarfs mixed,
+  by distance), `planetNumber`, `ordinal`, `describe(body)`, `sizeVsEarth`, `formatDays`,
+  `formatHours`, `formatAu`, `formatNumber`. Moon counts are as of `MOONS_AS_OF` (IAU Minor
+  Planet Center) — bump the numbers here when new ones are announced.
+- **`bodyLooks.js`** — Pure data: what each body looks like, keyed by id, in units of its radius
+  so one look draws at every size: `colors` [light, mid, dark], `shape` (circle, `{ ellipse }` for
+  Haumea, `{ potato }` for lumpy moons), `bands`, `spots`, `shapes` (Earth's continents, Pluto's
+  heart), `lines` (Europa's cracks, Enceladus's stripes), `caps`, `craters` (a list, or a count
+  scattered by a seeded random), `half` (Iapetus), `rings`, `glow`, `shade`. `lookFor(id)` fills
+  in defaults (grey cratered sphere, or a potato under 120 km) and the `extent` rings/glow reach.
+- **`layout.js`** — Pure math: `mapRadius(km, realSizes)` (radius^0.42 squash, or true scale with
+  Jupiter fixed at 54 px) and `layoutMap(orbiters, sun, { width, realSizes, realDistances })`,
+  which returns pixel positions for the Sun, every body, the belts, AU tick marks and the
+  off-the-chart break. Bodies zig-zag between two columns so close neighbors never overlap.
+- **`BodyPicture.jsx`** — Renders one look as an SVG (`size` = the body's diameter in px; the SVG
+  is `extent` times bigger when there are rings or a glow, and ignores pointer events so the
+  button around it takes the tap). Base and shadow radial gradients, a clip to the body shape,
+  blurred stripe rects, rings drawn behind the body and again clipped to the near half in front.
+  Gradient ids come from `useId`.
+- **`SolarMap.jsx`** — The map: an SVG backdrop (belts of seeded dots, the S-curve path, AU ticks,
+  the ⋮ break) under absolutely-positioned `<button>`s, one per body, each at least `HIT_RADIUS`
+  wide with the name (or "?" in guessing mode) and the planet-number badge.
+- **`App.jsx`** — State (`selectedId`, settings, visited set), the close-up `BodyOverlay`, fact
+  chips (`factsFor`), settings (names, numbers, dwarf planets, maybe-dwarfs, real sizes, real
+  distances, commas), Web Speech for names, and milestone toasts (all 8 planets, the Galilean
+  moons, all five dwarf planets, everything) via the shared `Toast`.
 
 ### Shared Utilities (`shared/`)
 
