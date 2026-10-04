@@ -14,6 +14,7 @@
 - **Roman Numerals** — Type any number and see it written in Roman numerals, broken into place-value parts, up to 3,999,999,999,999 using stacked bars (vinculum)
 - **Chinese Numbers** — Type any number and see it in Chinese characters with pinyin over each one, hear it spoken, and see how Chinese groups digits in fours, up to 不可思议 (10⁶⁴)
 - **Prime Checker** — Type any number and find out if it's prime; see it lined up as rows of blocks, split it into prime factors, and hop from prime to prime, up to nearly a septillion (24 digits)
+- **Odd or Even** — Type any number and find out if it's odd or even; see the blocks lined up in pairs (with the odd one out), shared between two, and the last digit lit up, up to 30 digits
 
 ## Tech Stack
 
@@ -93,6 +94,11 @@ There are no test, lint, or format commands.
 │   ├── App.jsx                 # Numpad + prime-jump keys, verdict, rows-of-blocks picture, prime-factor tiles, settings
 │   ├── primes.js               # Pure prime logic (Miller–Rabin, Pollard's rho factoring, prime index sieve)
 │   └── factorWorker.js         # Web Worker for numbers whose prime factors are all big
+├── odd-or-even/               # Odd or Even toy
+│   ├── index.html
+│   ├── main.jsx
+│   ├── App.jsx                 # Numpad + ±2 pair keys, verdict, last-digit strip, pairs picture, halves tiles, settings
+│   └── oddEven.js              # Pure parity logic (last digit, pairs + leftover, every-digit check)
 ├── shared/
 │   ├── base.css                # Shared stylesheet: tokens, resets, fonts, animations, utilities, .toy-btn
 │   ├── colorUtils.js           # Shared color helpers: luminance, contrastTextColor, rgbToHex, textColorForRgb
@@ -283,6 +289,26 @@ number is split into its prime factors as Numberblocks-style tiles. Numbers are 
   prime-factor tiles (auto-fit, then scrolls), the 25 primes under 100 as tappable tiles when empty,
   settings toggles (group repeated primes as powers, commas), and fun facts (twin, Mersenne and
   palindrome primes, milestones) via the shared `Toast`.
+
+### Odd or Even (`odd-or-even/`)
+
+Type a number on the Numberblocks-inspired numpad (same layout as the Big Number Namer, with blue
+−2/+2 "pair" keys flanking 0) and see a big EVEN or ODD verdict. Pairs are blue and the odd one out
+is orange throughout. The number's last digit is lit up, both in the number and in a strip showing
+that even numbers end in 0 2 4 6 8 and odd ones in 1 3 5 7 9. Numbers are digit strings (BigInt),
+up to 30 digits.
+
+- **`oddEven.js`** — Pure logic (no React dependency). Key exports:
+  - `isEven(digits)` — from the last digit alone
+  - `pairUp(n)` — `{ pairs, leftover }` (15 → 7 pairs, 1 left over; also the two equal halves)
+  - `everyDigit(digits)` — `"odd"` / `"even"` when every digit is (13579, 2468), else null
+  - `EVEN_DIGITS`, `ODD_DIGITS`, `MAX_DIGITS` (30), `MAX_NUMBER`
+- **`App.jsx`** — Auto-fit number display with the last digit in a parity-colored chip, verdict
+  pill, last-digit strip, the pairs picture (SVG towers of up to 10 pairs, Numberblocks-style, with
+  the leftover block bobbing on top next to a dashed space for its missing partner; past 100 a
+  stack with a ⋮ break), "shared between two" tiles (auto-fit, then scrolls), the numbers 1–20 as
+  tappable odd/even rows when empty, settings toggles (light up the last digit, commas), and fun
+  facts via the shared `Toast`.
 
 ### Shared Utilities (`shared/`)
 
