@@ -13,6 +13,7 @@
 - **Pi Digits** — Enter how many digits of π you want to see; the specific digit is shown big and the full number scrolls below, all the way up to a million
 - **Roman Numerals** — Type any number and see it written in Roman numerals, broken into place-value parts, up to 3,999,999,999,999 using stacked bars (vinculum)
 - **Chinese Numbers** — Type any number and see it in Chinese characters with pinyin over each one, hear it spoken, and see how Chinese groups digits in fours, up to 不可思议 (10⁶⁴)
+- **Spanish Numbers** — Type any number and see it written out in Spanish words with a how-to-say-it guide over each one, hear it spoken, and see how Spanish names a new big word every six zeros, up to the decillones (10⁶⁰)
 - **Prime Checker** — Type any number and find out if it's prime; see it lined up as rows of blocks, split it into prime factors, and hop from prime to prime, up to nearly a septillion (24 digits)
 - **Odd or Even** — Type any number and find out if it's odd or even; see the blocks lined up in pairs (with the odd one out), shared between two, and the last digit lit up, up to 30 digits
 - **Solar System** — Tap the Sun, the planets, the dwarf planets, the big asteroids and their best-known moons to see them up close and learn their names; the map scrolls outwards from the Sun with each world's moons beside it, with real sizes and real distances as options
@@ -90,6 +91,11 @@ There are no test, lint, or format commands.
 │   ├── main.jsx
 │   ├── App.jsx                 # Numpad + ×万 key, auto-fit pinyin-over-character reading, group chips, speech, settings
 │   └── chineseNumbers.js       # Pure Chinese number reading (myriad groups, 零 rules, 两, 一 tone changes)
+├── spanish-numbers/            # Spanish Numbers toy
+│   ├── index.html              # Also loads the Andika font (Spanish words, with every accent mark)
+│   ├── main.jsx
+│   ├── App.jsx                 # Numpad + ×mil key, auto-fit say-it-over-word reading, part chips, speech, settings
+│   └── spanishNumbers.js       # Pure Spanish number reading (long scale, cien/ciento, un/uno, dieci-/veinti-, respellings)
 ├── prime-checker/              # Prime Checker toy
 │   ├── index.html
 │   ├── main.jsx
@@ -285,6 +291,37 @@ its four-digit groups (e.g. 一亿 + 二千三百四十五万 + 六千七百八�
   table, and milestone fun facts via the shared `Toast`. The shared fonts lack pinyin tone marks
   (ǎ ǐ ǒ ǔ ǚ), hence Andika.
 
+### Spanish Numbers (`spanish-numbers/`)
+
+The Spanish twin of Chinese Numbers. Type a number on the Numberblocks-inspired numpad (same layout,
+with a fiesta-colored ×mil key that adds three zeros) and see it written out in Spanish words, with
+a how-to-say-it respelling for English readers over each word ("kwah-troh-SYEN-tohs", loudest
+syllable in capitals). Each bit of a word wears the Numberblocks color of the digit it comes from,
+so 3 ↔ tres ↔ treinta ↔ trescientos, and veintitrés is veinti (2) + trés (3); mil and y are white
+and the big words (millón, billón, …) sit in a gold pill. Below, the number is broken into parts:
+one per six-digit group, with the bottom six split at mil (un millón + doscientos treinta y cuatro
+mil + quinientos sesenta y siete). Numbers are digit strings (BigInt for ±1), up to 66 digits.
+
+- **`spanishNumbers.js`** — Pure logic (no React dependency). Key exports:
+  - `toSpanishParts(digits)` — the reading as parts, biggest first: `{ words, value, zeros }`.
+    Each word is `{ text, say: { latam, spain }, pieces, kind }`; `pieces` is `[[text, digit]]`
+    for coloring (digit null for no digit) and kind is `"number"`, `"and"` (y), `"mil"` or
+    `"unit"` (a big word). Handles cien vs ciento, the irregular hundreds (quinientos,
+    setecientos, novecientos), the 11–15 words, squished dieci-/veinti- with their accent marks,
+    y from 31, mil with no un, uno → un / veintiuno → veintiún before mil and big words, and
+    un millón vs dos millones (long scale: mil millones = 10⁹, un billón = 10¹²).
+  - `toSpanishText(parts)`, `formatDigits(digits, separator)`, `bigUnitIndex(digits)`,
+    `digitWord(d)`, `keyWords()`
+  - `BIG_UNITS` (millón 10⁶ through decillón 10⁶⁰, with plurals, respellings and the English
+    short-scale name), `MAX_DIGITS` (66), `MAX_NUMBER`
+- **`App.jsx`** — Arabic number auto-fit, the say-it-over-word reading (auto-fit, down to a
+  readable minimum, then scrolls), a word key for 0–9 and diez/veinte/cien/mil/millón when empty,
+  part chips (from trillón up the value reads "999,999 and 60 zeros"), a 🔊 button using the shared
+  `useSpeech` (prefers a Latin American Spanish voice, or a Spain one; hidden with no Spanish voice),
+  settings toggles (digit colors, the say-it guide, Spain pronunciation with "th" for c and z, dots
+  between thousands), a big-words table with their English names, and fun facts via the shared
+  `Toast`.
+
 ### Prime Checker (`prime-checker/`)
 
 Type a number on the Numberblocks-inspired numpad (same layout as the Big Number Namer, with
@@ -460,9 +497,12 @@ star, and everything.
     shadow radial gradients, a clip to the body shape, blurred stripe rects, rings drawn behind the
     body and again clipped to the near half in front; gradient ids from `useId`.
 
-- **`useSpeech.js`** — Web Speech hook. `useSpeech({ lang, rate })` returns `{ available, speaking,
-  speak(text), stop }`, picking the device's default voice for the language. Used by the Solar
-  System and Exoplanets toys for names (Chinese Numbers has its own Mandarin-specific version).
+- **`useSpeech.js`** — Web Speech hook. `useSpeech({ lang, rate, prefer? })` returns `{ available,
+  hasVoice, speaking, speak(text), stop }`, picking the device's default voice for the language
+  (`prefer` lists regional tags to try first, e.g. `["es-mx", "es-us"]`). `speak` also takes a list
+  of strings to say one after another, for long text. `hasVoice` is false when the device has no
+  voice for the language. Used by the Solar System and Exoplanets toys for names and by Spanish
+  Numbers (Chinese Numbers has its own Mandarin-specific version).
 
 - **`useElementWidth.js`** — `useElementWidth(ref, fallback)` — the element's current width, kept
   up to date on resize, for layouts worked out in pixels.
@@ -475,7 +515,7 @@ star, and everything.
   - `NB_COLORS` — digit-to-color/gradient map (string keys `"1"`–`"100"` for ones and decade values, with `"7"` as a rainbow linear-gradient)
   - `NB_SOLID` — digit-to-solid-hex map (for box-shadows where gradients can't be used; covers `"1"`–`"100"`)
   - `NB_OUTLINE` — outline colors for exact multiples of 10 (`"10"`–`"100"`)
-  - `NB_DIGIT_TEXT` — text colors for single digits 0–9 (solid purple for 7, white for 0); used by pi-digits, chinese-numbers, and prime-checker
+  - `NB_DIGIT_TEXT` — text colors for single digits 0–9 (solid purple for 7, white for 0); used by pi-digits, chinese-numbers, spanish-numbers, and prime-checker
   - `getNumberBlockStyle(n)` — returns `{ background, border }` for any number 1–100+, computing decade fill + ones-digit border colors
   - `NB7_STOPS` — array of rainbow gradient stop colors for Numberblocks 7
   - `NB7_GRADIENT` — the rainbow CSS linear-gradient string for Numberblocks 7
