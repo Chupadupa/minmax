@@ -81,9 +81,11 @@ The home page is built for a child who can't read yet: big picture tiles (three 
 
 Seven toys (Big Number Namer, Pi Digits, Roman Numerals, Chinese Numbers, Spanish Numbers, Prime Checker, Odd or Even) share one layout: a display card, a fun-fact strip, then the numpad. The typed number lives in `useNumberInput` as a **digit string**, because most of these toys go far past what a JS number can hold — do arithmetic on `pad.n` (a BigInt), never `parseInt`.
 
+Chinese Numbers and Spanish Numbers are the same toy in two languages. Their display is the shared `ReadingCard`, which does the sizing and scrolling; each toy supplies only its language: the pure reading logic, how a word is drawn, the key shown before a number is typed, and its settings. A third language should be built the same way.
+
 ### Space Toys
 
-Solar System and Exoplanets share the renderer that draws a world from a "look" (`shared/bodyArt.js`, `shared/BodyPicture.jsx`); each keeps its own data, looks and layout files. They link to each other: the Solar System's signpost leads to Exoplanets, and the Sun's row there leads back.
+Solar System and Exoplanets share the renderer that draws a world from a "look" (`shared/bodyArt.js`, `shared/BodyPicture.jsx`), the close-up that opens when a world is tapped (`shared/WorldPanel.jsx`), and the tracking of what has been visited (`shared/useVisits.js`). Each keeps its own data, looks, map and fact chips. They link to each other: the Solar System's signpost leads to Exoplanets, and the Sun's row there leads back.
 
 ### Things the Code Can't Tell You
 
@@ -99,12 +101,12 @@ Look here before writing anything a second toy might want.
 
 **Page furniture**
 
-- **`base.css`** — design tokens (CSS variables), resets, fonts, the background, shared keyframes (`popIn`, `fadeIn`, `float`, `flash`, `btnPress`, `shake`, `toastEnter`, `toastExit`) and utility classes (`.toy-container`, `.toy-btn`, `.nb-btn`, `.pm-btn`, `.frosted-card`, `.gradient-text`, `.sticky-header`, `.page-header`, `.back-btn`, `.gear-btn`, `.bg-dots`, `.overlay-open`)
+- **`base.css`** — design tokens (CSS variables), resets, fonts, the background, shared keyframes (`popIn`, `fadeIn`, `float`, `flash`, `btnPress`, `shake`, `toastEnter`, `toastExit`, `speakPulse`) and utility classes (`.toy-container`, `.toy-btn`, `.nb-btn`, `.pm-btn`, `.frosted-card`, `.gradient-text`, `.sticky-header`, `.page-header`, `.back-btn`, `.gear-btn`, `.bg-dots`, `.overlay-open`)
 - **`mountApp.jsx`** — `mountApp(App)`: creates the React root and imports `base.css`
 - **`StickyHeader.jsx`** — `StickyHeader({ title, subtitle?, titleStyle?, onGearClick? })`: back button, title, optional gear
 - **`BackgroundDots.jsx`** — `BackgroundDots({ count? })`: the floating dots
 - **`SettingsOverlay.jsx`** — the settings modal: `SettingsOverlay({ show, onClose, title? })` with `SettingsToggle`, `SettingsDivider`, `SettingsSection`, `SettingsAboutText`, `SettingsLink`, and `NumberblocksWord` (the rainbow word for the credit line)
-- **`Toast.jsx`** — `Toast({ text, visible?, variant?, position?, enterAnimation?, exitAnimation?, exitDuration? })`, `"info"` (gold on dark) or `"warning"` (white on red), positioned against its nearest positioned parent; and `FunFact({ text })`, a toast in the strip between a number toy's display and its numpad
+- **`Toast.jsx`** — `Toast({ text, visible?, variant?, position?, enterAnimation?, exitAnimation?, exitDuration? })`, `"info"` (gold on dark) or `"warning"` (white on red), positioned against its nearest positioned parent. Two ready-placed versions: `FunFact({ text })`, in the strip between a number toy's display and its numpad, and `FloatingToast({ text })`, pinned near the top of the screen over everything
 - **`toys.js`** — the toy list (see above)
 
 **Numbers**
@@ -113,9 +115,11 @@ Look here before writing anything a second toy might want.
   - `useNumberInput({ max, zeroIsEmpty? })` returns a `pad`: `input` (digit string), `n` (BigInt, or null when empty), `isEmpty`, `canType`, `canStep(k)`, the actions `type(d)`, `backspace()`, `clear()`, `step(k, key?)`, `set(value, key?)`, and `flash` / `bounce` for the display's flash and a key's press animation. `max` caps the value — typing past it lands on it — and sets how many digits fit. `zeroIsEmpty` is for toys where 0 isn't a number of its own.
   - `Numpad({ pad, middleKey?, leftKey?, rightKey? })` renders − 1 / + 1, CLR / ← and the digit grid. `middleKey` goes between − 1 and + 1 (the 🔊 button); `leftKey` / `rightKey` go either side of 0.
   - `NumpadKey({ pad, id, disabled?, label?, style?, onClick, children })` is one extra key for the digit grid: it dims when disabled and bounces when `pad.bounce === id`.
+  - `NumpadSpeakKey({ speech, disabled?, getText })` is the 🔊 key for `middleKey`: it says `getText()` and turns into ⏹ while talking.
+- **`ReadingCard.jsx`** — the display of a toy that writes a number out in a language: `ReadingCard({ pad, number, colorize, emptyLabel, countLabel, zeroHint, wordKey, reading, readingFit, readingStyle?, parts, partsFit, chipStyle?, chipWordsStyle? })`. It fits the number, the reading and the parts chips to their boxes (refitting when a web font arrives) and scrolls what won't fit. Also exports `PLAIN_COLOR` and `UNIT_PILL` (the gold pill round a big word).
 - **`NumberTile.jsx`** — `NumberTile({ value, label, style?, onClick? })`: a number in a rounded tile, colored like its Numberblock up to 100 and gold beyond; `NUMBER_TILE_SHAPE` is the tile without its colors
 - **`numberblockColors.js`** — the Numberblocks palette: `NB_COLORS` (fills, `"1"`–`"100"`), `NB_SOLID` (solid colors for shadows), `NB_OUTLINE` (borders for the tens), `NB_DIGIT_TEXT` (text colors for digits 0–9), `NB7_STOPS` / `NB7_GRADIENT` (Seven's rainbow), `getNumberBlockStyle(n)` → `{ background, border }`
-- **`formatUtils.js`** — `formatNumber(n, useCommas)` (numbers and BigInts), `formatDays`, `formatHours`, `ordinal`, `trimTo`
+- **`formatUtils.js`** — `formatNumber(n, useCommas)` (numbers and BigInts), `formatDays`, `formatHours`, `formatTemp`, `ordinal`, `plural(n, unit)`, `trimTo`
 - **`mathUtils.js`** — `gcd(a, b)`, `simplify(num, den)`
 - **`colorUtils.js`** — `luminance(hex)`, `contrastTextColor(hex)`, `rgbToHex(rgb)`, `textColorForRgb(rgb)`
 
@@ -124,12 +128,14 @@ Look here before writing anything a second toy might want.
 - **`useAutoFitFontSize.js`** — `useAutoFitFontSize(outerRef, innerRef, charCount, { maxFont, minFont, fitKey })`: the biggest font size at which the inner element fits the outer one. `fitKey` forces a refit when the content changes but its length doesn't.
 - **`useElementWidth.js`** — `useElementWidth(ref, fallback)`: an element's width, kept current on resize
 - **`useScrollLock.js`** — `useScrollLock(active)`: stops the page scrolling behind an overlay
-- **`useSpeech.js`** — `useSpeech({ lang, rate, prefer? })` → `{ available, hasVoice, speaking, speak(text), stop }`. Chinese Numbers still has its own Mandarin version.
+- **`useSpeech.js`** — `useSpeech({ lang, rate, match?, prefer? })` → `{ available, hasVoice, speaking, speak(text), stop }`. `prefer` lists voices to try first; `match` is a pattern for which voices count at all, for when a language-tag prefix isn't enough (Mandarin). Also `chunkSpeech(pieces, { joiner?, maxLength })`, which splits long text into utterances browsers won't cut off.
+- **`useVisits.js`** — `useVisits(milestones)` → `{ selectedId, pick(id), close(), toast }`: which thing is open, and a toast the first time every id in a milestone has been opened
 
 **Drawing worlds**
 
 - **`bodyArt.js`** — the "look" format (documented at the top of the file), `finishLook(id, partial)`, `accentColor(look)`, and the seeded-random helpers
 - **`BodyPicture.jsx`** — `BodyPicture({ look, size, style? })`: draws a finished look as an SVG
+- **`WorldPanel.jsx`** — `WorldPanel({ world, lookFor, siblings, back, homeLabel, kind, chips, related?, ribbon?, badge?, extra?, speech, onPick, onClose, picSize?, nameSize? })`: the close-up of one world, with ◀ ▶ to its neighbors, its name and 🔊, fact chips, a fun fact and a row of the worlds that go round it
 
 ## Coding Conventions
 
@@ -186,6 +192,5 @@ Low-priority items to consider as the project grows:
 - [ ] **A few tests for the pure logic** — `primes.js`, `spanishNumbers.js`, `chineseNumbers.js` and `romanNumerals.js` are plain functions with exact right answers; `node --test` would cover them with no new dependencies.
 - [ ] **Extract Fraction Fitter's SVG math** — move `polarToXY`, `arcPath` and the color constants out of `fraction-combiner/App.jsx` into a `fractionUtils.js`.
 - [ ] **Generate each toy's `index.html`** — the 14 files differ only in title, description and extra fonts, which could move into `shared/toys.js`.
-- [ ] **Share more between the twin toys** — Chinese and Spanish Numbers, and Solar System and Exoplanets, still copy their layout and overlay code from each other.
 - [ ] **Remember settings between visits** — every toggle resets when the page reloads.
 - [ ] **Offline from the first visit** — the service worker only caches a toy once it has been opened.

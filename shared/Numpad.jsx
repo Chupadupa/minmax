@@ -11,6 +11,8 @@ import { NB_COLORS, NB_SOLID } from "./numberblockColors.js";
 //   middleKey          goes between − 1 and + 1 (a 🔊 button, say) — give it the
 //                      classes "toy-btn pm-btn"
 //   leftKey, rightKey  go either side of 0 — make them with <NumpadKey />
+//
+// <NumpadSpeakKey /> is the ready-made 🔊 button for middleKey.
 
 const PRESS_ANIMATION = "btnPress 0.2s ease-out";
 const DISABLED_OPACITY = 0.35;
@@ -33,6 +35,26 @@ export function NumpadKey({ pad, id, disabled = false, label, style, onClick, ch
       onClick={onClick}
     >
       {children}
+    </button>
+  );
+}
+
+// A 🔊 key for between − 1 and + 1: says `getText()` (a string, or a list of
+// strings) with a `speech` from useSpeech, and turns into ⏹ while it's talking.
+export function NumpadSpeakKey({ speech, disabled = false, getText }) {
+  return (
+    <button
+      className="toy-btn pm-btn"
+      disabled={disabled}
+      aria-label="Say it"
+      style={{
+        ...styles.speakKey,
+        opacity: disabled ? DISABLED_OPACITY : 1,
+        animation: speech.speaking ? "speakPulse 0.8s ease-in-out infinite" : "none",
+      }}
+      onClick={() => (speech.speaking ? speech.stop() : speech.speak(getText()))}
+    >
+      {speech.speaking ? "⏹" : "🔊"}
     </button>
   );
 }
@@ -130,6 +152,11 @@ const styles = {
     boxShadow: "0 4px 10px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.15)",
     border: "1px solid rgba(255,255,255,0.12)",
     flex: 1,
+  },
+  speakKey: {
+    background: "linear-gradient(135deg, #FFD030, #FF8C1A)",
+    boxShadow: "0 4px 12px rgba(255,140,26,0.3), inset 0 2px 0 rgba(255,255,255,0.3)",
+    width: 72, flexShrink: 0, fontSize: 24,
   },
   clearKey: { fontSize: 16, letterSpacing: 1 },
   backspaceKey: { fontSize: 26 },

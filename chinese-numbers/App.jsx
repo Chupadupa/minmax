@@ -1,9 +1,8 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import {
   toChineseParts, toChineseText, formatDigits, readDigitByDigit, bigUnitIndex, bigUnitChars,
   DIGITS, PLACES, BIG_UNITS, MAX_DIGITS, MAX_NUMBER,
 } from "./chineseNumbers.js";
-import { useAutoFitFontSize } from "../shared/useAutoFitFontSize.js";
 import { NB_DIGIT_TEXT } from "../shared/numberblockColors.js";
 import { BackgroundDots } from "../shared/BackgroundDots.jsx";
 import {
@@ -12,7 +11,10 @@ import {
 } from "../shared/SettingsOverlay.jsx";
 import { StickyHeader } from "../shared/StickyHeader.jsx";
 import { FunFact } from "../shared/Toast.jsx";
-import { Numpad, NumpadKey } from "../shared/Numpad.jsx";
+import { useSpeech, chunkSpeech } from "../shared/useSpeech.js";
+import { plural } from "../shared/formatUtils.js";
+import { ReadingCard, PLAIN_COLOR, UNIT_PILL } from "../shared/ReadingCard.jsx";
+import { Numpad, NumpadKey, NumpadSpeakKey } from "../shared/Numpad.jsx";
 import { useNumberInput } from "../shared/useNumberInput.js";
 
 const THIS_YEAR = String(new Date().getFullYear());
@@ -26,9 +28,6 @@ const PINYIN_FONT = "'Andika', var(--font-body), sans-serif";
 // Digits wear their Numberblocks color — the same in the Arabic number and the
 // characters, so 3 and 三 match. Zero and the place words are white, and the
 // big words sit in a gold pill.
-const PLAIN_COLOR = "rgba(255,255,255,0.92)";
-const UNIT_PILL_BG = "rgba(255,208,48,0.14)";
-const UNIT_PILL_BORDER = "rgba(255,208,48,0.4)";
 
 function syllableColor(s, colorize) {
   if (!colorize) return PLAIN_COLOR;
@@ -69,76 +68,15 @@ function getFunFact(digits, traditional, useLiang) {
 
 // ── Speech ───────────────────────────────────────────────────────────────────
 //
-// Reads the characters aloud with the device's Mandarin voice, if it has one.
-
-function pickChineseVoice(voices) {
-  const lang = (v) => v.lang.replace("_", "-").toLowerCase();
-  const mandarin = voices.filter((v) => /^(zh|cmn)/.test(lang(v)) && !/hk|yue/.test(lang(v)));
-  return mandarin.find((v) => /cn|hans/.test(lang(v))) || mandarin[0] || null;
-}
+// Reads the characters aloud with the device's Mandarin voice, if it has one:
+// any zh-… or cmn-… voice that isn't Cantonese (zh-HK, yue), mainland first.
+const MANDARIN_VOICES = /^(zh|cmn)(?!.*(hk|yue))/;
+const MAINLAND_VOICES = [/cn|hans/];
 
 // Long readings are split into a few utterances, since some browsers cut off
 // a single long one partway through.
-function speechChunks(parts) {
-  const chunks = [];
-  for (const part of parts) {
-    const text = part.syllables.map((s) => s.char).join("");
-    if (chunks.length && chunks[chunks.length - 1].length + text.length <= 24) {
-      chunks[chunks.length - 1] += text;
-    } else {
-      chunks.push(text);
-    }
-  }
-  return chunks;
-}
-
-function useChineseSpeech() {
-  const synth = typeof window !== "undefined" && "speechSynthesis" in window ? window.speechSynthesis : null;
-  const [voices, setVoices] = useState([]);
-  const [speaking, setSpeaking] = useState(false);
-  const runRef = useRef(0);
-
-  useEffect(() => {
-    if (!synth) return;
-    const load = () => setVoices(synth.getVoices());
-    load();
-    synth.addEventListener?.("voiceschanged", load);
-    return () => {
-      synth.removeEventListener?.("voiceschanged", load);
-      synth.cancel();
-    };
-  }, [synth]);
-
-  const voice = pickChineseVoice(voices);
-
-  const stop = useCallback(() => {
-    runRef.current++;
-    synth?.cancel();
-    setSpeaking(false);
-  }, [synth]);
-
-  const speak = useCallback((chunks) => {
-    if (!synth || !chunks.length) return;
-    synth.cancel();
-    const run = ++runRef.current;
-    const finish = () => { if (runRef.current === run) setSpeaking(false); };
-    chunks.forEach((text, i) => {
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = voice?.lang ?? "zh-CN";
-      if (voice) u.voice = voice;
-      u.rate = 0.8;
-      if (i === chunks.length - 1) u.onend = finish;
-      u.onerror = finish;
-      synth.speak(u);
-    });
-    setSpeaking(true);
-  }, [synth, voice]);
-
-  // Some browsers list their voices late (or never); until any show up, let
-  // the browser pick one for the zh-CN language tag.
-  const available = !!synth && (!!voice || voices.length === 0);
-  return { available, speaking, speak, stop };
-}
+const speechChunks = (parts) =>
+  chunkSpeech(parts.map((part) => part.syllables.map((s) => s.char).join("")), { joiner: "", maxLength: 24 });
 
 // ── Number Display Pieces ────────────────────────────────────────────────────
 
@@ -148,14 +86,6 @@ function partValueLabel(part, groupSize) {
   if (part.unit < 4) return formatDigits(part.value, groupSize);
   const zeros = 4 * part.unit;
   return `${formatDigits(part.value.slice(0, -zeros), groupSize)} and ${zeros} zeros`;
-}
-
-function ArabicDigits({ text, colorize }) {
-  return [...text].map((ch, i) => (
-    <span key={i} style={ch === "," ? styles.comma : { color: colorize ? NB_DIGIT_TEXT[ch] : "#FFD030" }}>
-      {ch}
-    </span>
-  ));
 }
 
 // One character with its pinyin on top, like the pinyin printed over
@@ -394,77 +324,26 @@ export default function ChineseNumbers() {
   const [traditional, setTraditional] = useState(false);
   const [useLiang, setUseLiang] = useState(true);
   const [groupFours, setGroupFours] = useState(false);
-  const [fontTick, setFontTick] = useState(0);
-  const arabicOuterRef = useRef(null);
-  const arabicInnerRef = useRef(null);
-  const readingOuterRef = useRef(null);
-  const readingInnerRef = useRef(null);
-  const partsOuterRef = useRef(null);
-  const partsInnerRef = useRef(null);
-  const speech = useChineseSpeech();
+  const speech = useSpeech({ lang: "zh-CN", rate: 0.8, match: MANDARIN_VOICES, prefer: MAINLAND_VOICES });
 
   const { input, isEmpty } = pad;
-  const isZero = input === "0";
-  const hasValue = !isEmpty && !isZero;
+  const hasValue = !isEmpty && input !== "0";
   const canAddWan = hasValue && input.length + 4 <= MAX_DIGITS;
   const groupSize = groupFours ? 4 : 3;
   const parts = toChineseParts(input, { traditional, useLiang });
   const syllables = parts.flatMap((p) => p.syllables);
   const funFact = getFunFact(input, traditional, useLiang);
 
-  // The characters arrive in slices as they're first needed, so refit the
-  // display whenever a font finishes loading.
-  useEffect(() => {
-    const fonts = document.fonts;
-    if (!fonts?.addEventListener) return;
-    const bump = () => setFontTick((t) => t + 1);
-    fonts.addEventListener("loadingdone", bump);
-    return () => fonts.removeEventListener("loadingdone", bump);
-  }, []);
-
-  const arabicText = isEmpty ? "?" : formatDigits(input, groupSize);
-  const arabicFontSize = useAutoFitFontSize(arabicOuterRef, arabicInnerRef, arabicText.length, {
-    maxFont: 40, minFont: 10, fitKey: fontTick,
-  });
-  // Pinyin is extra content, so count it: turning it off lets the characters grow.
-  const readingFontSize = useAutoFitFontSize(
-    readingOuterRef, readingInnerRef, syllables.length * (showPinyin ? 2 : 1),
-    { maxFont: 64, minFont: 20, fitKey: `${input}|${traditional}|${useLiang}|${fontTick}` },
-  );
   const partsCharCount = parts.reduce(
     (sum, p) => sum + p.syllables.length + partValueLabel(p, groupSize).length, 0
   );
-  const partsFontSize = useAutoFitFontSize(partsOuterRef, partsInnerRef, partsCharCount, {
-    maxFont: 16, minFont: 12, fitKey: `${input}|${traditional}|${useLiang}|${groupFours}|${fontTick}`,
-  });
-
-  // Huge numbers can overflow even at the smallest readable size, so these
-  // boxes scroll — start each new number back at the top.
-  useEffect(() => {
-    if (readingOuterRef.current) readingOuterRef.current.scrollTop = 0;
-    if (partsOuterRef.current) partsOuterRef.current.scrollTop = 0;
-  }, [input]);
 
   // A changed number makes the old reading stale, so stop saying it.
   const { stop } = speech;
   useEffect(() => { stop(); }, [input, traditional, useLiang, stop]);
 
-  const handleSpeak = () => {
-    if (speech.speaking) speech.stop();
-    else speech.speak(speechChunks(parts));
-  };
-
-  const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
-
   return (
     <div className="toy-container">
-      <style>{`
-        @keyframes speakPulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.08); }
-        }
-      `}</style>
-
       <BackgroundDots count={20} />
 
       {/* Header */}
@@ -485,78 +364,33 @@ export default function ChineseNumbers() {
         groupFours={groupFours} setGroupFours={setGroupFours}
       />
 
-      {/* Display Area */}
-      <div className="frosted-card" style={styles.displayCard}>
-        <div ref={arabicOuterRef} style={styles.arabicOuter}>
-          <div ref={arabicInnerRef} style={{
-            ...styles.arabicInner,
-            fontSize: arabicFontSize,
-            color: isEmpty ? "rgba(255,255,255,0.3)" : undefined,
-          }}>
-            {isEmpty ? arabicText : <ArabicDigits text={arabicText} colorize={colorize} />}
-          </div>
-        </div>
-        <div style={styles.secondaryRow}>
-          {isEmpty && <span style={styles.secondaryLabel}>Chinese digits and place words</span>}
-          {isZero && <span style={styles.secondaryLabel}>zero</span>}
-          {hasValue && (
-            <>
-              <span style={styles.secondaryLabel}>{plural(input.length, "digit")}</span>
-              <span style={styles.notationDot}>·</span>
-              <span style={styles.secondaryLabel}>{plural(syllables.length, "character")}</span>
-            </>
-          )}
-        </div>
-
-        <div ref={readingOuterRef} style={styles.readingOuter}>
-          {isEmpty ? (
-            <CharacterKey colorize={colorize} showPinyin={showPinyin} traditional={traditional} groupSize={groupSize} />
-          ) : (
-            <div ref={readingInnerRef} style={{
-              ...styles.readingInner,
-              fontSize: readingFontSize,
-              animation: pad.flash ? "flash 0.3s ease-out" : "none",
-            }}>
-              <Reading parts={parts} colorize={colorize} showPinyin={showPinyin} />
-            </div>
-          )}
-        </div>
-
-        <div ref={partsOuterRef} style={styles.partsOuter}>
-          {isEmpty && <span style={styles.partsHint}>Tap a number below to start!</span>}
-          {isZero && <span style={styles.partsHint}>零 (líng) means zero</span>}
-          {hasValue && (
-            <div ref={partsInnerRef} style={{ ...styles.partsInner, fontSize: partsFontSize }}>
-              {parts.map((part, i) => (
-                <span key={i} style={styles.partGroup}>
-                  {i > 0 && <span style={styles.plus}>+</span>}
-                  <span style={styles.chip}>
-                    <span style={styles.chipHanzi}>
-                      <InlineHanzi syllables={part.syllables} colorize={colorize} />
-                    </span>
-                    <span style={styles.chipValue}>{partValueLabel(part, groupSize)}</span>
-                  </span>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+      <ReadingCard
+        pad={pad} number={formatDigits(input, groupSize)} colorize={colorize}
+        emptyLabel="Chinese digits and place words"
+        countLabel={plural(syllables.length, "character")}
+        zeroHint="零 (líng) means zero"
+        wordKey={<CharacterKey colorize={colorize} showPinyin={showPinyin} traditional={traditional} groupSize={groupSize} />}
+        reading={<Reading parts={parts} colorize={colorize} showPinyin={showPinyin} />}
+        // Pinyin is extra content, so count it: turning it off lets the characters grow.
+        readingFit={{
+          count: syllables.length * (showPinyin ? 2 : 1), maxFont: 64, minFont: 20,
+          fitKey: `${input}|${traditional}|${useLiang}`,
+        }}
+        readingStyle={styles.readingGaps}
+        parts={parts.map((part) => ({
+          words: <InlineHanzi syllables={part.syllables} colorize={colorize} />,
+          value: partValueLabel(part, groupSize),
+        }))}
+        partsFit={{ count: partsCharCount, fitKey: `${input}|${traditional}|${useLiang}|${groupFours}` }}
+        chipWordsStyle={styles.chipHanzi}
+      />
 
       <FunFact text={funFact} />
 
       <Numpad
         pad={pad}
-        middleKey={speech.available && (
-          <button className="toy-btn pm-btn" disabled={isEmpty} aria-label="Say it" style={{
-            background: "linear-gradient(135deg, #FFD030, #FF8C1A)",
-            boxShadow: "0 4px 12px rgba(255,140,26,0.3), inset 0 2px 0 rgba(255,255,255,0.3)",
-            width: 72, flexShrink: 0, fontSize: 24,
-            opacity: isEmpty ? 0.35 : 1,
-            animation: speech.speaking ? "speakPulse 0.8s ease-in-out infinite" : "none",
-          }} onClick={handleSpeak}>
-            {speech.speaking ? "⏹" : "🔊"}
-          </button>
+        middleKey={speech.hasVoice && (
+          <NumpadSpeakKey speech={speech} disabled={isEmpty} getText={() => speechChunks(parts)} />
         )}
         rightKey={
           // Adds four zeros — one big word bigger
@@ -574,49 +408,10 @@ export default function ChineseNumbers() {
 }
 
 const styles = {
-  displayCard: {
-    padding: "12px 14px",
-    width: "100%", maxWidth: 380, height: 380,
-    position: "relative", zIndex: 1,
-    display: "flex", flexDirection: "column",
-  },
-  arabicOuter: {
-    height: 52, flexShrink: 0, overflow: "hidden",
-    display: "flex", alignItems: "center", justifyContent: "center",
-  },
-  arabicInner: {
-    fontWeight: 700, textAlign: "center",
-    wordBreak: "break-all", maxWidth: "100%",
-  },
-  comma: { color: "rgba(255,255,255,0.35)" },
-  secondaryRow: {
-    display: "flex", alignItems: "center", justifyContent: "center",
-    gap: 6, height: 18, marginBottom: 8, flexShrink: 0,
-  },
-  secondaryLabel: {
-    fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5,
-    color: "rgba(255,255,255,0.4)", fontFamily: "var(--font-body)",
-  },
-  notationDot: { color: "rgba(255,255,255,0.2)", fontSize: 12 },
-  readingOuter: {
-    flex: 1, minHeight: 0,
-    background: "rgba(0,0,0,0.15)", borderRadius: 10,
-    marginBottom: 8, overflowX: "hidden", overflowY: "auto",
-    display: "flex", flexDirection: "column",
-    padding: "6px 8px",
-  },
-  readingInner: {
-    // Auto margins center the reading, but unlike align-items they fall back
-    // to the top when it overflows, so the scroll can reach the first line.
-    margin: "auto 0", width: "100%",
-    display: "flex", flexWrap: "wrap",
-    alignItems: "flex-end", justifyContent: "center",
-    rowGap: "0.14em",
-  },
   word: { display: "flex", alignItems: "flex-end" },
   unitWord: {
     display: "flex", alignItems: "flex-end",
-    background: UNIT_PILL_BG, boxShadow: `inset 0 0 0 1px ${UNIT_PILL_BORDER}`,
+    ...UNIT_PILL,
     borderRadius: "0.16em", padding: "0 0.06em", margin: "0 0.12em",
   },
   syllable: {
@@ -646,45 +441,15 @@ const styles = {
     fontFamily: HANZI_FONT, fontWeight: 700, fontSize: 26, lineHeight: 1.1,
   },
   keyUnitPill: {
-    background: UNIT_PILL_BG, boxShadow: `inset 0 0 0 1px ${UNIT_PILL_BORDER}`,
+    ...UNIT_PILL,
     borderRadius: 6, padding: "0 3px",
   },
   keyValue: {
     fontSize: 11, color: "rgba(255,255,255,0.55)",
     fontFamily: "var(--font-body)", fontWeight: 500, whiteSpace: "nowrap",
   },
-  partsOuter: {
-    height: 92, flexShrink: 0,
-    background: "rgba(255,255,255,0.05)", borderRadius: 10,
-    overflowX: "hidden", overflowY: "auto", padding: "5px 6px",
-    display: "flex", flexDirection: "column",
-  },
-  partsHint: {
-    margin: "auto 0", fontSize: 14, color: "rgba(255,255,255,0.45)",
-    fontFamily: "var(--font-body)", textAlign: "center",
-  },
-  partsInner: {
-    margin: "auto 0", width: "100%",
-    display: "flex", flexWrap: "wrap",
-    alignItems: "center", justifyContent: "center",
-    rowGap: "0.3em",
-  },
-  partGroup: { display: "flex", alignItems: "center" },
-  plus: {
-    color: "rgba(255,255,255,0.35)", fontWeight: 600,
-    fontSize: "1.1em", lineHeight: 1, margin: "0 0.25em",
-  },
-  chip: {
-    display: "flex", flexDirection: "column", alignItems: "center",
-    background: "rgba(255,255,255,0.06)", borderRadius: "0.5em",
-    padding: "0.2em 0.35em",
-  },
+  readingGaps: { rowGap: "0.14em" },
   chipHanzi: { fontSize: "1.2em", lineHeight: 1.1, whiteSpace: "nowrap" },
-  chipValue: {
-    fontFamily: "var(--font-body)", fontWeight: 500,
-    fontSize: "0.8em", lineHeight: 1.2, marginTop: "0.15em",
-    color: "rgba(255,255,255,0.65)", whiteSpace: "nowrap",
-  },
   inlineHanzi: { fontFamily: HANZI_FONT, fontWeight: 700, whiteSpace: "nowrap" },
   bigWords: {
     display: "grid", gridTemplateColumns: "auto 1fr auto",

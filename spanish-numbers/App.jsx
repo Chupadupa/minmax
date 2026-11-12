@@ -1,10 +1,11 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   toSpanishParts, toSpanishText, formatDigits, bigUnitIndex, digitWord, keyWords,
   BIG_UNITS, MAX_DIGITS, MAX_NUMBER,
 } from "./spanishNumbers.js";
-import { useAutoFitFontSize } from "../shared/useAutoFitFontSize.js";
-import { useSpeech } from "../shared/useSpeech.js";
+import { useSpeech, chunkSpeech } from "../shared/useSpeech.js";
+import { plural } from "../shared/formatUtils.js";
+import { ReadingCard, PLAIN_COLOR, UNIT_PILL } from "../shared/ReadingCard.jsx";
 import { NB_DIGIT_TEXT } from "../shared/numberblockColors.js";
 import { BackgroundDots } from "../shared/BackgroundDots.jsx";
 import {
@@ -13,7 +14,7 @@ import {
 } from "../shared/SettingsOverlay.jsx";
 import { StickyHeader } from "../shared/StickyHeader.jsx";
 import { FunFact } from "../shared/Toast.jsx";
-import { Numpad, NumpadKey } from "../shared/Numpad.jsx";
+import { Numpad, NumpadKey, NumpadSpeakKey } from "../shared/Numpad.jsx";
 import { useNumberInput } from "../shared/useNumberInput.js";
 
 const THIS_YEAR = String(new Date().getFullYear());
@@ -25,11 +26,8 @@ const WORD_FONT = "'Andika', var(--font-body), sans-serif";
 // Each bit of a word wears the Numberblocks color of the digit it comes from —
 // the same as in the number, so 3 and tres (and treinta, and trescientos)
 // match. Mil and y are white, and the big words sit in a gold pill.
-const PLAIN_COLOR = "rgba(255,255,255,0.92)";
 const AND_COLOR = "rgba(255,255,255,0.6)";
 const SAY_COLOR = "rgba(255,255,255,0.7)";
-const UNIT_PILL_BG = "rgba(255,208,48,0.14)";
-const UNIT_PILL_BORDER = "rgba(255,208,48,0.4)";
 
 function pieceColor(digit, kind, colorize) {
   if (kind === "and") return AND_COLOR;
@@ -77,19 +75,8 @@ function getFunFact(digits, spain) {
 //
 // Long readings are split into a few utterances, a part or two each, since
 // some browsers cut off a single long one partway through.
-
-function speechChunks(parts) {
-  const chunks = [];
-  for (const part of parts) {
-    const text = part.words.map((w) => w.text).join(" ");
-    if (chunks.length && chunks[chunks.length - 1].length + text.length <= 60) {
-      chunks[chunks.length - 1] += " " + text;
-    } else {
-      chunks.push(text);
-    }
-  }
-  return chunks;
-}
+const speechChunks = (parts) =>
+  chunkSpeech(parts.map((part) => part.words.map((w) => w.text).join(" ")), { maxLength: 60 });
 
 const LATAM_VOICES = ["es-mx", "es-us", "es-419"];
 const SPAIN_VOICES = ["es-es"];
@@ -101,14 +88,6 @@ const SPAIN_VOICES = ["es-es"];
 function partValueLabel(part, separator) {
   if (part.zeros < 18) return formatDigits(part.value, separator);
   return `${formatDigits(part.value.slice(0, -part.zeros), separator)} and ${part.zeros} zeros`;
-}
-
-function ArabicDigits({ text, colorize }) {
-  return [...text].map((ch, i) => (
-    <span key={i} style={/[0-9]/.test(ch) ? { color: colorize ? NB_DIGIT_TEXT[ch] : "#FFD030" } : styles.comma}>
-      {ch}
-    </span>
-  ));
 }
 
 // A word's spelling, each bit in its digit's color.
@@ -312,78 +291,30 @@ export default function SpanishNumbers() {
   const [showSay, setShowSay] = useState(true);
   const [spain, setSpain] = useState(false);
   const [useDots, setUseDots] = useState(false);
-  const [fontTick, setFontTick] = useState(0);
-  const arabicOuterRef = useRef(null);
-  const arabicInnerRef = useRef(null);
-  const readingOuterRef = useRef(null);
-  const readingInnerRef = useRef(null);
-  const partsOuterRef = useRef(null);
-  const partsInnerRef = useRef(null);
   const speech = useSpeech({ lang: "es", rate: 0.8, prefer: spain ? SPAIN_VOICES : LATAM_VOICES });
 
   const { input, isEmpty } = pad;
-  const isZero = input === "0";
-  const hasValue = !isEmpty && !isZero;
+  const hasValue = !isEmpty && input !== "0";
   const canAddMil = hasValue && input.length + 3 <= MAX_DIGITS;
   const separator = useDots ? "." : ",";
   const parts = toSpanishParts(input);
   const words = parts.flatMap((p) => p.words);
   const funFact = getFunFact(input, spain);
 
-  // Refit the display when the word font finishes loading.
-  useEffect(() => {
-    const fonts = document.fonts;
-    if (!fonts?.addEventListener) return;
-    const bump = () => setFontTick((t) => t + 1);
-    fonts.addEventListener("loadingdone", bump);
-    return () => fonts.removeEventListener("loadingdone", bump);
-  }, []);
-
-  const arabicText = isEmpty ? "?" : formatDigits(input, separator);
-  const arabicFontSize = useAutoFitFontSize(arabicOuterRef, arabicInnerRef, arabicText.length, {
-    maxFont: 40, minFont: 10, fitKey: fontTick,
-  });
   // The say-it guide is extra content, so count it: turning it off lets the words grow.
   const readingCharCount = words.reduce(
     (sum, w) => sum + w.text.length + 1 + (showSay ? sayOf(w, spain).length * 0.5 : 0), 0
   );
-  const readingFontSize = useAutoFitFontSize(readingOuterRef, readingInnerRef, readingCharCount, {
-    maxFont: 44, minFont: 15, fitKey: `${input}|${showSay}|${spain}|${fontTick}`,
-  });
   const partsCharCount = parts.reduce(
     (sum, p) => sum + toSpanishText([p]).length + partValueLabel(p, separator).length, 0
   );
-  const partsFontSize = useAutoFitFontSize(partsOuterRef, partsInnerRef, partsCharCount, {
-    maxFont: 16, minFont: 12, fitKey: `${input}|${useDots}|${fontTick}`,
-  });
-
-  // Huge numbers can overflow even at the smallest readable size, so these
-  // boxes scroll — start each new number back at the top.
-  useEffect(() => {
-    if (readingOuterRef.current) readingOuterRef.current.scrollTop = 0;
-    if (partsOuterRef.current) partsOuterRef.current.scrollTop = 0;
-  }, [input]);
 
   // A changed number makes the old reading stale, so stop saying it.
   const { stop } = speech;
   useEffect(() => { stop(); }, [input, spain, stop]);
 
-  const handleSpeak = () => {
-    if (speech.speaking) speech.stop();
-    else speech.speak(speechChunks(parts));
-  };
-
-  const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
-
   return (
     <div className="toy-container">
-      <style>{`
-        @keyframes speakPulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.08); }
-        }
-      `}</style>
-
       <BackgroundDots count={20} />
 
       {/* Header */}
@@ -403,78 +334,29 @@ export default function SpanishNumbers() {
         useDots={useDots} setUseDots={setUseDots}
       />
 
-      {/* Display Area */}
-      <div className="frosted-card" style={styles.displayCard}>
-        <div ref={arabicOuterRef} style={styles.arabicOuter}>
-          <div ref={arabicInnerRef} style={{
-            ...styles.arabicInner,
-            fontSize: arabicFontSize,
-            color: isEmpty ? "rgba(255,255,255,0.3)" : undefined,
-          }}>
-            {isEmpty ? arabicText : <ArabicDigits text={arabicText} colorize={colorize} />}
-          </div>
-        </div>
-        <div style={styles.secondaryRow}>
-          {isEmpty && <span style={styles.secondaryLabel}>Spanish number words</span>}
-          {isZero && <span style={styles.secondaryLabel}>zero</span>}
-          {hasValue && (
-            <>
-              <span style={styles.secondaryLabel}>{plural(input.length, "digit")}</span>
-              <span style={styles.notationDot}>·</span>
-              <span style={styles.secondaryLabel}>{plural(words.length, "word")}</span>
-            </>
-          )}
-        </div>
-
-        <div ref={readingOuterRef} style={styles.readingOuter}>
-          {isEmpty ? (
-            <WordKey colorize={colorize} showSay={showSay} spain={spain} separator={separator} />
-          ) : (
-            <div ref={readingInnerRef} style={{
-              ...styles.readingInner,
-              fontSize: readingFontSize,
-              animation: pad.flash ? "flash 0.3s ease-out" : "none",
-            }}>
-              <Reading parts={parts} colorize={colorize} showSay={showSay} spain={spain} />
-            </div>
-          )}
-        </div>
-
-        <div ref={partsOuterRef} style={styles.partsOuter}>
-          {isEmpty && <span style={styles.partsHint}>Tap a number below to start!</span>}
-          {isZero && <span style={styles.partsHint}>cero means zero</span>}
-          {hasValue && (
-            <div ref={partsInnerRef} style={{ ...styles.partsInner, fontSize: partsFontSize }}>
-              {parts.map((part, i) => (
-                <span key={i} style={styles.partGroup}>
-                  {i > 0 && <span style={styles.plus}>+</span>}
-                  <span style={styles.chip}>
-                    <span style={styles.chipWords}>
-                      <InlineWords words={part.words} colorize={colorize} />
-                    </span>
-                    <span style={styles.chipValue}>{partValueLabel(part, separator)}</span>
-                  </span>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+      <ReadingCard
+        pad={pad} number={formatDigits(input, separator)} colorize={colorize}
+        emptyLabel="Spanish number words"
+        countLabel={plural(words.length, "word")}
+        zeroHint="cero means zero"
+        wordKey={<WordKey colorize={colorize} showSay={showSay} spain={spain} separator={separator} />}
+        reading={<Reading parts={parts} colorize={colorize} showSay={showSay} spain={spain} />}
+        readingFit={{ count: readingCharCount, maxFont: 44, minFont: 15, fitKey: `${input}|${showSay}|${spain}` }}
+        readingStyle={styles.readingGaps}
+        parts={parts.map((part) => ({
+          words: <InlineWords words={part.words} colorize={colorize} />,
+          value: partValueLabel(part, separator),
+        }))}
+        partsFit={{ count: partsCharCount, fitKey: `${input}|${useDots}` }}
+        chipStyle={styles.chip} chipWordsStyle={styles.chipWords}
+      />
 
       <FunFact text={funFact} />
 
       <Numpad
         pad={pad}
         middleKey={speech.hasVoice && (
-          <button className="toy-btn pm-btn" disabled={isEmpty} aria-label="Say it" style={{
-            background: "linear-gradient(135deg, #FFD030, #FF8C1A)",
-            boxShadow: "0 4px 12px rgba(255,140,26,0.3), inset 0 2px 0 rgba(255,255,255,0.3)",
-            width: 72, flexShrink: 0, fontSize: 24,
-            opacity: isEmpty ? 0.35 : 1,
-            animation: speech.speaking ? "speakPulse 0.8s ease-in-out infinite" : "none",
-          }} onClick={handleSpeak}>
-            {speech.speaking ? "⏹" : "🔊"}
-          </button>
+          <NumpadSpeakKey speech={speech} disabled={isEmpty} getText={() => speechChunks(parts)} />
         )}
         rightKey={
           // Adds three zeros — one mil bigger
@@ -492,51 +374,12 @@ export default function SpanishNumbers() {
 }
 
 const styles = {
-  displayCard: {
-    padding: "12px 14px",
-    width: "100%", maxWidth: 380, height: 380,
-    position: "relative", zIndex: 1,
-    display: "flex", flexDirection: "column",
-  },
-  arabicOuter: {
-    height: 52, flexShrink: 0, overflow: "hidden",
-    display: "flex", alignItems: "center", justifyContent: "center",
-  },
-  arabicInner: {
-    fontWeight: 700, textAlign: "center",
-    wordBreak: "break-all", maxWidth: "100%",
-  },
-  comma: { color: "rgba(255,255,255,0.35)" },
-  secondaryRow: {
-    display: "flex", alignItems: "center", justifyContent: "center",
-    gap: 6, height: 18, marginBottom: 8, flexShrink: 0,
-  },
-  secondaryLabel: {
-    fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5,
-    color: "rgba(255,255,255,0.4)", fontFamily: "var(--font-body)",
-  },
-  notationDot: { color: "rgba(255,255,255,0.2)", fontSize: 12 },
-  readingOuter: {
-    flex: 1, minHeight: 0,
-    background: "rgba(0,0,0,0.15)", borderRadius: 10,
-    marginBottom: 8, overflowX: "hidden", overflowY: "auto",
-    display: "flex", flexDirection: "column",
-    padding: "6px 8px",
-  },
-  readingInner: {
-    // Auto margins center the reading, but unlike align-items they fall back
-    // to the top when it overflows, so the scroll can reach the first line.
-    margin: "auto 0", width: "100%",
-    display: "flex", flexWrap: "wrap",
-    alignItems: "flex-end", justifyContent: "center",
-    columnGap: "0.3em", rowGap: "0.12em",
-  },
   word: {
     display: "flex", flexDirection: "column", alignItems: "center",
   },
   unitWord: {
     display: "flex", flexDirection: "column", alignItems: "center",
-    background: UNIT_PILL_BG, boxShadow: `inset 0 0 0 1px ${UNIT_PILL_BORDER}`,
+    ...UNIT_PILL,
     borderRadius: "0.25em", padding: "0 0.18em",
   },
   say: {
@@ -564,46 +407,17 @@ const styles = {
     whiteSpace: "nowrap",
   },
   keyUnitPill: {
-    background: UNIT_PILL_BG, boxShadow: `inset 0 0 0 1px ${UNIT_PILL_BORDER}`,
+    ...UNIT_PILL,
     borderRadius: 6, padding: "0 3px",
   },
   keyValue: {
     fontSize: 11, color: "rgba(255,255,255,0.55)",
     fontFamily: "var(--font-body)", fontWeight: 500, whiteSpace: "nowrap",
   },
-  partsOuter: {
-    height: 92, flexShrink: 0,
-    background: "rgba(255,255,255,0.05)", borderRadius: 10,
-    overflowX: "hidden", overflowY: "auto", padding: "5px 6px",
-    display: "flex", flexDirection: "column",
-  },
-  partsHint: {
-    margin: "auto 0", fontSize: 14, color: "rgba(255,255,255,0.45)",
-    fontFamily: "var(--font-body)", textAlign: "center",
-  },
-  partsInner: {
-    margin: "auto 0", width: "100%",
-    display: "flex", flexWrap: "wrap",
-    alignItems: "center", justifyContent: "center",
-    rowGap: "0.3em",
-  },
-  partGroup: { display: "flex", alignItems: "center", maxWidth: "100%" },
-  plus: {
-    color: "rgba(255,255,255,0.35)", fontWeight: 600,
-    fontSize: "1.1em", lineHeight: 1, margin: "0 0.25em",
-  },
-  chip: {
-    display: "flex", flexDirection: "column", alignItems: "center", minWidth: 0,
-    background: "rgba(255,255,255,0.06)", borderRadius: "0.5em",
-    padding: "0.2em 0.45em",
-  },
+  readingGaps: { columnGap: "0.3em", rowGap: "0.12em" },
+  chip: { padding: "0.2em 0.45em" },
   // Long parts (doscientos treinta y cuatro mil) wrap inside their chip.
   chipWords: { fontSize: "1.05em", lineHeight: 1.2, textAlign: "center" },
-  chipValue: {
-    fontFamily: "var(--font-body)", fontWeight: 500,
-    fontSize: "0.8em", lineHeight: 1.2, marginTop: "0.15em",
-    color: "rgba(255,255,255,0.65)", whiteSpace: "nowrap",
-  },
   inlineWords: { fontFamily: WORD_FONT, fontWeight: 700 },
   bigWords: {
     display: "grid", gridTemplateColumns: "auto auto 1fr",

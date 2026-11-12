@@ -11,6 +11,11 @@ export function formatNumber(n, useCommas = true) {
   return useCommas ? n.toLocaleString("en-US") : String(n);
 }
 
+// A temperature with a proper minus sign: "−180 °C".
+export function formatTemp(tempC, useCommas = true) {
+  return `${tempC < 0 ? "−" : ""}${formatNumber(Math.abs(tempC), useCommas)} °C`;
+}
+
 export function ordinal(n) {
   const tens = n % 100;
   if (tens >= 11 && tens <= 13) return `${n}th`;
@@ -18,8 +23,9 @@ export function ordinal(n) {
   return `${n}${suffix}`;
 }
 
-function plural(n, unit) {
-  return `${n} ${unit}${n === "1" ? "" : "s"}`;
+// "1 word", "3 words" — for a count that's a number, or already formatted.
+export function plural(n, unit) {
+  return `${n} ${unit}${n === 1 || n === "1" ? "" : "s"}`;
 }
 
 // Durations in the friendliest unit: hours, days or years.
