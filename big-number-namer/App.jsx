@@ -1,7 +1,6 @@
 import { useState, useRef } from "react";
 import { getNumberName, formatZerosWithCommas } from "./numberNaming.js";
 import { useAutoFitFontSize } from "../shared/useAutoFitFontSize.js";
-import { NB_COLORS, NB_SOLID, getNumberBlockStyle } from "../shared/numberblockColors.js";
 import { BackgroundDots } from "../shared/BackgroundDots.jsx";
 import {
   SettingsOverlay, SettingsToggle, SettingsDivider,
@@ -9,6 +8,8 @@ import {
 } from "../shared/SettingsOverlay.jsx";
 import { StickyHeader } from "../shared/StickyHeader.jsx";
 import { Toast } from "../shared/Toast.jsx";
+import { Numpad } from "../shared/Numpad.jsx";
+import { useNumberInput } from "../shared/useNumberInput.js";
 
 const MAX_ZEROS = 3000000000003;
 
@@ -85,86 +86,17 @@ function BigNumberSettings({ show, onClose, useDashes, setUseDashes, useCommas, 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function BigNumberNamer() {
-  const [input, setInput] = useState("");
-  const [bounce, setBounce] = useState(null);
-  const [nameFlash, setNameFlash] = useState(false);
+  // No zeros is just "one", so there's no 0 to type: zero means nothing typed.
+  const pad = useNumberInput({ max: MAX_ZEROS, zeroIsEmpty: true });
   const [showSettings, setShowSettings] = useState(false);
   const [useDashes, setUseDashes] = useState(true);
   const [useCommas, setUseCommas] = useState(true);
   const zerosOuterRef = useRef(null);
   const zerosInnerRef = useRef(null);
 
-  const zeros = input === "" ? 0 : Math.min(parseInt(input, 10), MAX_ZEROS);
+  const zeros = Number(pad.n ?? 0n);
   const name = getNumberName(zeros, useDashes);
   const funFact = getFunFact(zeros);
-  const atMax = zeros >= MAX_ZEROS;
-  const atMin = zeros <= 0;
-  const hasContent = zeros > 0;
-
-  const triggerFlash = () => {
-    setNameFlash(true);
-    setTimeout(() => setNameFlash(false), 300);
-  };
-
-  // Normalize input: if typed value exceeds MAX, clamp the stored input
-  const setInputClamped = (val) => {
-    const num = parseInt(val, 10);
-    if (isNaN(num) || num <= 0) {
-      setInput("");
-    } else if (num > MAX_ZEROS) {
-      setInput(String(MAX_ZEROS));
-    } else {
-      setInput(String(num));
-    }
-  };
-
-  const handleDigit = (d) => {
-    if (atMax) return;
-    const next = input + d;
-    const val = parseInt(next, 10);
-    if (next.length > 13) return;
-    if (val > MAX_ZEROS) {
-      setInput(String(MAX_ZEROS));
-    } else {
-      setInput(String(val));
-    }
-    setBounce(d);
-    triggerFlash();
-    setTimeout(() => setBounce(null), 200);
-  };
-
-  const handleBackspace = () => {
-    if (!hasContent) return;
-    const newInput = input.slice(0, -1);
-    setInput(newInput);
-    triggerFlash();
-  };
-
-  const handleClear = () => {
-    if (!hasContent) return;
-    setInput("");
-    triggerFlash();
-  };
-
-  const handlePlusOne = () => {
-    if (atMax) return;
-    const current = input === "" ? 0 : parseInt(input, 10);
-    const next = Math.min(current + 1, MAX_ZEROS);
-    setInput(String(next));
-    triggerFlash();
-  };
-
-  const handleMinusOne = () => {
-    if (atMin) return;
-    // Use the clamped zeros value, not raw input
-    const next = zeros - 1;
-    if (next <= 0) {
-      setInput("");
-    } else {
-      setInput(String(next));
-    }
-    triggerFlash();
-  };
 
   const displayZeroCount = Math.min(zeros, 3003);
   const zerosString = useCommas ? formatZerosWithCommas(displayZeroCount) : "0".repeat(displayZeroCount);
@@ -182,13 +114,6 @@ export default function BigNumberNamer() {
         @keyframes factOut {
           0% { transform: translateX(-50%) scale(1); opacity: 1; }
           100% { transform: translateX(-50%) scale(0.7); opacity: 0; }
-        }
-        .nb-btn {
-          width: 100%; aspect-ratio: 1.4;
-          border-radius: 18px; font-size: 30px;
-        }
-        .pm-btn {
-          font-size: 26px; padding: 12px 0;
         }
       `}</style>
 
@@ -243,7 +168,7 @@ export default function BigNumberNamer() {
 
         <div style={{
           ...styles.nameDisplay,
-          animation: nameFlash ? "flash 0.3s ease-out" : "none",
+          animation: pad.flash ? "flash 0.3s ease-out" : "none",
         }}>
           <span style={styles.nameText}>{name}</span>
         </div>
@@ -260,81 +185,7 @@ export default function BigNumberNamer() {
         />
       </div>
 
-      {/* Plus / Minus row */}
-      <div style={styles.pmRow}>
-        <button className="toy-btn pm-btn" disabled={atMin} style={{
-          background: "linear-gradient(135deg, #E41E20, #FF8C1A)",
-          boxShadow: "0 4px 12px rgba(228,30,32,0.3), inset 0 2px 0 rgba(255,255,255,0.2)",
-          flex: 1, opacity: atMin ? 0.35 : 1,
-        }} onClick={handleMinusOne}>
-          − 1
-        </button>
-        <button className="toy-btn pm-btn" disabled={atMax} style={{
-          background: "linear-gradient(135deg, #3A8FDE, #9B59B6)",
-          boxShadow: "0 4px 12px rgba(58,143,222,0.3), inset 0 2px 0 rgba(255,255,255,0.2)",
-          flex: 1, opacity: atMax ? 0.35 : 1,
-        }} onClick={handlePlusOne}>
-          + 1
-        </button>
-      </div>
-
-      {/* Clear / Delete row */}
-      <div style={styles.actionRow}>
-        <button className="toy-btn pm-btn" disabled={!hasContent} style={{
-          background: "rgba(255,255,255,0.18)",
-          boxShadow: "0 4px 10px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.15)",
-          fontSize: 16, letterSpacing: 1,
-          color: hasContent ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.4)",
-          border: "1px solid rgba(255,255,255,0.12)",
-          flex: 1,
-        }} onClick={handleClear}>
-          CLR
-        </button>
-        <button className="toy-btn pm-btn" disabled={!hasContent} style={{
-          background: "rgba(255,255,255,0.18)",
-          boxShadow: "0 4px 10px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.15)",
-          fontSize: 26,
-          color: hasContent ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.4)",
-          border: "1px solid rgba(255,255,255,0.12)",
-          flex: 1,
-        }} onClick={handleBackspace}>
-          ←
-        </button>
-      </div>
-
-      {/* Numpad */}
-      <div style={styles.numpad}>
-        {[7, 8, 9, 4, 5, 6, 1, 2, 3].map((d) => {
-          const style = getNumberBlockStyle(d);
-          const hasBorder = !!style.border;
-          return (
-            <button key={d} className="toy-btn nb-btn" disabled={atMax} style={{
-              background: style.background,
-              border: hasBorder ? `3px solid ${style.border}` : undefined,
-              boxShadow: hasBorder
-                ? `0 5px 14px ${style.border}40, inset 0 2px 0 rgba(255,255,255,0.5)`
-                : `0 5px 14px ${NB_SOLID[String(d)]}55, inset 0 2px 0 rgba(255,255,255,0.25)`,
-              color: hasBorder ? style.border : undefined,
-              textShadow: hasBorder ? "none" : undefined,
-              animation: bounce === String(d) && !atMax ? "btnPress 0.2s ease-out" : "none",
-              opacity: atMax ? 0.35 : 1,
-            }} onClick={() => handleDigit(String(d))}>
-              {d}
-            </button>
-          );
-        })}
-        <button className="toy-btn nb-btn" disabled={atMax} style={{
-          background: "#FFFFFF",
-          border: "3px solid #E41E20",
-          boxShadow: "0 5px 14px rgba(228,30,32,0.25), inset 0 2px 0 rgba(255,255,255,0.5)",
-          color: "#E41E20", textShadow: "none",
-          animation: bounce === "0" && !atMax ? "btnPress 0.2s ease-out" : "none",
-          opacity: atMax ? 0.35 : 1,
-          gridColumn: 2,
-        }} onClick={() => handleDigit("0")}>
-          0
-        </button>
-      </div>
+      <Numpad pad={pad} />
     </div>
   );
 }
@@ -387,17 +238,5 @@ const styles = {
   funFactAnchor: {
     width: "100%", maxWidth: 380, height: 20,
     position: "relative", zIndex: 2,
-  },
-  numpad: {
-    display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10,
-    width: "100%", maxWidth: 300, marginTop: 10, position: "relative", zIndex: 1,
-  },
-  pmRow: {
-    display: "flex", gap: 10, width: "100%", maxWidth: 300,
-    position: "relative", zIndex: 1,
-  },
-  actionRow: {
-    display: "flex", gap: 10, width: "100%", maxWidth: 300,
-    marginTop: 10, position: "relative", zIndex: 1,
   },
 };

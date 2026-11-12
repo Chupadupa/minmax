@@ -280,6 +280,20 @@ body::before {
 .toy-btn:active:not([disabled]) { transform: scale(0.9); }
 .toy-btn[disabled] { cursor: default; }
 
+/* ── Numpad Keys ─────────────────────────────────────────────────────────── */
+/* Sizes for the shared number pad (shared/Numpad.jsx): .nb-btn for the keys in
+   the digit grid, .pm-btn for the wide keys in the rows above it. */
+.nb-btn {
+  width: 100%;
+  aspect-ratio: 1.4;
+  border-radius: 18px;
+  font-size: 30px;
+}
+.pm-btn {
+  font-size: 26px;
+  padding: 12px 0;
+}
+
 /* ── Global: Prevent Text Selection ────────────────────────────────────────── */
 body, #root {
   user-select: none;
