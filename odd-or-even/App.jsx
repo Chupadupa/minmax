@@ -1,20 +1,19 @@
 import { useState, useRef, useEffect } from "react";
 import { isEven, pairUp, everyDigit, EVEN_DIGITS, ODD_DIGITS, MAX_DIGITS, MAX_NUMBER } from "./oddEven.js";
 import { useAutoFitFontSize } from "../shared/useAutoFitFontSize.js";
-import { NB_SOLID, getNumberBlockStyle } from "../shared/numberblockColors.js";
-import { contrastTextColor } from "../shared/colorUtils.js";
+import { formatNumber } from "../shared/formatUtils.js";
+import { NumberTile, NUMBER_TILE_SHAPE } from "../shared/NumberTile.jsx";
 import { BackgroundDots } from "../shared/BackgroundDots.jsx";
 import {
   SettingsOverlay, SettingsToggle, SettingsDivider,
-  SettingsSection, SettingsAboutText,
+  SettingsSection, SettingsAboutText, NumberblocksWord,
 } from "../shared/SettingsOverlay.jsx";
 import { StickyHeader } from "../shared/StickyHeader.jsx";
-import { Toast } from "../shared/Toast.jsx";
+import { FunFact } from "../shared/Toast.jsx";
 import { Numpad, NumpadKey } from "../shared/Numpad.jsx";
 import { useNumberInput } from "../shared/useNumberInput.js";
 
 const THIS_YEAR = String(new Date().getFullYear());
-const GOLD = "#FFD030";
 
 // Pairs are blue; the odd one out is orange.
 const EVEN_COLOR = "#3A8FDE";
@@ -25,10 +24,6 @@ const KIND_COLOR = { even: EVEN_COLOR, odd: ODD_COLOR };
 // Numbers up to this are drawn block by block; bigger ones as a stack that
 // keeps going.
 const BLOCK_LIMIT = 100n;
-
-function formatNumber(n, useCommas) {
-  return useCommas ? n.toLocaleString("en-US") : String(n);
-}
 
 function getFunFact(input, n, even) {
   switch (input) {
@@ -54,44 +49,7 @@ function getFunFact(input, n, even) {
   return null;
 }
 
-// ── Number Tiles ─────────────────────────────────────────────────────────────
-
-// Numbers up to 100 look like the Numberblocks; bigger ones are plain gold.
-function tileStyle(value) {
-  if (value > 100n) {
-    return {
-      background: "rgba(255,208,48,0.14)",
-      boxShadow: "inset 0 0 0 1px rgba(255,208,48,0.5)",
-      color: GOLD,
-    };
-  }
-  const n = Number(value);
-  const nb = getNumberBlockStyle(n);
-  if (!nb.border) {
-    return { background: nb.background, color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.4)" };
-  }
-  const decade = String(n - (n % 10));
-  const color = contrastTextColor(NB_SOLID[decade]);
-  return {
-    background: nb.background,
-    boxShadow: `inset 0 0 0 2px ${nb.border}`,
-    color,
-    textShadow: color === "#fff" ? "0 1px 2px rgba(0,0,0,0.4)" : "none",
-  };
-}
-
-function NumberTile({ value, label, style, onClick }) {
-  const Tag = onClick ? "button" : "span";
-  return (
-    <Tag
-      className={onClick ? "toy-btn" : undefined}
-      style={{ ...styles.tile, ...tileStyle(value), ...style }}
-      onClick={onClick}
-    >
-      {label}
-    </Tag>
-  );
-}
+// ── Counting Key ─────────────────────────────────────────────────────────────
 
 // 1–20 in two rows, odds over evens, shown before a number is typed.
 function CountingKey({ onPick }) {
@@ -294,18 +252,7 @@ function OddEvenSettings({ show, onClose, useCommas, setUseCommas, lightLast, se
       <SettingsSection title="Credits">
         <SettingsAboutText>
           Number button colors based on the{" "}
-          <span style={{ color: "#E41E20" }}>N</span>
-          <span style={{ color: "#FF8C1A" }}>u</span>
-          <span style={{ color: "#FFD030" }}>m</span>
-          <span style={{ color: "#4AAF4E" }}>b</span>
-          <span style={{ color: "#3A8FDE" }}>e</span>
-          <span style={{ color: "#9B59B6" }}>r</span>
-          <span style={{ color: "#F472B6" }}>b</span>
-          <span style={{ color: "#8E8E93" }}>l</span>
-          <span style={{ color: "#E41E20" }}>o</span>
-          <span style={{ color: "#FF8C1A" }}>c</span>
-          <span style={{ color: "#FFD030" }}>k</span>
-          <span style={{ color: "#4AAF4E" }}>s</span>
+          <NumberblocksWord />
           {" "}characters.
         </SettingsAboutText>
       </SettingsSection>
@@ -354,15 +301,6 @@ export default function OddOrEven() {
   return (
     <div className="toy-container">
       <style>{`
-        @keyframes factPop {
-          0% { transform: translateX(-50%) scale(0.7); opacity: 0; }
-          60% { transform: translateX(-50%) scale(1.05); }
-          100% { transform: translateX(-50%) scale(1); opacity: 1; }
-        }
-        @keyframes factOut {
-          0% { transform: translateX(-50%) scale(1); opacity: 1; }
-          100% { transform: translateX(-50%) scale(0.7); opacity: 0; }
-        }
         @keyframes blocksIn {
           0% { transform: scale(0.92); opacity: 0.4; }
           100% { transform: scale(1); opacity: 1; }
@@ -460,7 +398,7 @@ export default function OddOrEven() {
                 {leftover > 0n && (
                   <span style={styles.tileGroup}>
                     <span style={styles.plus}>+</span>
-                    <span style={{ ...styles.tile, ...styles.leftoverTile }}>1</span>
+                    <span style={{ ...NUMBER_TILE_SHAPE, ...styles.leftoverTile }}>1</span>
                   </span>
                 )}
               </div>
@@ -469,16 +407,7 @@ export default function OddOrEven() {
         </div>
       </div>
 
-      {/* Fun fact overlay */}
-      <div style={styles.funFactAnchor}>
-        <Toast
-          text={funFact}
-          variant="info"
-          position="top"
-          enterAnimation="factPop 0.35s ease-out forwards"
-          exitAnimation="factOut 0.35s ease-in forwards"
-        />
-      </div>
+      <FunFact text={funFact} />
 
       {/* ±1 flips odd and even; ±2 adds or takes away a pair, so it stays the same. */}
       <Numpad
@@ -599,11 +528,6 @@ const styles = {
     display: "flex", gap: 4, padding: 4, borderRadius: 12,
   },
   keyTile: { flex: 1, minWidth: 0, fontSize: 14, padding: "7px 0" },
-  tile: {
-    display: "inline-flex", alignItems: "center", justifyContent: "center",
-    fontWeight: 700, lineHeight: 1, whiteSpace: "nowrap",
-    borderRadius: "0.45em", padding: "0.3em 0.45em",
-  },
   leftoverTile: {
     background: ODD_COLOR, color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.4)",
     boxShadow: "0 0 8px rgba(255,140,26,0.6)",
@@ -637,10 +561,6 @@ const styles = {
   plus: {
     color: "rgba(255,255,255,0.45)", fontWeight: 600,
     margin: "0 0.35em", lineHeight: 1,
-  },
-  funFactAnchor: {
-    width: "100%", maxWidth: 380, height: 20,
-    position: "relative", zIndex: 2,
   },
   // Two blues, like a pair of blocks
   pairBtn: {

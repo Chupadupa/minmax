@@ -308,15 +308,6 @@ export default function Exoplanets() {
   return (
     <div className="toy-container">
       <style>{`
-        @keyframes factPop {
-          0% { transform: translateX(-50%) scale(0.7); opacity: 0; }
-          60% { transform: translateX(-50%) scale(1.05); }
-          100% { transform: translateX(-50%) scale(1); opacity: 1; }
-        }
-        @keyframes factOut {
-          0% { transform: translateX(-50%) scale(1); opacity: 1; }
-          100% { transform: translateX(-50%) scale(0.7); opacity: 0; }
-        }
         @keyframes bodyReveal {
           0% { transform: scale(0.4); opacity: 0; }
           60% { transform: scale(1.06); }
@@ -516,13 +507,7 @@ export default function Exoplanets() {
       </div>
 
       <div style={styles.toastAnchor}>
-        <Toast
-          text={toast}
-          variant="info"
-          position="top"
-          enterAnimation="factPop 0.35s ease-out forwards"
-          exitAnimation="factOut 0.35s ease-in forwards"
-        />
+        <Toast text={toast} />
       </div>
 
       {selected && (

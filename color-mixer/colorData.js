@@ -1,6 +1,6 @@
 // ── Color Palette & Named Colors ─────────────────────────────────────────────
 //
-// Color definitions for the Color Mixer toy.
+// Color definitions for the Color Combiner toy.
 // Palette = colors available to mix; Named Colors = dictionary for matching.
 //
 

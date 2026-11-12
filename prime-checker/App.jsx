@@ -4,15 +4,16 @@ import {
   PRIMES_UNDER_100, MAX_NUMBER,
 } from "./primes.js";
 import { useAutoFitFontSize } from "../shared/useAutoFitFontSize.js";
-import { NB_SOLID, NB_DIGIT_TEXT, getNumberBlockStyle } from "../shared/numberblockColors.js";
-import { contrastTextColor } from "../shared/colorUtils.js";
+import { formatNumber } from "../shared/formatUtils.js";
+import { NumberTile } from "../shared/NumberTile.jsx";
+import { NB_DIGIT_TEXT } from "../shared/numberblockColors.js";
 import { BackgroundDots } from "../shared/BackgroundDots.jsx";
 import {
   SettingsOverlay, SettingsToggle, SettingsDivider,
-  SettingsSection, SettingsAboutText, SettingsLink,
+  SettingsSection, SettingsAboutText, SettingsLink, NumberblocksWord,
 } from "../shared/SettingsOverlay.jsx";
 import { StickyHeader } from "../shared/StickyHeader.jsx";
-import { Toast } from "../shared/Toast.jsx";
+import { FunFact } from "../shared/Toast.jsx";
 import { Numpad, NumpadKey } from "../shared/Numpad.jsx";
 import { useNumberInput } from "../shared/useNumberInput.js";
 
@@ -43,10 +44,6 @@ const MERSENNE = {
 const MILESTONE_PRIMES = {
   "7919": "1,000th", "104729": "10,000th", "1299709": "100,000th", "15485863": "millionth",
 };
-
-function formatNumber(n, useCommas) {
-  return useCommas ? n.toLocaleString("en-US") : String(n);
-}
 
 function ordinalSuffix(k) {
   const tens = k % 100;
@@ -123,44 +120,7 @@ function useWorkerFactors(input, needed) {
   return result.input === input ? result.factors : null;
 }
 
-// ── Number Tiles ─────────────────────────────────────────────────────────────
-
-// Numbers up to 100 look like the Numberblocks; bigger ones are plain gold.
-function tileStyle(value) {
-  if (value > 100n) {
-    return {
-      background: "rgba(255,208,48,0.14)",
-      boxShadow: "inset 0 0 0 1px rgba(255,208,48,0.5)",
-      color: GOLD,
-    };
-  }
-  const n = Number(value);
-  const nb = getNumberBlockStyle(n);
-  if (!nb.border) {
-    return { background: nb.background, color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.4)" };
-  }
-  const decade = String(n - (n % 10));
-  const color = contrastTextColor(NB_SOLID[decade]);
-  return {
-    background: nb.background,
-    boxShadow: `inset 0 0 0 2px ${nb.border}`,
-    color,
-    textShadow: color === "#fff" ? "0 1px 2px rgba(0,0,0,0.4)" : "none",
-  };
-}
-
-function NumberTile({ value, label, style, onClick }) {
-  const Tag = onClick ? "button" : "span";
-  return (
-    <Tag
-      className={onClick ? "toy-btn" : undefined}
-      style={{ ...styles.tile, ...tileStyle(value), ...style }}
-      onClick={onClick}
-    >
-      {label}
-    </Tag>
-  );
-}
+// ── Prime Key ────────────────────────────────────────────────────────────────
 
 // The 25 primes under 100, shown before a number is typed.
 function PrimeKey({ onPick }) {
@@ -304,18 +264,7 @@ function PrimeSettings({ show, onClose, usePowers, setUsePowers, useCommas, setU
         </SettingsAboutText>
         <SettingsAboutText>
           Number button colors based on the{" "}
-          <span style={{ color: "#E41E20" }}>N</span>
-          <span style={{ color: "#FF8C1A" }}>u</span>
-          <span style={{ color: "#FFD030" }}>m</span>
-          <span style={{ color: "#4AAF4E" }}>b</span>
-          <span style={{ color: "#3A8FDE" }}>e</span>
-          <span style={{ color: "#9B59B6" }}>r</span>
-          <span style={{ color: "#F472B6" }}>b</span>
-          <span style={{ color: "#8E8E93" }}>l</span>
-          <span style={{ color: "#E41E20" }}>o</span>
-          <span style={{ color: "#FF8C1A" }}>c</span>
-          <span style={{ color: "#FFD030" }}>k</span>
-          <span style={{ color: "#4AAF4E" }}>s</span>
+          <NumberblocksWord />
           {" "}characters.
         </SettingsAboutText>
       </SettingsSection>
@@ -409,15 +358,6 @@ export default function PrimeChecker() {
   return (
     <div className="toy-container">
       <style>{`
-        @keyframes factPop {
-          0% { transform: translateX(-50%) scale(0.7); opacity: 0; }
-          60% { transform: translateX(-50%) scale(1.05); }
-          100% { transform: translateX(-50%) scale(1); opacity: 1; }
-        }
-        @keyframes factOut {
-          0% { transform: translateX(-50%) scale(1); opacity: 1; }
-          100% { transform: translateX(-50%) scale(0.7); opacity: 0; }
-        }
         @keyframes blocksIn {
           0% { transform: scale(0.92); opacity: 0.4; }
           100% { transform: scale(1); opacity: 1; }
@@ -534,16 +474,7 @@ export default function PrimeChecker() {
         </div>
       </div>
 
-      {/* Fun fact overlay */}
-      <div style={styles.funFactAnchor}>
-        <Toast
-          text={funFact}
-          variant="info"
-          position="top"
-          enterAnimation="factPop 0.35s ease-out forwards"
-          exitAnimation="factOut 0.35s ease-in forwards"
-        />
-      </div>
+      <FunFact text={funFact} />
 
       <Numpad
         pad={pad}
@@ -656,11 +587,6 @@ const styles = {
     gap: 6, maxWidth: 320,
   },
   keyTile: { minWidth: 36, fontSize: 16, padding: "5px 0" },
-  tile: {
-    display: "inline-flex", alignItems: "center", justifyContent: "center",
-    fontWeight: 700, lineHeight: 1, whiteSpace: "nowrap",
-    borderRadius: "0.45em", padding: "0.3em 0.45em",
-  },
   partsOuter: {
     height: 80, flexShrink: 0,
     background: "rgba(255,255,255,0.05)", borderRadius: 10,
@@ -691,10 +617,6 @@ const styles = {
   times: {
     color: "rgba(255,255,255,0.45)", fontWeight: 600,
     margin: "0 0.3em", lineHeight: 1,
-  },
-  funFactAnchor: {
-    width: "100%", maxWidth: 380, height: 20,
-    position: "relative", zIndex: 2,
   },
   // Gold on deep purple, like a gem
   jumpBtn: {

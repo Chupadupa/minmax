@@ -3,6 +3,8 @@ import { useState, useEffect, useRef } from "react";
 // ── Toast ────────────────────────────────────────────────────────────────────
 // Shared toast notification with enter/exit animation support.
 // Variants: "info" (gold on dark) and "warning" (white on red).
+// It positions itself against its nearest positioned parent; the default pop
+// in and out (toastEnter / toastExit) lives in base.css.
 
 const VARIANTS = {
   info: {
@@ -74,3 +76,21 @@ export function Toast({
     </div>
   );
 }
+
+// ── Fun Fact ─────────────────────────────────────────────────────────────────
+// A toast in its own slim strip of the page: put it between a number toy's
+// display card and its numpad, and the fact pops up over the gap whenever
+// `text` is set.
+
+export function FunFact({ text }) {
+  return (
+    <div style={FUN_FACT_STRIP}>
+      <Toast text={text} />
+    </div>
+  );
+}
+
+const FUN_FACT_STRIP = {
+  width: "100%", maxWidth: 380, height: 20,
+  position: "relative", zIndex: 2,
+};

@@ -1,7 +1,7 @@
 // ── Format Utilities ─────────────────────────────────────────────────────────
 //
-// Friendly numbers for the space toys: commas on request, durations in the
-// nicest unit, and ordinals. Pure logic, no React.
+// Friendly numbers: commas on request (for numbers and BigInts alike),
+// durations in the nicest unit, and ordinals. Pure logic, no React.
 
 export function trimTo(n, decimals) {
   return Number(n.toFixed(decimals));

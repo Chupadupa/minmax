@@ -4,10 +4,10 @@ import { useAutoFitFontSize } from "../shared/useAutoFitFontSize.js";
 import { BackgroundDots } from "../shared/BackgroundDots.jsx";
 import {
   SettingsOverlay, SettingsToggle, SettingsDivider,
-  SettingsSection, SettingsAboutText, SettingsLink,
+  SettingsSection, SettingsAboutText, SettingsLink, NumberblocksWord,
 } from "../shared/SettingsOverlay.jsx";
 import { StickyHeader } from "../shared/StickyHeader.jsx";
-import { Toast } from "../shared/Toast.jsx";
+import { FunFact } from "../shared/Toast.jsx";
 import { Numpad } from "../shared/Numpad.jsx";
 import { useNumberInput } from "../shared/useNumberInput.js";
 
@@ -64,18 +64,7 @@ function BigNumberSettings({ show, onClose, useDashes, setUseDashes, useCommas, 
         </SettingsAboutText>
         <SettingsAboutText>
           Number button colors based on the{" "}
-          <span style={{ color: "#E41E20" }}>N</span>
-          <span style={{ color: "#FF8C1A" }}>u</span>
-          <span style={{ color: "#FFD030" }}>m</span>
-          <span style={{ color: "#4AAF4E" }}>b</span>
-          <span style={{ color: "#3A8FDE" }}>e</span>
-          <span style={{ color: "#9B59B6" }}>r</span>
-          <span style={{ color: "#F472B6" }}>b</span>
-          <span style={{ color: "#8E8E93" }}>l</span>
-          <span style={{ color: "#E41E20" }}>o</span>
-          <span style={{ color: "#FF8C1A" }}>c</span>
-          <span style={{ color: "#FFD030" }}>k</span>
-          <span style={{ color: "#4AAF4E" }}>s</span>
+          <NumberblocksWord />
           {" "}characters.
         </SettingsAboutText>
       </SettingsSection>
@@ -105,17 +94,6 @@ export default function BigNumberNamer() {
 
   return (
     <div className="toy-container">
-      <style>{`
-        @keyframes factPop {
-          0% { transform: translateX(-50%) scale(0.7); opacity: 0; }
-          60% { transform: translateX(-50%) scale(1.05); }
-          100% { transform: translateX(-50%) scale(1); opacity: 1; }
-        }
-        @keyframes factOut {
-          0% { transform: translateX(-50%) scale(1); opacity: 1; }
-          100% { transform: translateX(-50%) scale(0.7); opacity: 0; }
-        }
-      `}</style>
 
       <BackgroundDots count={20} />
 
@@ -174,16 +152,7 @@ export default function BigNumberNamer() {
         </div>
       </div>
 
-      {/* Fun fact overlay */}
-      <div style={styles.funFactAnchor}>
-        <Toast
-          text={funFact}
-          variant="info"
-          position="top"
-          enterAnimation="factPop 0.35s ease-out forwards"
-          exitAnimation="factOut 0.35s ease-in forwards"
-        />
-      </div>
+      <FunFact text={funFact} />
 
       <Numpad pad={pad} />
     </div>
@@ -234,9 +203,5 @@ const styles = {
     fontSize: 20, fontWeight: 600, textAlign: "center", lineHeight: 1.3,
     background: "linear-gradient(135deg, #FF8C1A, #FFD030, #4AAF4E, #3A8FDE)",
     WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", wordBreak: "break-word",
-  },
-  funFactAnchor: {
-    width: "100%", maxWidth: 380, height: 20,
-    position: "relative", zIndex: 2,
   },
 };

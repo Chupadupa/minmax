@@ -84,6 +84,20 @@ export function SettingsAboutText({ children }) {
   return <p style={S.aboutText}>{children}</p>;
 }
 
+// "Numberblocks", one color per letter — for the credit line in toys that
+// borrow the characters' colors.
+const NUMBERBLOCKS_LETTERS = [
+  ["N", "#E41E20"], ["u", "#FF8C1A"], ["m", "#FFD030"], ["b", "#4AAF4E"],
+  ["e", "#3A8FDE"], ["r", "#9B59B6"], ["b", "#F472B6"], ["l", "#8E8E93"],
+  ["o", "#E41E20"], ["c", "#FF8C1A"], ["k", "#FFD030"], ["s", "#4AAF4E"],
+];
+
+export function NumberblocksWord() {
+  return NUMBERBLOCKS_LETTERS.map(([letter, color], i) => (
+    <span key={i} style={{ color }}>{letter}</span>
+  ));
+}
+
 // ── Styles ───────────────────────────────────────────────────────────────────
 
 const S = {
