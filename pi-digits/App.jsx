@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { computePiString, MAX_DIGITS } from "./piDigits.js";
-import { NB_SOLID, NB_DIGIT_TEXT, getNumberBlockStyle } from "../shared/numberblockColors.js";
+import { NB_DIGIT_TEXT } from "../shared/numberblockColors.js";
 import { BackgroundDots } from "../shared/BackgroundDots.jsx";
 import {
   SettingsOverlay, SettingsToggle, SettingsDivider,
@@ -8,8 +8,9 @@ import {
 } from "../shared/SettingsOverlay.jsx";
 import { StickyHeader } from "../shared/StickyHeader.jsx";
 import { Toast } from "../shared/Toast.jsx";
+import { Numpad } from "../shared/Numpad.jsx";
+import { useNumberInput } from "../shared/useNumberInput.js";
 
-const MAX_INPUT_LEN = String(MAX_DIGITS).length;
 
 // Digits computed synchronously up front so small, common requests are instant
 // (no worker round-trip, no "computing…" flash). ~2 ms.
@@ -236,8 +237,8 @@ function PiSettings({ show, onClose, colorize, setColorize, group, setGroup }) {
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function PiDigits() {
-  const [input, setInput] = useState("");
-  const [bounce, setBounce] = useState(null);
+  // Zero digits of π is nothing to show, so zero means nothing typed.
+  const pad = useNumberInput({ max: MAX_DIGITS, zeroIsEmpty: true });
   const [showSettings, setShowSettings] = useState(false);
   const [colorize, setColorize] = useState(true);
   const [group, setGroup] = useState(true);
@@ -253,11 +254,8 @@ export default function PiDigits() {
   const reqIdRef = useRef(0);
   const debounceRef = useRef(null);
 
-  const count = input === "" ? 0 : Math.min(parseInt(input, 10), MAX_DIGITS);
+  const count = Number(pad.n ?? 0n);
   const funFact = getFunFact(count);
-  const atMax = count >= MAX_DIGITS;
-  const atMin = count <= 0;
-  const hasContent = count > 0;
   const ready = count <= piCache.count;
 
   // Spin up the compute worker once.
@@ -285,37 +283,6 @@ export default function PiDigits() {
     return () => clearTimeout(debounceRef.current);
   }, [count, piCache.count]);
 
-  const handleDigit = (d) => {
-    if (atMax) return;
-    const next = input + d;
-    if (next.length > MAX_INPUT_LEN) return;
-    const val = parseInt(next, 10);
-    setInput(val > MAX_DIGITS ? String(MAX_DIGITS) : String(val));
-    setBounce(d);
-    setTimeout(() => setBounce(null), 200);
-  };
-
-  const handleBackspace = () => {
-    if (!hasContent) return;
-    setInput(input.slice(0, -1));
-  };
-
-  const handleClear = () => {
-    if (!hasContent) return;
-    setInput("");
-  };
-
-  const handlePlusOne = () => {
-    if (atMax) return;
-    setInput(String(Math.min(count + 1, MAX_DIGITS)));
-  };
-
-  const handleMinusOne = () => {
-    if (atMin) return;
-    const next = count - 1;
-    setInput(next <= 0 ? "" : String(next));
-  };
-
   return (
     <div className="toy-container" style={{ justifyContent: "flex-start" }}>
       <style>{`
@@ -329,11 +296,6 @@ export default function PiDigits() {
           100% { transform: translateX(-50%) scale(0.7); opacity: 0; }
         }
         @keyframes softPulse { 0%,100% { opacity: 0.45; } 50% { opacity: 1; } }
-        .nb-btn {
-          width: 100%; aspect-ratio: 1.4;
-          border-radius: 18px; font-size: 30px;
-        }
-        .pm-btn { font-size: 26px; padding: 12px 0; }
       `}</style>
 
       <BackgroundDots count={20} />
@@ -367,81 +329,7 @@ export default function PiDigits() {
         />
       </div>
 
-      {/* Plus / Minus row */}
-      <div style={styles.pmRow}>
-        <button className="toy-btn pm-btn" disabled={atMin} style={{
-          background: "linear-gradient(135deg, #E41E20, #FF8C1A)",
-          boxShadow: "0 4px 12px rgba(228,30,32,0.3), inset 0 2px 0 rgba(255,255,255,0.2)",
-          flex: 1, opacity: atMin ? 0.35 : 1,
-        }} onClick={handleMinusOne}>
-          − 1
-        </button>
-        <button className="toy-btn pm-btn" disabled={atMax} style={{
-          background: "linear-gradient(135deg, #3A8FDE, #9B59B6)",
-          boxShadow: "0 4px 12px rgba(58,143,222,0.3), inset 0 2px 0 rgba(255,255,255,0.2)",
-          flex: 1, opacity: atMax ? 0.35 : 1,
-        }} onClick={handlePlusOne}>
-          + 1
-        </button>
-      </div>
-
-      {/* Clear / Delete row */}
-      <div style={styles.actionRow}>
-        <button className="toy-btn pm-btn" disabled={!hasContent} style={{
-          background: "rgba(255,255,255,0.18)",
-          boxShadow: "0 4px 10px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.15)",
-          fontSize: 16, letterSpacing: 1,
-          color: hasContent ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.4)",
-          border: "1px solid rgba(255,255,255,0.12)",
-          flex: 1,
-        }} onClick={handleClear}>
-          CLR
-        </button>
-        <button className="toy-btn pm-btn" disabled={!hasContent} style={{
-          background: "rgba(255,255,255,0.18)",
-          boxShadow: "0 4px 10px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.15)",
-          fontSize: 26,
-          color: hasContent ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.4)",
-          border: "1px solid rgba(255,255,255,0.12)",
-          flex: 1,
-        }} onClick={handleBackspace}>
-          ←
-        </button>
-      </div>
-
-      {/* Numpad */}
-      <div style={styles.numpad}>
-        {[7, 8, 9, 4, 5, 6, 1, 2, 3].map((d) => {
-          const style = getNumberBlockStyle(d);
-          const hasBorder = !!style.border;
-          return (
-            <button key={d} className="toy-btn nb-btn" disabled={atMax} style={{
-              background: style.background,
-              border: hasBorder ? `3px solid ${style.border}` : undefined,
-              boxShadow: hasBorder
-                ? `0 5px 14px ${style.border}40, inset 0 2px 0 rgba(255,255,255,0.5)`
-                : `0 5px 14px ${NB_SOLID[String(d)]}55, inset 0 2px 0 rgba(255,255,255,0.25)`,
-              color: hasBorder ? style.border : undefined,
-              textShadow: hasBorder ? "none" : undefined,
-              animation: bounce === String(d) && !atMax ? "btnPress 0.2s ease-out" : "none",
-              opacity: atMax ? 0.35 : 1,
-            }} onClick={() => handleDigit(String(d))}>
-              {d}
-            </button>
-          );
-        })}
-        <button className="toy-btn nb-btn" disabled={atMax} style={{
-          background: "#FFFFFF",
-          border: "3px solid #E41E20",
-          boxShadow: "0 5px 14px rgba(228,30,32,0.25), inset 0 2px 0 rgba(255,255,255,0.5)",
-          color: "#E41E20", textShadow: "none",
-          animation: bounce === "0" && !atMax ? "btnPress 0.2s ease-out" : "none",
-          opacity: atMax ? 0.35 : 1,
-          gridColumn: 2,
-        }} onClick={() => handleDigit("0")}>
-          0
-        </button>
-      </div>
+      <Numpad pad={pad} />
     </div>
   );
 }
@@ -450,18 +338,6 @@ const styles = {
   funFactAnchor: {
     width: "100%", maxWidth: 380, height: 20,
     position: "relative", zIndex: 2,
-  },
-  numpad: {
-    display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10,
-    width: "100%", maxWidth: 300, marginTop: 10, position: "relative", zIndex: 1,
-  },
-  pmRow: {
-    display: "flex", gap: 10, width: "100%", maxWidth: 300,
-    position: "relative", zIndex: 1,
-  },
-  actionRow: {
-    display: "flex", gap: 10, width: "100%", maxWidth: 300,
-    marginTop: 10, position: "relative", zIndex: 1,
   },
   displayCard: {
     width: "100%", maxWidth: 460,

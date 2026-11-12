@@ -134,6 +134,8 @@ There are no test, lint, or format commands.
 │   ├── useSpeech.js            # Web Speech hook: says a name with the device's voice for a language
 │   ├── useElementWidth.js      # Hook: an element's current width, kept up to date on resize
 │   ├── useAutoFitFontSize.js   # Generic auto-fit font hook (reusable across toys)
+│   ├── Numpad.jsx              # The number toys' keys: − 1 / + 1, CLR / ←, Numberblocks digits, optional extra keys
+│   ├── useNumberInput.js       # Hook behind the numpad: the typed number as a digit string, limits, flash and bounce
 │   ├── useScrollLock.js        # Scroll lock hook for overlays (toggles overlay-open class)
 │   ├── numberblockColors.js    # Shared NB_COLORS, NB_SOLID, NB_OUTLINE, NB7_STOPS, NB7_GRADIENT, getNumberBlockStyle
 │   ├── BackgroundDots.jsx      # Floating background dots decoration component
@@ -473,7 +475,7 @@ star, and everything.
 
 ### Shared Utilities (`shared/`)
 
-- **`base.css`** — Shared stylesheet providing design tokens (CSS custom properties), global resets, font loading (Fredoka & Outfit via Google Fonts), dark gradient background, shared keyframe animations (`popIn`, `fadeIn`, `float`, `flash`, `btnPress`, `shake`), utility CSS classes (`.gradient-text`, `.frosted-card`, `.toy-btn`, `.back-btn`, `.gear-btn`, `.page-header`, `.safe-area-container`, `.toy-container`, `.bg-dots`), page header defaults (`.page-header h1`, `.page-header .subtitle`), `.overlay-open` scroll-lock class (used by `useScrollLock` hook), and global user-select prevention. Toys import this to get the Doodads look for free, override CSS variables for tweaks, or skip the import entirely for a custom look.
+- **`base.css`** — Shared stylesheet providing design tokens (CSS custom properties), global resets, font loading (Fredoka & Outfit via Google Fonts), dark gradient background, shared keyframe animations (`popIn`, `fadeIn`, `float`, `flash`, `btnPress`, `shake`), utility CSS classes (`.gradient-text`, `.frosted-card`, `.toy-btn`, `.nb-btn`, `.pm-btn`, `.back-btn`, `.gear-btn`, `.page-header`, `.safe-area-container`, `.toy-container`, `.bg-dots`), page header defaults (`.page-header h1`, `.page-header .subtitle`), `.overlay-open` scroll-lock class (used by `useScrollLock` hook), and global user-select prevention. Toys import this to get the Doodads look for free, override CSS variables for tweaks, or skip the import entirely for a custom look.
 
 - **`colorUtils.js`** — Shared color helper functions used across multiple toys. Exports:
   - `luminance(hex)` — relative luminance of a hex color (WCAG 2.0 sRGB formula)
@@ -518,6 +520,12 @@ star, and everything.
 
 - **`useAutoFitFontSize.js`** — Binary search algorithm for dynamic font scaling within a container, with oscillation prevention via ceiling tracking. Accepts `{ maxFont, minFont, fitKey }` options; `fitKey` forces a refit when content changes without its character count changing (e.g. proportional letters). Available for use by any toy.
 
+- **`Numpad.jsx`** and **`useNumberInput.js`** — The number pad shared by the seven number toys (Big Number Namer, Pi Digits, Roman Numerals, Chinese Numbers, Spanish Numbers, Prime Checker, Odd or Even), and the hook that drives it.
+  - `useNumberInput({ max, zeroIsEmpty? })` holds the typed number as a digit string (so it can be any size) and returns a `pad`: `input`, `n` (BigInt, or null when empty), `isEmpty`, `canType`, `canStep(k)`, the actions `type(d)`, `backspace()`, `clear()`, `step(k, key?)`, `set(value, key?)`, and `flash` / `bounce` for the display's flash and a key's press animation. `max` (a BigInt, number or digit string) caps the value — typing past it lands on it — and sets how many digits fit. `zeroIsEmpty` is for toys where 0 isn't a number of its own (Big Number Namer, Pi Digits).
+  - `Numpad({ pad, middleKey?, leftKey?, rightKey? })` renders − 1 / + 1, CLR / ← and the digit grid. `middleKey` goes between − 1 and + 1 (the 🔊 button); `leftKey` / `rightKey` go either side of 0.
+  - `NumpadKey({ pad, id, disabled?, label?, style?, onClick, children })` is one extra key for the digit grid (×万, ×mil, ◀/▶ prime, ±2): it dims when disabled and bounces when `pad.bounce === id`.
+  - Key sizes are the `.nb-btn` (grid keys) and `.pm-btn` (wide keys) classes in `base.css`.
+
 - **`useScrollLock.js`** — Hook to prevent background scrolling when overlays are active. Toggles the `overlay-open` class on `<html>` and `<body>` (styled in `base.css`). Usage: `useScrollLock(isOverlayVisible)`.
 
 - **`numberblockColors.js`** — Shared Numberblocks-inspired color palette constants. Exports:
@@ -554,11 +562,12 @@ star, and everything.
 - **Toy-specific styling is inline** via JavaScript style objects for dynamic/component-specific styles
 - **Use CSS variables** (`var(--font-heading)`, `var(--glass-bg)`, etc.) instead of hardcoding shared values
 - **Use shared CSS classes** (`.gradient-text`, `.toy-btn`, `.back-btn`, `.gear-btn`, `.page-header`, `.frosted-card`, `.toy-container`, `.bg-dots`) for common UI patterns instead of duplicating inline styles
-- **Use `.toy-btn`** base class for all interactive buttons across toys. It provides border-radius, font, color, cursor, flex centering, user-select prevention, active-press scale, and disabled cursor. Each toy adds a modifier class (e.g. `.nb-btn`, `.calc-btn`, `.clock-btn`, `.frac-btn`, `.color-btn`) for size/shape overrides only.
+- **Use `.toy-btn`** base class for all interactive buttons across toys. It provides border-radius, font, color, cursor, flex centering, user-select prevention, active-press scale, and disabled cursor. Each toy adds a modifier class (e.g. `.calc-btn`, `.clock-btn`, `.frac-btn`, `.color-btn`) for size/shape overrides only; the shared numpad's `.nb-btn` and `.pm-btn` live in `base.css`.
 - **Use `.toy-container`** class on the outermost div of every toy for consistent layout and safe-area padding. Add toy-specific overrides (e.g. `justifyContent`, `gap`) as inline styles.
 - **Use `<StickyHeader />`** component for the toy header — provides a consistent sticky header with frosted-glass background, drop shadow, back button, optional gear button, gradient title, and subtitle. Stays pinned at the top when scrolling.
 - **Use `<BackgroundDots />`** component for floating dot decorations instead of defining the useMemo + render pattern inline
 - **Use `.frosted-card`** class for frosted glass card displays instead of redefining `background`, `backdropFilter`, `border`, `borderRadius` inline
+- **Use `<Numpad />` with `useNumberInput`** for any toy where a number is typed, instead of building keys and digit handlers per toy. Add toy-specific keys with `<NumpadKey />`; read the number from `pad.input` (digit string) or `pad.n` (BigInt).
 - **Use the shared `SettingsOverlay`** shell for settings modals; pass toy-specific toggles and about content as children
 - **Use the shared `Toast`** component for toast notifications instead of defining custom toast components per toy. Use `variant="info"` for informational toasts and `variant="warning"` for error/warning toasts.
 - **Use `useScrollLock`** hook when showing full-screen overlays to prevent background scrolling
@@ -612,7 +621,7 @@ The service worker cache version is **auto-generated at build time** — no manu
 4. Add an entry to `TOYS` in `shared/toys.js` (at the end of its shelf) — the home page tile is built from it, and the build stops if it's missing
 5. **Import `shared/base.css`** — either via `<link rel="stylesheet" href="shared/base.css" />` in HTML, or `import '../shared/base.css'` in a JS/JSX entry point. This gives you fonts, resets, background, animations, and utility classes. Skip this import if you want a fully custom look.
 6. **Use `<StickyHeader />`** for the header (required for PWA navigation — see UI Conventions above). This provides the back button, title, subtitle, and optional gear button in a consistent sticky container.
-7. **Use shared resources**: `.toy-container` class for layout, `.toy-btn` class for buttons, `<BackgroundDots />` for decorations, `numberblockColors.js` for the Numberblocks palette, `colorUtils.js` for color helpers, `mathUtils.js` for math helpers, `<SettingsOverlay>` for settings modals, `.frosted-card` for glass card displays, `useScrollLock` hook for overlays.
+7. **Use shared resources**: `.toy-container` class for layout, `.toy-btn` class for buttons, `<BackgroundDots />` for decorations, `numberblockColors.js` for the Numberblocks palette, `colorUtils.js` for color helpers, `mathUtils.js` for math helpers, `<Numpad>` + `useNumberInput` for typing numbers, `<SettingsOverlay>` for settings modals, `.frosted-card` for glass card displays, `useScrollLock` hook for overlays.
 8. The toy will be built and deployed automatically
 
 ## Future Improvements

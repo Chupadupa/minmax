@@ -4,7 +4,7 @@ import {
   DIGITS, PLACES, BIG_UNITS, MAX_DIGITS, MAX_NUMBER,
 } from "./chineseNumbers.js";
 import { useAutoFitFontSize } from "../shared/useAutoFitFontSize.js";
-import { NB_SOLID, NB_DIGIT_TEXT, getNumberBlockStyle } from "../shared/numberblockColors.js";
+import { NB_DIGIT_TEXT } from "../shared/numberblockColors.js";
 import { BackgroundDots } from "../shared/BackgroundDots.jsx";
 import {
   SettingsOverlay, SettingsToggle, SettingsDivider,
@@ -12,6 +12,8 @@ import {
 } from "../shared/SettingsOverlay.jsx";
 import { StickyHeader } from "../shared/StickyHeader.jsx";
 import { Toast } from "../shared/Toast.jsx";
+import { Numpad, NumpadKey } from "../shared/Numpad.jsx";
+import { useNumberInput } from "../shared/useNumberInput.js";
 
 const THIS_YEAR = String(new Date().getFullYear());
 
@@ -396,9 +398,7 @@ function ChineseSettings({
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function ChineseNumbers() {
-  const [input, setInput] = useState("");
-  const [bounce, setBounce] = useState(null);
-  const [readingFlash, setReadingFlash] = useState(false);
+  const pad = useNumberInput({ max: MAX_NUMBER });
   const [showSettings, setShowSettings] = useState(false);
   const [colorize, setColorize] = useState(true);
   const [showPinyin, setShowPinyin] = useState(true);
@@ -414,11 +414,9 @@ export default function ChineseNumbers() {
   const partsInnerRef = useRef(null);
   const speech = useChineseSpeech();
 
-  const isEmpty = input === "";
+  const { input, isEmpty } = pad;
   const isZero = input === "0";
   const hasValue = !isEmpty && !isZero;
-  const atMax = input === MAX_NUMBER;
-  const isFull = input.length >= MAX_DIGITS;
   const canAddWan = hasValue && input.length + 4 <= MAX_DIGITS;
   const groupSize = groupFours ? 4 : 3;
   const parts = toChineseParts(input, { traditional, useLiang });
@@ -462,54 +460,6 @@ export default function ChineseNumbers() {
   const { stop } = speech;
   useEffect(() => { stop(); }, [input, traditional, useLiang, stop]);
 
-  const triggerFlash = () => {
-    setReadingFlash(true);
-    setTimeout(() => setReadingFlash(false), 300);
-  };
-
-  const pressed = (key) => {
-    setBounce(key);
-    triggerFlash();
-    setTimeout(() => setBounce(null), 200);
-  };
-
-  const handleDigit = (d) => {
-    if (isFull) return;
-    setInput((isZero ? "" : input) + d);
-    pressed(d);
-  };
-
-  const handleWan = () => {
-    if (!canAddWan) return;
-    setInput(input + "0000");
-    pressed("wan");
-  };
-
-  const handleBackspace = () => {
-    if (isEmpty) return;
-    setInput(input.slice(0, -1));
-    triggerFlash();
-  };
-
-  const handleClear = () => {
-    if (isEmpty) return;
-    setInput("");
-    triggerFlash();
-  };
-
-  const handlePlusOne = () => {
-    if (atMax) return;
-    setInput(String(BigInt(input || "0") + 1n));
-    triggerFlash();
-  };
-
-  const handleMinusOne = () => {
-    if (!hasValue) return;
-    // Counting down from 一 lands on 零.
-    setInput(String(BigInt(input) - 1n));
-    triggerFlash();
-  };
-
   const handleSpeak = () => {
     if (speech.speaking) speech.stop();
     else speech.speak(speechChunks(parts));
@@ -532,13 +482,6 @@ export default function ChineseNumbers() {
         @keyframes speakPulse {
           0%, 100% { transform: scale(1); }
           50% { transform: scale(1.08); }
-        }
-        .nb-btn {
-          width: 100%; aspect-ratio: 1.4;
-          border-radius: 18px; font-size: 30px;
-        }
-        .pm-btn {
-          font-size: 26px; padding: 12px 0;
         }
       `}</style>
 
@@ -592,7 +535,7 @@ export default function ChineseNumbers() {
             <div ref={readingInnerRef} style={{
               ...styles.readingInner,
               fontSize: readingFontSize,
-              animation: readingFlash ? "flash 0.3s ease-out" : "none",
+              animation: pad.flash ? "flash 0.3s ease-out" : "none",
             }}>
               <Reading parts={parts} colorize={colorize} showPinyin={showPinyin} />
             </div>
@@ -631,16 +574,9 @@ export default function ChineseNumbers() {
         />
       </div>
 
-      {/* Plus / Say it / Minus row */}
-      <div style={styles.pmRow}>
-        <button className="toy-btn pm-btn" disabled={!hasValue} style={{
-          background: "linear-gradient(135deg, #E41E20, #FF8C1A)",
-          boxShadow: "0 4px 12px rgba(228,30,32,0.3), inset 0 2px 0 rgba(255,255,255,0.2)",
-          flex: 1, opacity: hasValue ? 1 : 0.35,
-        }} onClick={handleMinusOne}>
-          − 1
-        </button>
-        {speech.available && (
+      <Numpad
+        pad={pad}
+        middleKey={speech.available && (
           <button className="toy-btn pm-btn" disabled={isEmpty} aria-label="Say it" style={{
             background: "linear-gradient(135deg, #FFD030, #FF8C1A)",
             boxShadow: "0 4px 12px rgba(255,140,26,0.3), inset 0 2px 0 rgba(255,255,255,0.3)",
@@ -651,73 +587,17 @@ export default function ChineseNumbers() {
             {speech.speaking ? "⏹" : "🔊"}
           </button>
         )}
-        <button className="toy-btn pm-btn" disabled={atMax} style={{
-          background: "linear-gradient(135deg, #3A8FDE, #9B59B6)",
-          boxShadow: "0 4px 12px rgba(58,143,222,0.3), inset 0 2px 0 rgba(255,255,255,0.2)",
-          flex: 1, opacity: atMax ? 0.35 : 1,
-        }} onClick={handlePlusOne}>
-          + 1
-        </button>
-      </div>
-
-      {/* Clear / Delete row */}
-      <div style={styles.actionRow}>
-        <button className="toy-btn pm-btn" disabled={isEmpty} style={{
-          ...styles.grayBtn, fontSize: 16, letterSpacing: 1,
-          color: isEmpty ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.85)",
-        }} onClick={handleClear}>
-          CLR
-        </button>
-        <button className="toy-btn pm-btn" disabled={isEmpty} style={{
-          ...styles.grayBtn, fontSize: 26,
-          color: isEmpty ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.85)",
-        }} onClick={handleBackspace}>
-          ←
-        </button>
-      </div>
-
-      {/* Numpad */}
-      <div style={styles.numpad}>
-        {[7, 8, 9, 4, 5, 6, 1, 2, 3].map((d) => {
-          const style = getNumberBlockStyle(d);
-          const hasBorder = !!style.border;
-          return (
-            <button key={d} className="toy-btn nb-btn" disabled={isFull} style={{
-              background: style.background,
-              border: hasBorder ? `3px solid ${style.border}` : undefined,
-              boxShadow: hasBorder
-                ? `0 5px 14px ${style.border}40, inset 0 2px 0 rgba(255,255,255,0.5)`
-                : `0 5px 14px ${NB_SOLID[String(d)]}55, inset 0 2px 0 rgba(255,255,255,0.25)`,
-              color: hasBorder ? style.border : undefined,
-              textShadow: hasBorder ? "none" : undefined,
-              animation: bounce === String(d) && !isFull ? "btnPress 0.2s ease-out" : "none",
-              opacity: isFull ? 0.35 : 1,
-            }} onClick={() => handleDigit(String(d))}>
-              {d}
-            </button>
-          );
-        })}
-        <button className="toy-btn nb-btn" disabled={isFull} style={{
-          background: "#FFFFFF",
-          border: "3px solid #E41E20",
-          boxShadow: "0 5px 14px rgba(228,30,32,0.25), inset 0 2px 0 rgba(255,255,255,0.5)",
-          color: "#E41E20", textShadow: "none",
-          animation: bounce === "0" && !isFull ? "btnPress 0.2s ease-out" : "none",
-          opacity: isFull ? 0.35 : 1,
-          gridColumn: 2,
-        }} onClick={() => handleDigit("0")}>
-          0
-        </button>
-        {/* Adds four zeros — one big word bigger */}
-        <button className="toy-btn nb-btn" disabled={!canAddWan} aria-label="Times ten thousand" style={{
-          ...styles.wanBtn,
-          animation: bounce === "wan" && canAddWan ? "btnPress 0.2s ease-out" : "none",
-          opacity: canAddWan ? 1 : 0.35,
-        }} onClick={handleWan}>
-          <span style={styles.wanChar}>×{bigUnitChars(1, traditional)}</span>
-          <span style={styles.wanZeros}>0000</span>
-        </button>
-      </div>
+        rightKey={
+          // Adds four zeros — one big word bigger
+          <NumpadKey
+            pad={pad} id="wan" disabled={!canAddWan} label="Times ten thousand" style={styles.wanBtn}
+            onClick={() => pad.set(input + "0000", "wan")}
+          >
+            <span style={styles.wanChar}>×{bigUnitChars(1, traditional)}</span>
+            <span style={styles.wanZeros}>0000</span>
+          </NumpadKey>
+        }
+      />
     </div>
   );
 }
@@ -852,24 +732,6 @@ const styles = {
   funFactAnchor: {
     width: "100%", maxWidth: 380, height: 20,
     position: "relative", zIndex: 2,
-  },
-  numpad: {
-    display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10,
-    width: "100%", maxWidth: 300, marginTop: 10, position: "relative", zIndex: 1,
-  },
-  pmRow: {
-    display: "flex", gap: 10, width: "100%", maxWidth: 300,
-    position: "relative", zIndex: 1,
-  },
-  actionRow: {
-    display: "flex", gap: 10, width: "100%", maxWidth: 300,
-    marginTop: 10, position: "relative", zIndex: 1,
-  },
-  grayBtn: {
-    background: "rgba(255,255,255,0.18)",
-    boxShadow: "0 4px 10px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.15)",
-    border: "1px solid rgba(255,255,255,0.12)",
-    flex: 1,
   },
   // Chinese red and gold
   wanBtn: {

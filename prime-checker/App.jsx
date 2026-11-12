@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import {
   isPrime, nextPrime, prevPrime, factorize, factorCount, rectangleSides, primeIndex,
-  PRIMES_UNDER_100, MAX_DIGITS, MAX_NUMBER,
+  PRIMES_UNDER_100, MAX_NUMBER,
 } from "./primes.js";
 import { useAutoFitFontSize } from "../shared/useAutoFitFontSize.js";
 import { NB_SOLID, NB_DIGIT_TEXT, getNumberBlockStyle } from "../shared/numberblockColors.js";
@@ -13,6 +13,8 @@ import {
 } from "../shared/SettingsOverlay.jsx";
 import { StickyHeader } from "../shared/StickyHeader.jsx";
 import { Toast } from "../shared/Toast.jsx";
+import { Numpad, NumpadKey } from "../shared/Numpad.jsx";
+import { useNumberInput } from "../shared/useNumberInput.js";
 
 const THIS_YEAR = String(new Date().getFullYear());
 const GOLD = "#FFD030";
@@ -324,9 +326,8 @@ function PrimeSettings({ show, onClose, usePowers, setUsePowers, useCommas, setU
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function PrimeChecker() {
-  const [input, setInput] = useState("");
-  const [bounce, setBounce] = useState(null);
-  const [numberFlash, setNumberFlash] = useState(false);
+  const pad = useNumberInput({ max: MAX_NUMBER });
+  const { input } = pad;
   const [nudge, setNudge] = useState(false);
   const [pick, setPick] = useState({ input: "", index: 0 });
   const [showSettings, setShowSettings] = useState(false);
@@ -347,8 +348,6 @@ export default function PrimeChecker() {
   const isComposite = n !== null && n > 1n && !prime;
   const next = info ? info.next : 2n;
   const prev = info ? info.prev : null;
-  const atMax = n === MAX_NUMBER;
-  const isFull = input.length >= MAX_DIGITS;
   const funFact = useMemo(() => getFunFact(input, info), [input, info]);
 
   // Every rectangle the blocks can make, most square first; a tap on the
@@ -382,59 +381,6 @@ export default function PrimeChecker() {
   useEffect(() => {
     if (partsOuterRef.current) partsOuterRef.current.scrollTop = 0;
   }, [input]);
-
-  const triggerFlash = () => {
-    setNumberFlash(true);
-    setTimeout(() => setNumberFlash(false), 300);
-  };
-
-  const pressed = (key) => {
-    setBounce(key);
-    triggerFlash();
-    setTimeout(() => setBounce(null), 200);
-  };
-
-  const handleDigit = (d) => {
-    if (isFull) return;
-    setInput((input === "0" ? "" : input) + d);
-    pressed(d);
-  };
-
-  const handleBackspace = () => {
-    if (isEmpty) return;
-    setInput(input.slice(0, -1));
-    triggerFlash();
-  };
-
-  const handleClear = () => {
-    if (isEmpty) return;
-    setInput("");
-    triggerFlash();
-  };
-
-  const handlePlusOne = () => {
-    if (atMax) return;
-    setInput(String((n ?? 0n) + 1n));
-    triggerFlash();
-  };
-
-  const handleMinusOne = () => {
-    if (isEmpty || n === 0n) return;
-    setInput(String(n - 1n));
-    triggerFlash();
-  };
-
-  const handlePrevPrime = () => {
-    if (prev === null) return;
-    setInput(String(prev));
-    pressed("prev");
-  };
-
-  const handleNextPrime = () => {
-    if (next === null) return;
-    setInput(String(next));
-    pressed("next");
-  };
 
   // Try the next rectangle — a prime (or 1) only wiggles, since there isn't one.
   const handlePictureTap = () => {
@@ -484,13 +430,6 @@ export default function PrimeChecker() {
           0%, 100% { opacity: 0.35; }
           50% { opacity: 0.9; }
         }
-        .nb-btn {
-          width: 100%; aspect-ratio: 1.4;
-          border-radius: 18px; font-size: 30px;
-        }
-        .pm-btn {
-          font-size: 26px; padding: 12px 0;
-        }
       `}</style>
 
       <BackgroundDots count={20} />
@@ -519,7 +458,7 @@ export default function PrimeChecker() {
             ...styles.numberInner,
             fontSize: numberFontSize,
             color: isEmpty ? "rgba(255,255,255,0.3)" : GOLD,
-            animation: numberFlash ? "flash 0.3s ease-out" : "none",
+            animation: pad.flash ? "flash 0.3s ease-out" : "none",
           }}>
             {numberText}
           </div>
@@ -547,7 +486,7 @@ export default function PrimeChecker() {
           role={rows !== null ? "button" : undefined}
           aria-label={rows !== null ? "Line the blocks up another way" : undefined}
         >
-          {isEmpty && <PrimeKey onPick={(p) => { setInput(p); triggerFlash(); }} />}
+          {isEmpty && <PrimeKey onPick={(p) => pad.set(p)} />}
           {n === 0n && <span style={styles.pictureNote}>No blocks at all!</span>}
           {n !== null && n > 0n && rows === null && (
             <span style={{ ...styles.pictureNote, animation: "thinking 1.2s ease-in-out infinite" }}>
@@ -606,92 +545,31 @@ export default function PrimeChecker() {
         />
       </div>
 
-      {/* Plus / Minus row */}
-      <div style={styles.pmRow}>
-        <button className="toy-btn pm-btn" disabled={isEmpty || n === 0n} style={{
-          background: "linear-gradient(135deg, #E41E20, #FF8C1A)",
-          boxShadow: "0 4px 12px rgba(228,30,32,0.3), inset 0 2px 0 rgba(255,255,255,0.2)",
-          flex: 1, opacity: isEmpty || n === 0n ? 0.35 : 1,
-        }} onClick={handleMinusOne}>
-          − 1
-        </button>
-        <button className="toy-btn pm-btn" disabled={atMax} style={{
-          background: "linear-gradient(135deg, #3A8FDE, #9B59B6)",
-          boxShadow: "0 4px 12px rgba(58,143,222,0.3), inset 0 2px 0 rgba(255,255,255,0.2)",
-          flex: 1, opacity: atMax ? 0.35 : 1,
-        }} onClick={handlePlusOne}>
-          + 1
-        </button>
-      </div>
-
-      {/* Clear / Delete row */}
-      <div style={styles.actionRow}>
-        <button className="toy-btn pm-btn" disabled={isEmpty} style={{
-          ...styles.grayBtn, fontSize: 16, letterSpacing: 1,
-          color: isEmpty ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.85)",
-        }} onClick={handleClear}>
-          CLR
-        </button>
-        <button className="toy-btn pm-btn" disabled={isEmpty} style={{
-          ...styles.grayBtn, fontSize: 26,
-          color: isEmpty ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.85)",
-        }} onClick={handleBackspace}>
-          ←
-        </button>
-      </div>
-
-      {/* Numpad */}
-      <div style={styles.numpad}>
-        {[7, 8, 9, 4, 5, 6, 1, 2, 3].map((d) => {
-          const style = getNumberBlockStyle(d);
-          const hasBorder = !!style.border;
-          return (
-            <button key={d} className="toy-btn nb-btn" disabled={isFull} style={{
-              background: style.background,
-              border: hasBorder ? `3px solid ${style.border}` : undefined,
-              boxShadow: hasBorder
-                ? `0 5px 14px ${style.border}40, inset 0 2px 0 rgba(255,255,255,0.5)`
-                : `0 5px 14px ${NB_SOLID[String(d)]}55, inset 0 2px 0 rgba(255,255,255,0.25)`,
-              color: hasBorder ? style.border : undefined,
-              textShadow: hasBorder ? "none" : undefined,
-              animation: bounce === String(d) && !isFull ? "btnPress 0.2s ease-out" : "none",
-              opacity: isFull ? 0.35 : 1,
-            }} onClick={() => handleDigit(String(d))}>
-              {d}
-            </button>
-          );
-        })}
-        <button className="toy-btn nb-btn" disabled={prev === null} aria-label="Previous prime" style={{
-          ...styles.jumpBtn,
-          animation: bounce === "prev" ? "btnPress 0.2s ease-out" : "none",
-          opacity: prev === null ? 0.35 : 1,
-        }} onClick={handlePrevPrime}>
-          <svg width="18" height="18" viewBox="0 0 10 10" aria-hidden="true">
-            <path d="M7.5 1 L2 5 L7.5 9 Z" fill="currentColor" strokeLinejoin="round" stroke="currentColor" />
-          </svg>
-          <span style={styles.jumpLabel}>prime</span>
-        </button>
-        <button className="toy-btn nb-btn" disabled={isFull} style={{
-          background: "#FFFFFF",
-          border: "3px solid #E41E20",
-          boxShadow: "0 5px 14px rgba(228,30,32,0.25), inset 0 2px 0 rgba(255,255,255,0.5)",
-          color: "#E41E20", textShadow: "none",
-          animation: bounce === "0" && !isFull ? "btnPress 0.2s ease-out" : "none",
-          opacity: isFull ? 0.35 : 1,
-        }} onClick={() => handleDigit("0")}>
-          0
-        </button>
-        <button className="toy-btn nb-btn" disabled={next === null} aria-label="Next prime" style={{
-          ...styles.jumpBtn,
-          animation: bounce === "next" ? "btnPress 0.2s ease-out" : "none",
-          opacity: next === null ? 0.35 : 1,
-        }} onClick={handleNextPrime}>
-          <svg width="18" height="18" viewBox="0 0 10 10" aria-hidden="true">
-            <path d="M2.5 1 L8 5 L2.5 9 Z" fill="currentColor" strokeLinejoin="round" stroke="currentColor" />
-          </svg>
-          <span style={styles.jumpLabel}>prime</span>
-        </button>
-      </div>
+      <Numpad
+        pad={pad}
+        leftKey={
+          <NumpadKey
+            pad={pad} id="prev" disabled={prev === null} label="Previous prime" style={styles.jumpBtn}
+            onClick={() => pad.set(prev, "prev")}
+          >
+            <svg width="18" height="18" viewBox="0 0 10 10" aria-hidden="true">
+              <path d="M7.5 1 L2 5 L7.5 9 Z" fill="currentColor" strokeLinejoin="round" stroke="currentColor" />
+            </svg>
+            <span style={styles.jumpLabel}>prime</span>
+          </NumpadKey>
+        }
+        rightKey={
+          <NumpadKey
+            pad={pad} id="next" disabled={next === null} label="Next prime" style={styles.jumpBtn}
+            onClick={() => pad.set(next, "next")}
+          >
+            <svg width="18" height="18" viewBox="0 0 10 10" aria-hidden="true">
+              <path d="M2.5 1 L8 5 L2.5 9 Z" fill="currentColor" strokeLinejoin="round" stroke="currentColor" />
+            </svg>
+            <span style={styles.jumpLabel}>prime</span>
+          </NumpadKey>
+        }
+      />
     </div>
   );
 }
@@ -817,24 +695,6 @@ const styles = {
   funFactAnchor: {
     width: "100%", maxWidth: 380, height: 20,
     position: "relative", zIndex: 2,
-  },
-  numpad: {
-    display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10,
-    width: "100%", maxWidth: 300, marginTop: 10, position: "relative", zIndex: 1,
-  },
-  pmRow: {
-    display: "flex", gap: 10, width: "100%", maxWidth: 300,
-    position: "relative", zIndex: 1,
-  },
-  actionRow: {
-    display: "flex", gap: 10, width: "100%", maxWidth: 300,
-    marginTop: 10, position: "relative", zIndex: 1,
-  },
-  grayBtn: {
-    background: "rgba(255,255,255,0.18)",
-    boxShadow: "0 4px 10px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.15)",
-    border: "1px solid rgba(255,255,255,0.12)",
-    flex: 1,
   },
   // Gold on deep purple, like a gem
   jumpBtn: {

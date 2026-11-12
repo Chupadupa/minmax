@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { toRomanParts, toRomanLetters, ROMAN_LETTERS, MAX_NUMBER } from "./romanNumerals.js";
 import { useAutoFitFontSize } from "../shared/useAutoFitFontSize.js";
-import { NB_SOLID, getNumberBlockStyle } from "../shared/numberblockColors.js";
 import { BackgroundDots } from "../shared/BackgroundDots.jsx";
 import {
   SettingsOverlay, SettingsToggle, SettingsDivider,
@@ -9,8 +8,9 @@ import {
 } from "../shared/SettingsOverlay.jsx";
 import { StickyHeader } from "../shared/StickyHeader.jsx";
 import { Toast } from "../shared/Toast.jsx";
+import { Numpad } from "../shared/Numpad.jsx";
+import { useNumberInput } from "../shared/useNumberInput.js";
 
-const MAX_INPUT_LEN = String(MAX_NUMBER).length;
 const THIS_YEAR = new Date().getFullYear();
 
 // One rainbow color per letter, smallest (I, red) to biggest (M, pink).
@@ -202,9 +202,7 @@ function RomanSettings({ show, onClose, colorize, setColorize, useCommas, setUse
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function RomanNumerals() {
-  const [input, setInput] = useState("");
-  const [bounce, setBounce] = useState(null);
-  const [numeralFlash, setNumeralFlash] = useState(false);
+  const pad = useNumberInput({ max: MAX_NUMBER });
   const [showSettings, setShowSettings] = useState(false);
   const [colorize, setColorize] = useState(true);
   const [useCommas, setUseCommas] = useState(true);
@@ -213,16 +211,13 @@ export default function RomanNumerals() {
   const partsOuterRef = useRef(null);
   const partsInnerRef = useRef(null);
 
-  const value = input === "" ? 0 : Math.min(parseInt(input, 10), MAX_NUMBER);
-  const isEmpty = input === "";
+  const value = Number(pad.n ?? 0n);
+  const isEmpty = pad.isEmpty;
   const isZero = !isEmpty && value === 0;
   const parts = toRomanParts(value);
   const letters = toRomanLetters(parts);
   const maxBars = parts[0]?.bars ?? 0;
   const funFact = getFunFact(value, isZero);
-  const atMax = value >= MAX_NUMBER;
-  const atMin = value <= 0;
-  const hasContent = !isEmpty;
 
   const numeralFontSize = useAutoFitFontSize(numeralOuterRef, numeralInnerRef, letters.length, {
     maxFont: 64, minFont: 8, fitKey: value,
@@ -240,46 +235,6 @@ export default function RomanNumerals() {
     if (partsOuterRef.current) partsOuterRef.current.scrollTop = 0;
   }, [value]);
 
-  const triggerFlash = () => {
-    setNumeralFlash(true);
-    setTimeout(() => setNumeralFlash(false), 300);
-  };
-
-  const handleDigit = (d) => {
-    if (atMax) return;
-    const next = input + d;
-    if (next.length > MAX_INPUT_LEN) return;
-    setInput(String(Math.min(parseInt(next, 10), MAX_NUMBER)));
-    setBounce(d);
-    triggerFlash();
-    setTimeout(() => setBounce(null), 200);
-  };
-
-  const handleBackspace = () => {
-    if (!hasContent) return;
-    setInput(input.slice(0, -1));
-    triggerFlash();
-  };
-
-  const handleClear = () => {
-    if (!hasContent) return;
-    setInput("");
-    triggerFlash();
-  };
-
-  const handlePlusOne = () => {
-    if (atMax) return;
-    setInput(String(Math.min(value + 1, MAX_NUMBER)));
-    triggerFlash();
-  };
-
-  const handleMinusOne = () => {
-    if (atMin) return;
-    // Counting down from I lands on zero, so the Romans-had-no-zero fact shows.
-    setInput(String(value - 1));
-    triggerFlash();
-  };
-
   const arabicText = isEmpty ? "?" : formatNumber(value, useCommas);
   const letterCountText = `${letters.length} ${letters.length === 1 ? "letter" : "letters"}`;
 
@@ -294,13 +249,6 @@ export default function RomanNumerals() {
         @keyframes factOut {
           0% { transform: translateX(-50%) scale(1); opacity: 1; }
           100% { transform: translateX(-50%) scale(0.7); opacity: 0; }
-        }
-        .nb-btn {
-          width: 100%; aspect-ratio: 1.4;
-          border-radius: 18px; font-size: 30px;
-        }
-        .pm-btn {
-          font-size: 26px; padding: 12px 0;
         }
       `}</style>
 
@@ -350,7 +298,7 @@ export default function RomanNumerals() {
               ...styles.numeralInner,
               fontSize: numeralFontSize,
               lineHeight: numeralFontSize >= 14 ? 1.6 : 1.15,
-              animation: numeralFlash ? "flash 0.3s ease-out" : "none",
+              animation: pad.flash ? "flash 0.3s ease-out" : "none",
             }}>
               <RomanLetters letters={letters} maxBars={maxBars} colorize={colorize} />
             </div>
@@ -389,81 +337,7 @@ export default function RomanNumerals() {
         />
       </div>
 
-      {/* Plus / Minus row */}
-      <div style={styles.pmRow}>
-        <button className="toy-btn pm-btn" disabled={atMin} style={{
-          background: "linear-gradient(135deg, #E41E20, #FF8C1A)",
-          boxShadow: "0 4px 12px rgba(228,30,32,0.3), inset 0 2px 0 rgba(255,255,255,0.2)",
-          flex: 1, opacity: atMin ? 0.35 : 1,
-        }} onClick={handleMinusOne}>
-          − 1
-        </button>
-        <button className="toy-btn pm-btn" disabled={atMax} style={{
-          background: "linear-gradient(135deg, #3A8FDE, #9B59B6)",
-          boxShadow: "0 4px 12px rgba(58,143,222,0.3), inset 0 2px 0 rgba(255,255,255,0.2)",
-          flex: 1, opacity: atMax ? 0.35 : 1,
-        }} onClick={handlePlusOne}>
-          + 1
-        </button>
-      </div>
-
-      {/* Clear / Delete row */}
-      <div style={styles.actionRow}>
-        <button className="toy-btn pm-btn" disabled={!hasContent} style={{
-          background: "rgba(255,255,255,0.18)",
-          boxShadow: "0 4px 10px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.15)",
-          fontSize: 16, letterSpacing: 1,
-          color: hasContent ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.4)",
-          border: "1px solid rgba(255,255,255,0.12)",
-          flex: 1,
-        }} onClick={handleClear}>
-          CLR
-        </button>
-        <button className="toy-btn pm-btn" disabled={!hasContent} style={{
-          background: "rgba(255,255,255,0.18)",
-          boxShadow: "0 4px 10px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.15)",
-          fontSize: 26,
-          color: hasContent ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.4)",
-          border: "1px solid rgba(255,255,255,0.12)",
-          flex: 1,
-        }} onClick={handleBackspace}>
-          ←
-        </button>
-      </div>
-
-      {/* Numpad */}
-      <div style={styles.numpad}>
-        {[7, 8, 9, 4, 5, 6, 1, 2, 3].map((d) => {
-          const style = getNumberBlockStyle(d);
-          const hasBorder = !!style.border;
-          return (
-            <button key={d} className="toy-btn nb-btn" disabled={atMax} style={{
-              background: style.background,
-              border: hasBorder ? `3px solid ${style.border}` : undefined,
-              boxShadow: hasBorder
-                ? `0 5px 14px ${style.border}40, inset 0 2px 0 rgba(255,255,255,0.5)`
-                : `0 5px 14px ${NB_SOLID[String(d)]}55, inset 0 2px 0 rgba(255,255,255,0.25)`,
-              color: hasBorder ? style.border : undefined,
-              textShadow: hasBorder ? "none" : undefined,
-              animation: bounce === String(d) && !atMax ? "btnPress 0.2s ease-out" : "none",
-              opacity: atMax ? 0.35 : 1,
-            }} onClick={() => handleDigit(String(d))}>
-              {d}
-            </button>
-          );
-        })}
-        <button className="toy-btn nb-btn" disabled={atMax} style={{
-          background: "#FFFFFF",
-          border: "3px solid #E41E20",
-          boxShadow: "0 5px 14px rgba(228,30,32,0.25), inset 0 2px 0 rgba(255,255,255,0.5)",
-          color: "#E41E20", textShadow: "none",
-          animation: bounce === "0" && !atMax ? "btnPress 0.2s ease-out" : "none",
-          opacity: atMax ? 0.35 : 1,
-          gridColumn: 2,
-        }} onClick={() => handleDigit("0")}>
-          0
-        </button>
-      </div>
+      <Numpad pad={pad} />
     </div>
   );
 }
@@ -572,17 +446,5 @@ const styles = {
   funFactAnchor: {
     width: "100%", maxWidth: 380, height: 20,
     position: "relative", zIndex: 2,
-  },
-  numpad: {
-    display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10,
-    width: "100%", maxWidth: 300, marginTop: 10, position: "relative", zIndex: 1,
-  },
-  pmRow: {
-    display: "flex", gap: 10, width: "100%", maxWidth: 300,
-    position: "relative", zIndex: 1,
-  },
-  actionRow: {
-    display: "flex", gap: 10, width: "100%", maxWidth: 300,
-    marginTop: 10, position: "relative", zIndex: 1,
   },
 };
