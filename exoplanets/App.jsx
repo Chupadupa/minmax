@@ -1,31 +1,40 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useMemo } from "react";
 import {
   WORLDS, STARS_BY_DISTANCE, worldById, planetsOf, describe,
   formatLightYears, lightTravel, sizeVsEarth, massVsEarth, sizeVsSun, formatDays,
   KNOWN_EXOPLANETS, PLANETS_AS_OF, LIGHT_YEAR_KM, SUN_RADIUS_KM, EARTH_RADIUS_KM,
 } from "./exoplanets.js";
-import { formatNumber, trimTo } from "../shared/formatUtils.js";
+import { formatNumber, formatTemp, trimTo } from "../shared/formatUtils.js";
 import { layoutStars } from "./exoLayout.js";
 import { lookFor } from "./exoLooks.js";
 import { StarMap } from "./StarMap.jsx";
-import { BodyPicture } from "../shared/BodyPicture.jsx";
-import { accentColor } from "../shared/bodyArt.js";
 import { BackgroundDots } from "../shared/BackgroundDots.jsx";
 import { StickyHeader } from "../shared/StickyHeader.jsx";
 import {
   SettingsOverlay, SettingsToggle, SettingsDivider,
   SettingsSection, SettingsAboutText, SettingsLink,
 } from "../shared/SettingsOverlay.jsx";
-import { Toast } from "../shared/Toast.jsx";
+import { FloatingToast } from "../shared/Toast.jsx";
+import { WorldPanel } from "../shared/WorldPanel.jsx";
 import { useScrollLock } from "../shared/useScrollLock.js";
 import { useSpeech } from "../shared/useSpeech.js";
+import { useVisits } from "../shared/useVisits.js";
 import { useElementWidth } from "../shared/useElementWidth.js";
 
 const STAR_IDS = STARS_BY_DISTANCE.map((s) => s.id);
 const TRAPPIST_IDS = planetsOf("trappist1").map((p) => p.id);
 const LICH_IDS = planetsOf("lich").map((p) => p.id);
 const KEPLER90_IDS = planetsOf("kepler90").map((p) => p.id);
-const TOAST_MS = 3500;
+
+// Announced once each, the first time every one of them has been opened.
+const MILESTONES = [
+  { key: "first", ids: ["dimidium"], text: "🏆 The first planet found round a star like the Sun — 1995!" },
+  { key: "lich", ids: LICH_IDS, text: "👻 The very first exoplanets, found in 1992!" },
+  { key: "trappist", ids: TRAPPIST_IDS, text: "🪐 All seven TRAPPIST-1 planets!" },
+  { key: "kepler90", ids: KEPLER90_IDS, text: "8️⃣ Eight planets — just like home!" },
+  { key: "stars", ids: STAR_IDS, text: "🌟 You've hopped to every star!" },
+  { key: "everything", ids: WORLDS.map((w) => w.id), text: "🌌 You've seen every single world!" },
+];
 
 // ── Fact Chips ───────────────────────────────────────────────────────────────
 
@@ -33,10 +42,6 @@ function roundSig(x, sig = 3) {
   if (x === 0) return 0;
   const p = Math.pow(10, Math.floor(Math.log10(x)) - sig + 1);
   return Math.round(x / p) * p;
-}
-
-function formatTemp(tempC, commas) {
-  return `${tempC < 0 ? "−" : ""}${formatNumber(Math.abs(tempC), commas)} °C`;
 }
 
 function tempNote(tempC) {
@@ -83,92 +88,27 @@ function factsFor(world, commas) {
 
 function WorldOverlay({ world, siblings, useCommas, speech, onPick, onClose }) {
   const isStar = world.kind === "star";
-  const accent = accentColor(lookFor(world.id));
-  const parent = isStar ? null : worldById(world.parent);
   const planets = isStar ? planetsOf(world.id) : [];
-  const index = siblings.findIndex((w) => w.id === world.id);
-  const prev = siblings[index - 1];
-  const next = siblings[index + 1];
-  const chips = factsFor(world, useCommas);
-  const picSize = isStar ? 136 : 150;
 
   return (
-    <div className="overlay-backdrop" onClick={onClose}>
-      <div key={world.id} className="body-panel" onClick={(e) => e.stopPropagation()}>
-        <div style={styles.panelTop}>
-          <button className="toy-btn panel-btn" onClick={() => (parent ? onPick(parent.id) : onClose())}>
-            ← {parent ? parent.name : "Star map"}
-          </button>
-          <button className="toy-btn panel-btn" onClick={onClose} aria-label="Close">✕</button>
-        </div>
-
-        {!isStar && <div className="guess-ribbon">🎨 Nobody has seen it — this is an artist's guess!</div>}
-
-        <div style={styles.stage}>
-          <button
-            className="toy-btn nav-btn" disabled={!prev}
-            onClick={() => prev && onPick(prev.id)} aria-label={prev ? `Previous: ${prev.name}` : "No previous"}
-          >
-            ◀
-          </button>
-          <div className="panel-pic" style={{ width: picSize, height: picSize }}>
-            <BodyPicture look={lookFor(world.id)} size={picSize} />
-          </div>
-          <button
-            className="toy-btn nav-btn" disabled={!next}
-            onClick={() => next && onPick(next.id)} aria-label={next ? `Next: ${next.name}` : "No next"}
-          >
-            ▶
-          </button>
-        </div>
-
-        <div style={styles.nameRow}>
-          <span className="panel-name" style={{ color: accent }}>{world.name}</span>
-          {speech.available && (
-            <button
-              className="toy-btn speak-btn"
-              onClick={() => speech.speak(world.say ?? world.name)}
-              aria-label={`Say ${world.name}`}
-              style={{ animation: speech.speaking ? "speakPulse 0.8s ease-in-out infinite" : "none" }}
-            >
-              🔊
-            </button>
-          )}
-        </div>
-        <div className="panel-kind">{describe(world)}</div>
-        {world.habitable && <div className="water-badge">💧 Could have liquid water</div>}
-
-        <div style={styles.chips}>
-          {chips.map((chip) => (
-            <div key={chip.label} style={styles.chip}>
-              <div style={styles.chipLabel}>{chip.label}</div>
-              <div style={styles.chipValue}>{chip.value}</div>
-              {chip.note && <div style={styles.chipNote}>{chip.note}</div>}
-            </div>
-          ))}
-        </div>
-
-        <div className="panel-fact">{world.fact}</div>
-
-        {isStar && world.link && (
-          <a className="toy-btn visit-link" href={world.link}>🪐 Visit the Solar System ➜</a>
-        )}
-
-        {planets.length > 0 && (
-          <div style={styles.planets}>
-            <div style={styles.planetsTitle}>{planets.length === 1 ? "Its planet" : `Its ${planets.length} planets`}</div>
-            <div className="planets-row">
-              {planets.map((p) => (
-                <button key={p.id} className="world-chip" onClick={() => onPick(p.id)}>
-                  <span className="world-chip-pic"><BodyPicture look={lookFor(p.id)} size={34} /></span>
-                  <span className="world-chip-name">{p.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+    <WorldPanel
+      world={world} lookFor={lookFor} siblings={siblings}
+      back={isStar ? null : worldById(world.parent)} homeLabel="Star map"
+      picSize={isStar ? 136 : 150} nameSize={32}
+      ribbon={!isStar && <div className="guess-ribbon">🎨 Nobody has seen it — this is an artist's guess!</div>}
+      kind={describe(world)}
+      badge={world.habitable && <div className="water-badge">💧 Could have liquid water</div>}
+      chips={factsFor(world, useCommas)}
+      extra={isStar && world.link && (
+        <a className="toy-btn visit-link" href={world.link}>🪐 Visit the Solar System ➜</a>
+      )}
+      // Planet names run longer than moon names, so their chips are wider.
+      related={planets.length > 0 && {
+        title: planets.length === 1 ? "Its planet" : `Its ${planets.length} planets`,
+        items: planets, chipWidth: 86, nameSize: 11,
+      }}
+      speech={speech} onPick={onPick} onClose={onClose}
+    />
   );
 }
 
@@ -250,13 +190,9 @@ const DEFAULT_SETTINGS = {
 };
 
 export default function Exoplanets() {
-  const [selectedId, setSelectedId] = useState(null);
+  const { selectedId, pick, close, toast } = useVisits(MILESTONES);
   const [showSettings, setShowSettings] = useState(false);
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
-  const [visited, setVisited] = useState(() => new Set());
-  const [toast, setToast] = useState(null);
-  const toastTimer = useRef(null);
-  const milestonesFired = useRef(new Set());
   const mapRef = useRef(null);
   const width = useElementWidth(mapRef);
   const speech = useSpeech({ lang: "en" });
@@ -277,46 +213,9 @@ export default function Exoplanets() {
     return selected.kind === "star" ? STARS_BY_DISTANCE : planetsOf(selected.parent);
   }, [selected]);
 
-  const showToast = (text) => {
-    clearTimeout(toastTimer.current);
-    setToast(text);
-    toastTimer.current = setTimeout(() => setToast(null), TOAST_MS);
-  };
-
-  const pick = (id) => {
-    setSelectedId(id);
-    setVisited((prev) => (prev.has(id) ? prev : new Set(prev).add(id)));
-  };
-
-  // Milestones, each announced once
-  useEffect(() => {
-    const check = (key, ids, text) => {
-      if (milestonesFired.current.has(key) || !ids.every((id) => visited.has(id))) return;
-      milestonesFired.current.add(key);
-      showToast(text);
-    };
-    check("first", ["dimidium"], "🏆 The first planet found round a star like the Sun — 1995!");
-    check("lich", LICH_IDS, "👻 The very first exoplanets, found in 1992!");
-    check("trappist", TRAPPIST_IDS, "🪐 All seven TRAPPIST-1 planets!");
-    check("kepler90", KEPLER90_IDS, "8️⃣ Eight planets — just like home!");
-    check("stars", STAR_IDS, "🌟 You've hopped to every star!");
-    check("everything", WORLDS.map((w) => w.id), "🌌 You've seen every single world!");
-  }, [visited]);
-
-  useEffect(() => () => clearTimeout(toastTimer.current), []);
-
   return (
     <div className="toy-container">
       <style>{`
-        @keyframes bodyReveal {
-          0% { transform: scale(0.4); opacity: 0; }
-          60% { transform: scale(1.06); }
-          100% { transform: scale(1); opacity: 1; }
-        }
-        @keyframes speakPulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.15); }
-        }
         @keyframes twinkle {
           0%, 100% { opacity: 0.5; }
           50% { opacity: 1; }
@@ -385,95 +284,20 @@ export default function Exoplanets() {
           text-align: center; margin-top: 14px; padding: 0 12px; max-width: 400px;
           position: relative; z-index: 1;
         }
-        .overlay-backdrop {
-          position: fixed; inset: 0; z-index: 100;
-          background: rgba(0,0,0,0.72);
-          backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-          display: flex; align-items: center; justify-content: center;
-          padding: 12px; cursor: pointer;
-          animation: fadeIn 0.2s ease-out;
-          overscroll-behavior: contain;
-        }
-        .body-panel {
-          cursor: default; width: 100%; max-width: 380px;
-          max-height: calc(100dvh - 24px); max-height: calc(var(--app-height, 100dvh) - 24px);
-          overflow-y: auto; -webkit-overflow-scrolling: touch;
-          background: linear-gradient(160deg, rgba(27,20,100,0.96) 0%, rgba(36,36,62,0.96) 100%);
-          border: 1px solid rgba(255,255,255,0.12); border-radius: 24px;
-          box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-          padding: 14px 16px 18px;
-          display: flex; flex-direction: column; align-items: center;
-          animation: popIn 0.3s ease-out;
-        }
-        .panel-btn {
-          background: rgba(52,48,112,0.92); border: 1px solid rgba(255,255,255,0.14);
-          color: rgba(255,255,255,0.8); font-size: 14px; font-weight: 600;
-          padding: 8px 14px; border-radius: 12px; min-height: 36px;
-          position: relative; z-index: 2; /* above a star's glow and beams */
-        }
-        .nav-btn {
-          width: 40px; height: 40px; border-radius: 50%; font-size: 15px; flex-shrink: 0;
-          background: rgba(52,48,112,0.92); border: 1px solid rgba(255,255,255,0.18);
-          color: rgba(255,255,255,0.85);
-          position: relative; z-index: 2;
-        }
-        .nav-btn[disabled] { opacity: 0.2; }
         .guess-ribbon {
           font-family: var(--font-body); font-size: 12px; color: rgba(255,255,255,0.75);
           background: rgba(255,255,255,0.08); border: 1px dashed rgba(255,255,255,0.3);
           border-radius: 999px; padding: 4px 12px; margin-top: 8px; text-align: center;
-        }
-        .panel-pic {
-          display: flex; align-items: center; justify-content: center; overflow: visible;
-          animation: bodyReveal 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
-          filter: drop-shadow(0 8px 24px rgba(0,0,0,0.5));
-        }
-        .panel-name {
-          font-family: var(--font-heading); font-size: 32px; font-weight: 700; line-height: 1.1;
-          text-shadow: 0 2px 8px rgba(0,0,0,0.4); text-align: center;
-        }
-        .speak-btn {
-          width: 36px; height: 36px; border-radius: 50%; font-size: 17px; flex-shrink: 0;
-          background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.12);
-        }
-        .panel-kind {
-          font-family: var(--font-body); font-size: 15px; color: rgba(255,255,255,0.65);
-          text-align: center; margin-top: 2px;
         }
         .water-badge {
           margin-top: 8px; font-family: var(--font-heading); font-weight: 600; font-size: 13px;
           color: #9ad8ff; background: rgba(58,143,222,0.18); border: 1px solid rgba(58,143,222,0.45);
           border-radius: 999px; padding: 4px 12px;
         }
-        .panel-fact {
-          font-family: var(--font-body); font-size: 14px; line-height: 1.45;
-          color: rgba(255,255,255,0.85); text-align: center;
-          background: rgba(255,208,48,0.08); border: 1px solid rgba(255,208,48,0.25);
-          border-radius: 14px; padding: 10px 12px; margin-top: 12px; width: 100%;
-        }
         .visit-link {
           margin-top: 12px; padding: 12px 20px; border-radius: 14px; font-size: 16px;
           background: linear-gradient(135deg, #6366f1, #a855f7); text-decoration: none;
           box-shadow: 0 6px 18px rgba(99,102,241,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
-        }
-        .planets-row {
-          display: flex; gap: 8px; overflow-x: auto; width: 100%;
-          padding: 4px 2px 6px; -webkit-overflow-scrolling: touch;
-          scrollbar-width: none;
-        }
-        .planets-row::-webkit-scrollbar { display: none; }
-        .world-chip {
-          flex-shrink: 0; width: 86px; display: flex; flex-direction: column; align-items: center; gap: 4px;
-          background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 14px; padding: 8px 4px 6px; cursor: pointer;
-          transition: transform 0.15s ease;
-        }
-        .world-chip:active { transform: scale(0.92); }
-        .world-chip-pic { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; overflow: visible; }
-        .world-chip-name {
-          font-family: var(--font-heading); font-weight: 600; font-size: 11px;
-          color: rgba(255,255,255,0.85); white-space: nowrap; max-width: 100%;
-          overflow: hidden; text-overflow: ellipsis;
         }
       `}</style>
 
@@ -506,9 +330,7 @@ export default function Exoplanets() {
         round other stars so far, and the count goes up every week!
       </div>
 
-      <div style={styles.toastAnchor}>
-        <Toast text={toast} />
-      </div>
+      <FloatingToast text={toast} />
 
       {selected && (
         <WorldOverlay
@@ -517,7 +339,7 @@ export default function Exoplanets() {
           useCommas={settings.useCommas}
           speech={speech}
           onPick={pick}
-          onClose={() => setSelectedId(null)}
+          onClose={close}
         />
       )}
     </div>
@@ -530,50 +352,5 @@ const styles = {
   mapWrap: {
     width: "100%", maxWidth: 400,
     position: "relative", zIndex: 1,
-  },
-  toastAnchor: {
-    position: "fixed", left: 0, right: 0,
-    top: "calc(var(--safe-top) + 100px)",
-    height: 0, zIndex: 200, pointerEvents: "none",
-  },
-  panelTop: {
-    display: "flex", justifyContent: "space-between", alignItems: "center",
-    width: "100%", marginBottom: 6,
-  },
-  stage: {
-    display: "flex", alignItems: "center", justifyContent: "space-between",
-    width: "100%", gap: 8, minHeight: 150,
-  },
-  nameRow: {
-    display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-    marginTop: 12, maxWidth: "100%",
-  },
-  chips: {
-    display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8,
-    width: "100%", marginTop: 12,
-  },
-  chip: {
-    background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)",
-    borderRadius: 14, padding: "8px 10px", minWidth: 0,
-  },
-  chipLabel: {
-    fontFamily: "var(--font-body)", fontSize: 10, letterSpacing: 1.5,
-    textTransform: "uppercase", color: "rgba(255,255,255,0.45)",
-  },
-  chipValue: {
-    fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 17,
-    color: "#fff", marginTop: 2, lineHeight: 1.2, overflowWrap: "anywhere",
-  },
-  chipNote: {
-    fontFamily: "var(--font-body)", fontSize: 11, lineHeight: 1.3,
-    color: "rgba(255,255,255,0.55)", marginTop: 2,
-  },
-  planets: {
-    width: "100%", marginTop: 12,
-  },
-  planetsTitle: {
-    fontFamily: "var(--font-body)", fontSize: 11, letterSpacing: 1.5,
-    textTransform: "uppercase", color: "rgba(255,255,255,0.45)",
-    marginBottom: 4, textAlign: "center",
   },
 };

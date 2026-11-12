@@ -11,6 +11,11 @@ export function formatNumber(n, useCommas = true) {
   return useCommas ? n.toLocaleString("en-US") : String(n);
 }
 
+// A temperature with a proper minus sign: "−180 °C".
+export function formatTemp(tempC, useCommas = true) {
+  return `${tempC < 0 ? "−" : ""}${formatNumber(Math.abs(tempC), useCommas)} °C`;
+}
+
 export function ordinal(n) {
   const tens = n % 100;
   if (tens >= 11 && tens <= 13) return `${n}th`;

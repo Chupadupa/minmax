@@ -94,3 +94,21 @@ const FUN_FACT_STRIP = {
   width: "100%", maxWidth: 380, height: 20,
   position: "relative", zIndex: 2,
 };
+
+// ── Floating Toast ───────────────────────────────────────────────────────────
+// A toast pinned near the top of the screen, over everything (overlays too) —
+// for a message that isn't about any one spot on the page.
+
+export function FloatingToast({ text }) {
+  return (
+    <div style={FLOATING_ANCHOR}>
+      <Toast text={text} />
+    </div>
+  );
+}
+
+const FLOATING_ANCHOR = {
+  position: "fixed", left: 0, right: 0,
+  top: "calc(var(--safe-top) + 100px)",
+  height: 0, zIndex: 200, pointerEvents: "none",
+};
