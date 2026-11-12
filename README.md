@@ -4,11 +4,7 @@ A collection of little toys and experiments. Built with React + Vite, auto-deplo
 
 ## Toys
 
-- **[Big Number Namer](./big-number-namer/)** — Explore the names of ridiculously large numbers, up to a millinillinillinillinillion.
-- **[Time Teller](./clock/)** — Drag the clock hands or type a time — learn to tell time with an interactive clock.
-- **[Calculator](./calculator/)** — A colorful calculator with big, friendly Numberblocks-inspired buttons.
-- **[Color Mixer](./color-mixer/)** — Tap colors to mix them together and see what you get.
-- **[Fraction Combiner](./fraction-combiner/)** — Combine fraction pie pieces to fill a circle and learn fractions.
+The toys are listed in [`shared/toys.js`](./shared/toys.js), which is also what the home page is built from. Each toy lives in the folder named by its `id`.
 
 ## Setup
 
@@ -28,7 +24,7 @@ npm run build    # production build to ./dist
 
 4. Include a back button (`<a href="../" class="back-btn">⬅️</a>`) in the header — required for PWA navigation.
 
-5. Add a card to the root `index.html` grid to link to it.
+5. Add an entry to `TOYS` in `shared/toys.js` — the home page tile is built from it, and the build stops if it's missing.
 
 6. Push to `main` — GitHub Actions builds and deploys automatically.
 

@@ -42,7 +42,7 @@ There are no test, lint, or format commands.
 
 ```
 /
-├── index.html                  # Hub/landing page linking to all toys
+├── index.html                  # Home page: styles + a <!-- toys --> marker filled in from shared/toys.js
 ├── big-number-namer/           # Big Number Namer toy
 │   ├── index.html              # Entry HTML
 │   ├── main.jsx                # React mount point
@@ -124,6 +124,7 @@ There are no test, lint, or format commands.
 │   ├── exoLooks.js             # Pure data: imagined looks by planet type and star type, plus the famous ones
 │   └── exoLayout.js            # Pure math: star and planet sizes (squashed or real) and the rows
 ├── shared/
+│   ├── toys.js                 # The one list of toys: shelves, and each toy's folder, name, picture and tile colors
 │   ├── base.css                # Shared stylesheet: tokens, resets, fonts, animations, utilities, .toy-btn
 │   ├── colorUtils.js           # Shared color helpers: luminance, contrastTextColor, rgbToHex, textColorForRgb
 │   ├── mathUtils.js            # Shared math helpers: gcd, simplify (fraction reduction)
@@ -151,7 +152,7 @@ There are no test, lint, or format commands.
 │   ├── manifest.json           # Web app manifest (PWA)
 │   ├── pwa-init.js             # Shared PWA bootstrap (viewport fix + SW registration)
 │   └── sw.js                   # Service worker for offline caching
-├── vite.config.js              # Auto-discovers toy directories as entry points
+├── vite.config.js              # Auto-discovers toy directories as entry points; builds the home page from shared/toys.js
 ├── package.json
 └── .github/workflows/deploy.yml
 ```
@@ -161,6 +162,14 @@ There are no test, lint, or format commands.
 ### Multi-Page Auto-Discovery
 
 `vite.config.js` auto-discovers any subdirectory containing an `index.html` as a separate page entry. To add a new toy, create a new directory with its own `index.html` — no config changes needed.
+
+### Home Page and the Toy List
+
+`shared/toys.js` is the one list of toys. `SHELVES` are the home page's four color-coded groups (Numbers, Number Words, Shapes & Colors, Space); `TOYS` gives each toy's `id` (its folder), `name`, `picture` (an emoji, or with `textPicture` a plain character like π), `shelf` and tile `colors` (a gradient — each shelf runs through its own family of colors).
+
+The home page is plain HTML with no JavaScript: `hubPlugin` in `vite.config.js` fills the `<!-- toys -->` marker in the root `index.html` with a shelf per entry in `SHELVES` and a picture tile per toy, in list order (dev server and build alike). The tile styles live in the root `index.html`. The config also checks the list against the toy folders and stops with "Toy list out of step" if a folder has no entry or an entry has no folder.
+
+The home page is built for a child who can't read yet: big picture tiles (three across on a phone, five on a tablet, so every shelf is one row and the whole page fits one iPad screen), no descriptions, and no tabs, search, menus or "recently played" row. Tiles should never move — a toy is found by remembering where its picture was — so add new toys at the end of their shelf.
 
 ### Big Number Namer (`big-number-namer/`)
 
@@ -600,7 +609,7 @@ The service worker cache version is **auto-generated at build time** — no manu
 1. Create a new directory at the project root (e.g., `my-new-toy/`)
 2. Add an `index.html` inside it (Vite auto-discovers it)
 3. **Include `<script src="/pwa-init.js"></script>`** in the `<head>` — this handles the iOS viewport fix and service worker registration automatically.
-4. Add a card link in the root `index.html` grid
+4. Add an entry to `TOYS` in `shared/toys.js` (at the end of its shelf) — the home page tile is built from it, and the build stops if it's missing
 5. **Import `shared/base.css`** — either via `<link rel="stylesheet" href="shared/base.css" />` in HTML, or `import '../shared/base.css'` in a JS/JSX entry point. This gives you fonts, resets, background, animations, and utility classes. Skip this import if you want a fully custom look.
 6. **Use `<StickyHeader />`** for the header (required for PWA navigation — see UI Conventions above). This provides the back button, title, subtitle, and optional gear button in a consistent sticky container.
 7. **Use shared resources**: `.toy-container` class for layout, `.toy-btn` class for buttons, `<BackgroundDots />` for decorations, `numberblockColors.js` for the Numberblocks palette, `colorUtils.js` for color helpers, `mathUtils.js` for math helpers, `<SettingsOverlay>` for settings modals, `.frosted-card` for glass card displays, `useScrollLock` hook for overlays.
