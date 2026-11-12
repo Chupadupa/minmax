@@ -1,13 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { toRomanParts, toRomanLetters, ROMAN_LETTERS, MAX_NUMBER } from "./romanNumerals.js";
 import { useAutoFitFontSize } from "../shared/useAutoFitFontSize.js";
+import { formatNumber } from "../shared/formatUtils.js";
 import { BackgroundDots } from "../shared/BackgroundDots.jsx";
 import {
   SettingsOverlay, SettingsToggle, SettingsDivider,
-  SettingsSection, SettingsAboutText, SettingsLink,
+  SettingsSection, SettingsAboutText, SettingsLink, NumberblocksWord,
 } from "../shared/SettingsOverlay.jsx";
 import { StickyHeader } from "../shared/StickyHeader.jsx";
-import { Toast } from "../shared/Toast.jsx";
+import { FunFact } from "../shared/Toast.jsx";
 import { Numpad } from "../shared/Numpad.jsx";
 import { useNumberInput } from "../shared/useNumberInput.js";
 
@@ -33,10 +34,6 @@ const BAR_THICK = 0.065; // thickness of one bar
 const BAR_STEP = 0.14;   // distance between stacked bars
 const BAR_INSET = 0.07;  // gap at the ends of a barred group
 const BAR_RISE = BAR_GAP + BAR_THICK - CAP_TOP;
-
-function formatNumber(n, useCommas) {
-  return useCommas ? n.toLocaleString("en-US") : String(n);
-}
 
 function getFunFact(n, isZero) {
   if (isZero) return "🏛️ The Romans had no zero!";
@@ -180,18 +177,7 @@ function RomanSettings({ show, onClose, colorize, setColorize, useCommas, setUse
         </SettingsAboutText>
         <SettingsAboutText>
           Number button colors based on the{" "}
-          <span style={{ color: "#E41E20" }}>N</span>
-          <span style={{ color: "#FF8C1A" }}>u</span>
-          <span style={{ color: "#FFD030" }}>m</span>
-          <span style={{ color: "#4AAF4E" }}>b</span>
-          <span style={{ color: "#3A8FDE" }}>e</span>
-          <span style={{ color: "#9B59B6" }}>r</span>
-          <span style={{ color: "#F472B6" }}>b</span>
-          <span style={{ color: "#8E8E93" }}>l</span>
-          <span style={{ color: "#E41E20" }}>o</span>
-          <span style={{ color: "#FF8C1A" }}>c</span>
-          <span style={{ color: "#FFD030" }}>k</span>
-          <span style={{ color: "#4AAF4E" }}>s</span>
+          <NumberblocksWord />
           {" "}characters.
         </SettingsAboutText>
       </SettingsSection>
@@ -240,17 +226,6 @@ export default function RomanNumerals() {
 
   return (
     <div className="toy-container">
-      <style>{`
-        @keyframes factPop {
-          0% { transform: translateX(-50%) scale(0.7); opacity: 0; }
-          60% { transform: translateX(-50%) scale(1.05); }
-          100% { transform: translateX(-50%) scale(1); opacity: 1; }
-        }
-        @keyframes factOut {
-          0% { transform: translateX(-50%) scale(1); opacity: 1; }
-          100% { transform: translateX(-50%) scale(0.7); opacity: 0; }
-        }
-      `}</style>
 
       <BackgroundDots count={20} />
 
@@ -326,16 +301,7 @@ export default function RomanNumerals() {
         </div>
       </div>
 
-      {/* Fun fact overlay */}
-      <div style={styles.funFactAnchor}>
-        <Toast
-          text={funFact}
-          variant="info"
-          position="top"
-          enterAnimation="factPop 0.35s ease-out forwards"
-          exitAnimation="factOut 0.35s ease-in forwards"
-        />
-      </div>
+      <FunFact text={funFact} />
 
       <Numpad pad={pad} />
     </div>
@@ -442,9 +408,5 @@ const styles = {
     fontFamily: "var(--font-body)", fontWeight: 500,
     fontSize: "0.85em", lineHeight: 1.2, marginTop: "0.2em",
     color: "rgba(255,255,255,0.65)", whiteSpace: "nowrap",
-  },
-  funFactAnchor: {
-    width: "100%", maxWidth: 380, height: 20,
-    position: "relative", zIndex: 2,
   },
 };

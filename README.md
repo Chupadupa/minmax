@@ -20,9 +20,9 @@ npm run build    # production build to ./dist
 
 2. Include `<script src="/pwa-init.js"></script>` in the `<head>` for the iOS viewport fix and service worker.
 
-3. Import `shared/base.css` for fonts, resets, background, animations, and utility classes (`.back-btn`, `.frosted-card`, `.gradient-text`, etc.).
+3. Mount the toy with `mountApp(App)` from `shared/mountApp.jsx`, which brings in `shared/base.css` (fonts, background, animations, utility classes). See `CLAUDE.md` for the rest of what `shared/` offers.
 
-4. Include a back button (`<a href="../" class="back-btn">⬅️</a>`) in the header — required for PWA navigation.
+4. Use the shared `<StickyHeader />` for the header — its back button is how you get home in the installed app.
 
 5. Add an entry to `TOYS` in `shared/toys.js` — the home page tile is built from it, and the build stops if it's missing.
 

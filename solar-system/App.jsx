@@ -13,7 +13,7 @@ import { BackgroundDots } from "../shared/BackgroundDots.jsx";
 import { StickyHeader } from "../shared/StickyHeader.jsx";
 import {
   SettingsOverlay, SettingsToggle, SettingsDivider,
-  SettingsSection, SettingsAboutText, SettingsLink,
+  SettingsSection, SettingsAboutText, SettingsLink, NumberblocksWord,
 } from "../shared/SettingsOverlay.jsx";
 import { Toast } from "../shared/Toast.jsx";
 import { useScrollLock } from "../shared/useScrollLock.js";
@@ -255,18 +255,7 @@ function SolarSettings({ show, onClose, settings, update }) {
         </SettingsAboutText>
         <SettingsAboutText>
           Planet numbers use the{" "}
-          <span style={{ color: "#E41E20" }}>N</span>
-          <span style={{ color: "#FF8C1A" }}>u</span>
-          <span style={{ color: "#FFD030" }}>m</span>
-          <span style={{ color: "#4AAF4E" }}>b</span>
-          <span style={{ color: "#3A8FDE" }}>e</span>
-          <span style={{ color: "#9B59B6" }}>r</span>
-          <span style={{ color: "#F472B6" }}>b</span>
-          <span style={{ color: "#8E8E93" }}>l</span>
-          <span style={{ color: "#E41E20" }}>o</span>
-          <span style={{ color: "#FF8C1A" }}>c</span>
-          <span style={{ color: "#FFD030" }}>k</span>
-          <span style={{ color: "#4AAF4E" }}>s</span>
+          <NumberblocksWord />
           {" "}colors.
         </SettingsAboutText>
       </SettingsSection>
@@ -354,15 +343,6 @@ export default function SolarSystem() {
   return (
     <div className="toy-container">
       <style>{`
-        @keyframes factPop {
-          0% { transform: translateX(-50%) scale(0.7); opacity: 0; }
-          60% { transform: translateX(-50%) scale(1.05); }
-          100% { transform: translateX(-50%) scale(1); opacity: 1; }
-        }
-        @keyframes factOut {
-          0% { transform: translateX(-50%) scale(1); opacity: 1; }
-          100% { transform: translateX(-50%) scale(0.7); opacity: 0; }
-        }
         @keyframes bodyReveal {
           0% { transform: scale(0.4); opacity: 0; }
           60% { transform: scale(1.06); }
@@ -557,13 +537,7 @@ export default function SolarSystem() {
       </div>
 
       <div style={styles.toastAnchor}>
-        <Toast
-          text={toast}
-          variant="info"
-          position="top"
-          enterAnimation="factPop 0.35s ease-out forwards"
-          exitAnimation="factOut 0.35s ease-in forwards"
-        />
+        <Toast text={toast} />
       </div>
 
       {selected && (

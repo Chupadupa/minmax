@@ -8,10 +8,10 @@ import { NB_DIGIT_TEXT } from "../shared/numberblockColors.js";
 import { BackgroundDots } from "../shared/BackgroundDots.jsx";
 import {
   SettingsOverlay, SettingsToggle, SettingsDivider,
-  SettingsSection, SettingsAboutText, SettingsLink,
+  SettingsSection, SettingsAboutText, SettingsLink, NumberblocksWord,
 } from "../shared/SettingsOverlay.jsx";
 import { StickyHeader } from "../shared/StickyHeader.jsx";
-import { Toast } from "../shared/Toast.jsx";
+import { FunFact } from "../shared/Toast.jsx";
 import { Numpad, NumpadKey } from "../shared/Numpad.jsx";
 import { useNumberInput } from "../shared/useNumberInput.js";
 
@@ -376,18 +376,7 @@ function ChineseSettings({
         </SettingsAboutText>
         <SettingsAboutText>
           Number button colors based on the{" "}
-          <span style={{ color: "#E41E20" }}>N</span>
-          <span style={{ color: "#FF8C1A" }}>u</span>
-          <span style={{ color: "#FFD030" }}>m</span>
-          <span style={{ color: "#4AAF4E" }}>b</span>
-          <span style={{ color: "#3A8FDE" }}>e</span>
-          <span style={{ color: "#9B59B6" }}>r</span>
-          <span style={{ color: "#F472B6" }}>b</span>
-          <span style={{ color: "#8E8E93" }}>l</span>
-          <span style={{ color: "#E41E20" }}>o</span>
-          <span style={{ color: "#FF8C1A" }}>c</span>
-          <span style={{ color: "#FFD030" }}>k</span>
-          <span style={{ color: "#4AAF4E" }}>s</span>
+          <NumberblocksWord />
           {" "}characters.
         </SettingsAboutText>
       </SettingsSection>
@@ -470,15 +459,6 @@ export default function ChineseNumbers() {
   return (
     <div className="toy-container">
       <style>{`
-        @keyframes factPop {
-          0% { transform: translateX(-50%) scale(0.7); opacity: 0; }
-          60% { transform: translateX(-50%) scale(1.05); }
-          100% { transform: translateX(-50%) scale(1); opacity: 1; }
-        }
-        @keyframes factOut {
-          0% { transform: translateX(-50%) scale(1); opacity: 1; }
-          100% { transform: translateX(-50%) scale(0.7); opacity: 0; }
-        }
         @keyframes speakPulse {
           0%, 100% { transform: scale(1); }
           50% { transform: scale(1.08); }
@@ -563,16 +543,7 @@ export default function ChineseNumbers() {
         </div>
       </div>
 
-      {/* Fun fact overlay */}
-      <div style={styles.funFactAnchor}>
-        <Toast
-          text={funFact}
-          variant="info"
-          position="top"
-          enterAnimation="factPop 0.35s ease-out forwards"
-          exitAnimation="factOut 0.35s ease-in forwards"
-        />
-      </div>
+      <FunFact text={funFact} />
 
       <Numpad
         pad={pad}
@@ -728,10 +699,6 @@ const styles = {
   bigWordZeros: {
     fontFamily: "var(--font-body)", fontSize: 13,
     color: "rgba(255,255,255,0.55)", alignSelf: "center", textAlign: "right",
-  },
-  funFactAnchor: {
-    width: "100%", maxWidth: 380, height: 20,
-    position: "relative", zIndex: 2,
   },
   // Chinese red and gold
   wanBtn: {

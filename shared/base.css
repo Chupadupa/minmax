@@ -259,6 +259,19 @@ body::before {
   80%      { transform: translateX(4px); }
 }
 
+/* ── Shared Animation: Toast ─────────────────────────────────────────────── */
+/* The default pop in and out of shared/Toast.jsx, which centers itself with
+   translateX(-50%) — so the keyframes have to carry it too. */
+@keyframes toastEnter {
+  0%   { transform: translateX(-50%) scale(0.7); opacity: 0; }
+  60%  { transform: translateX(-50%) scale(1.05); }
+  100% { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+@keyframes toastExit {
+  0%   { transform: translateX(-50%) scale(1); opacity: 1; }
+  100% { transform: translateX(-50%) scale(0.7); opacity: 0; }
+}
+
 /* ── Utility: Toy Button ─────────────────────────────────────────────────── */
 /* Shared base class for colorful interactive buttons across toys.
    Apply a background color and optional border per button. */
