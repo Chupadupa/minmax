@@ -23,8 +23,9 @@ export function ordinal(n) {
   return `${n}${suffix}`;
 }
 
-function plural(n, unit) {
-  return `${n} ${unit}${n === "1" ? "" : "s"}`;
+// "1 word", "3 words" — for a count that's a number, or already formatted.
+export function plural(n, unit) {
+  return `${n} ${unit}${n === 1 || n === "1" ? "" : "s"}`;
 }
 
 // Durations in the friendliest unit: hours, days or years.

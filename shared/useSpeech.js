@@ -9,17 +9,46 @@ import { useState, useEffect, useCallback, useRef } from "react";
 // listed its voices, it's assumed to have one).
 //
 // `prefer` lists language tags to try first, in order ("es-mx", "es-us"); any
-// voice for `lang` is the fallback. `speak` takes a string, or a list of
-// strings said one after another — long text is best split up, since some
-// browsers cut off a single long utterance partway through.
+// voice for `lang` is the fallback. Where a tag prefix isn't enough to say
+// which voices will do, `match` is a pattern for the voices to consider and
+// `prefer` can hold patterns too (Mandarin is zh-… or cmn-…, but not zh-HK).
+//
+// `speak` takes a string, or a list of strings said one after another — long
+// text is best split up with chunkSpeech, since some browsers cut off a single
+// long utterance partway through.
 //
 // Usage:
 //   const speech = useSpeech({ lang: "en" });
 //   <button onClick={() => speech.speak("Jupiter")}>🔊</button>
 
 const tagOf = (v) => v.lang.replace("_", "-").toLowerCase();
+const fits = (voice, want) => (want instanceof RegExp ? want.test(tagOf(voice)) : tagOf(voice).startsWith(want));
 
-export function useSpeech({ lang = "en", rate = 0.85, prefer = [] } = {}) {
+// The voice to use: the first of `prefer` that the device has, else any that
+// matches. Among equals, the device's default voice wins.
+export function pickVoice(voices, { lang, match = lang, prefer = [] }) {
+  const pick = (list) => list.find((v) => v.default) || list[0] || null;
+  const matching = voices.filter((v) => fits(v, match));
+  for (const want of prefer) {
+    const voice = pick(matching.filter((v) => fits(v, want)));
+    if (voice) return voice;
+  }
+  return pick(matching);
+}
+
+// Joins short pieces of text into utterances of up to `maxLength` characters,
+// keeping each piece whole.
+export function chunkSpeech(pieces, { joiner = " ", maxLength }) {
+  const chunks = [];
+  for (const piece of pieces) {
+    const last = chunks.length - 1;
+    if (chunks.length && chunks[last].length + piece.length <= maxLength) chunks[last] += joiner + piece;
+    else chunks.push(piece);
+  }
+  return chunks;
+}
+
+export function useSpeech({ lang = "en", rate = 0.85, match, prefer = [] } = {}) {
   const synth = typeof window !== "undefined" && "speechSynthesis" in window ? window.speechSynthesis : null;
   const [voices, setVoices] = useState([]);
   const [speaking, setSpeaking] = useState(false);
@@ -36,14 +65,9 @@ export function useSpeech({ lang = "en", rate = 0.85, prefer = [] } = {}) {
     };
   }, [synth]);
 
-  const pick = (list) => list.find((v) => v.default) || list[0] || null;
-  const matching = voices.filter((v) => tagOf(v).startsWith(lang));
-  let voice = null;
-  for (const tag of prefer) {
-    voice = pick(matching.filter((v) => tagOf(v).startsWith(tag)));
-    if (voice) break;
-  }
-  voice = voice || pick(matching);
+  const voice = pickVoice(voices, { lang, match, prefer });
+  // With no voice listed yet, the browser picks one from this language tag.
+  const fallbackLang = typeof prefer[0] === "string" ? prefer[0] : lang;
 
   const stop = useCallback(() => {
     runRef.current++;
@@ -59,7 +83,7 @@ export function useSpeech({ lang = "en", rate = 0.85, prefer = [] } = {}) {
     const finish = () => { if (runRef.current === run) setSpeaking(false); };
     chunks.forEach((chunk, i) => {
       const u = new SpeechSynthesisUtterance(chunk);
-      u.lang = voice?.lang ?? prefer[0] ?? lang;
+      u.lang = voice?.lang ?? fallbackLang;
       if (voice) u.voice = voice;
       u.rate = rate;
       if (i === chunks.length - 1) u.onend = finish;
@@ -67,7 +91,7 @@ export function useSpeech({ lang = "en", rate = 0.85, prefer = [] } = {}) {
       synth.speak(u);
     });
     setSpeaking(true);
-  }, [synth, voice, lang, rate, prefer[0]]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [synth, voice, fallbackLang, rate]);
 
   const hasVoice = !!synth && (!!voice || voices.length === 0);
   return { available: !!synth, hasVoice, speaking, speak, stop };

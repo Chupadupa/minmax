@@ -293,6 +293,13 @@ body::before {
 .toy-btn:active:not([disabled]) { transform: scale(0.9); }
 .toy-btn[disabled] { cursor: default; }
 
+/* ── Shared Animation: Speak Pulse ───────────────────────────────────────── */
+/* The numpad's 🔊 key while it's talking (shared/Numpad.jsx). */
+@keyframes speakPulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.08); }
+}
+
 /* ── Numpad Keys ─────────────────────────────────────────────────────────── */
 /* Sizes for the shared number pad (shared/Numpad.jsx): .nb-btn for the keys in
    the digit grid, .pm-btn for the wide keys in the rows above it. */

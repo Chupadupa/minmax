@@ -77,7 +77,7 @@ export function WorldPanel({
               className="toy-btn speak-btn"
               onClick={() => speech.speak(world.say ?? world.name)}
               aria-label={`Say ${world.name}`}
-              style={{ animation: speech.speaking ? "speakPulse 0.8s ease-in-out infinite" : "none" }}
+              style={{ animation: speech.speaking ? "panelSpeakPulse 0.8s ease-in-out infinite" : "none" }}
             >
               🔊
             </button>
@@ -131,7 +131,7 @@ const PANEL_CSS = `
     60% { transform: scale(1.06); }
     100% { transform: scale(1); opacity: 1; }
   }
-  @keyframes speakPulse {
+  @keyframes panelSpeakPulse {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.15); }
   }
