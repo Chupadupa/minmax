@@ -39,7 +39,7 @@ npm run build      # Production build to ./dist/
 npm run preview    # Preview production build locally
 ```
 
-There are no test, lint, or format commands. To check a change, build it and look at it in a browser at phone (390 px) and tablet (820 px) widths.
+There are no test, lint, or format commands. To check a change, build it and look at it in a browser at phone (390 px) and tablet (820 px) widths — and for the number toys and the Calculator at a small phone too (375 × 667), where nothing should need scrolling.
 
 ## Project Structure
 
@@ -82,6 +82,14 @@ The home page is built for a child who can't read yet: big picture tiles (three 
 
 Seven toys (Big Number Namer, Pi Digits, Roman Numerals, Chinese Numbers, Spanish Numbers, Prime Checker, Odd or Even) share one layout: a display card, a fun-fact strip, then the numpad. The typed number lives in `useNumberInput` as a **digit string**, because most of these toys go far past what a JS number can hold — do arithmetic on `pad.n` (a BigInt), never `parseInt`.
 
+**On a phone these toys, and the Calculator, fit one screen** — the keys must never be below the fold. Their container has `.one-screen` as well as `.toy-container`, and under 600 px wide `base.css` then gives a one-line header (no subtitle), slim edges, a numpad whose five wide keys share one row and whose key height follows the screen's, and a `.display-card` that takes whatever height is left instead of its own `--card-h`. So a card's height isn't known in advance: it runs from about 250 px (small phones) to 430 px, and its insides have to cope —
+
+- give the middle box `flex: 1, minHeight: 0` and the rows around it fixed heights, as the existing cards do;
+- on a short card (under 340 px) `--tight` is 1 instead of 0 for everything inside, so a row can be `height: "calc(56px - var(--tight) * 12px)"`, and anything with `.tight-hide` disappears — use that for small labels, never for a picture;
+- a fixed block of content in the flexible box (the "starter key" shown before a number is typed) should be sized in em with `.fit-font` on its root, so it shrinks to fit rather than being clipped.
+
+Tablets keep the roomy layout exactly as it was, and a screen too short even for `--card-min` (a phone under about 590 px tall) just scrolls. The Calculator does the same job its own way: its round keys shrink until five rows fit.
+
 Chinese Numbers and Spanish Numbers are the same toy in two languages. Their display is the shared `ReadingCard`, which does the sizing and scrolling; each toy supplies only its language: the pure reading logic, how a word is drawn, the key shown before a number is typed, and its settings. A third language should be built the same way.
 
 ### Math Quiz
@@ -106,7 +114,7 @@ Look here before writing anything a second toy might want.
 
 **Page furniture**
 
-- **`base.css`** — design tokens (CSS variables), resets, fonts, the background, shared keyframes (`popIn`, `fadeIn`, `float`, `flash`, `btnPress`, `shake`, `toastEnter`, `toastExit`, `speakPulse`) and utility classes (`.toy-container`, `.toy-btn`, `.nb-btn`, `.pm-btn`, `.frosted-card`, `.gradient-text`, `.sticky-header`, `.page-header`, `.back-btn`, `.gear-btn`, `.bg-dots`, `.overlay-open`)
+- **`base.css`** — design tokens (CSS variables), resets, fonts, the background, shared keyframes (`popIn`, `fadeIn`, `float`, `flash`, `btnPress`, `shake`, `toastEnter`, `toastExit`, `speakPulse`) and utility classes (`.toy-container`, `.one-screen`, `.toy-btn`, `.frosted-card`, `.display-card`, `.tight-hide`, `.fit-font`, `.gradient-text`, `.sticky-header`, `.page-header`, `.back-btn`, `.gear-btn`, `.bg-dots`, `.overlay-open`), and the numpad's layout (`.numpad…`, `.nb-btn`, `.pm-btn`, `.fun-fact-strip`)
 - **`mountApp.jsx`** — `mountApp(App)`: creates the React root and imports `base.css`
 - **`StickyHeader.jsx`** — `StickyHeader({ title, subtitle?, titleStyle?, onGearClick? })`: back button, title, optional gear
 - **`BackgroundDots.jsx`** — `BackgroundDots({ count? })`: the floating dots
@@ -118,10 +126,10 @@ Look here before writing anything a second toy might want.
 
 - **`Numpad.jsx`** and **`useNumberInput.js`** — the number pad and the hook that drives it.
   - `useNumberInput({ max, zeroIsEmpty? })` returns a `pad`: `input` (digit string), `n` (BigInt, or null when empty), `isEmpty`, `canType`, `canStep(k)`, the actions `type(d)`, `backspace()`, `clear()`, `step(k, key?)`, `set(value, key?)`, and `flash` / `bounce` for the display's flash and a key's press animation. `max` caps the value — typing past it lands on it — and sets how many digits fit. `zeroIsEmpty` is for toys where 0 isn't a number of its own.
-  - `Numpad({ pad, middleKey?, leftKey?, rightKey? })` renders − 1 / + 1, CLR / ← and the digit grid. `middleKey` goes between − 1 and + 1 (the 🔊 button); `leftKey` / `rightKey` go either side of 0.
+  - `Numpad({ pad, middleKey?, leftKey?, rightKey? })` renders − 1 / + 1, CLR / ← and the digit grid (on a phone, in a `.one-screen` toy, the first two rows become one: − 1, + 1, 🔊, CLR, ←). `middleKey` goes between − 1 and + 1 (the 🔊 button); `leftKey` / `rightKey` go either side of 0.
   - `NumpadKey({ pad, id, disabled?, label?, style?, onClick, children })` is one extra key for the digit grid: it dims when disabled and bounces when `pad.bounce === id`.
   - `NumpadSpeakKey({ speech, disabled?, getText })` is the 🔊 key for `middleKey`: it says `getText()` and turns into ⏹ while talking.
-- **`ReadingCard.jsx`** — the display of a toy that writes a number out in a language: `ReadingCard({ pad, number, colorize, emptyLabel, countLabel, zeroHint, wordKey, reading, readingFit, readingStyle?, parts, partsFit, chipStyle?, chipWordsStyle? })`. It fits the number, the reading and the parts chips to their boxes (refitting when a web font arrives) and scrolls what won't fit. Also exports `PLAIN_COLOR` and `UNIT_PILL` (the gold pill round a big word).
+- **`ReadingCard.jsx`** — the display of a toy that writes a number out in a language: `ReadingCard({ pad, number, colorize, emptyLabel, countLabel, zeroHint, wordKey, reading, readingFit, readingStyle?, parts, partsFit, chipStyle?, chipWordsStyle? })`. It fits the number, the reading and the parts chips to their boxes (refitting when a web font arrives) and scrolls what won't fit. It is a `.display-card`, so its height follows the screen on a phone. Also exports `PLAIN_COLOR` and `UNIT_PILL` (the gold pill round a big word).
 - **`NumberTile.jsx`** — `NumberTile({ value, label, style?, onClick?, disabled? })`: a number in a rounded tile, colored like its Numberblock up to 100 (0 is white and red, like the numpad's) and gold beyond; with `onClick` it's a button; `NUMBER_TILE_SHAPE` is the tile without its colors
 - **`numberblockColors.js`** — the Numberblocks palette: `NB_COLORS` (fills, `"1"`–`"100"`), `NB_SOLID` (solid colors for shadows), `NB_OUTLINE` (borders for the tens), `NB_DIGIT_TEXT` (text colors for digits 0–9), `NB7_STOPS` / `NB7_GRADIENT` (Seven's rainbow), `getNumberBlockStyle(n)` → `{ background, border }`
 - **`formatUtils.js`** — `formatNumber(n, useCommas)` (numbers and BigInts), `formatDays`, `formatHours`, `formatTemp`, `ordinal`, `plural(n, unit)`, `trimTo`
@@ -149,7 +157,7 @@ Look here before writing anything a second toy might want.
 - **Open each file with a comment** saying what it holds and what it exports. That comment is the documentation.
 - **Toy-specific styling is inline**, as JavaScript style objects in a `styles` constant at the bottom of the file. Toy-specific `@keyframes` go in a `<style>` tag in the component.
 - **Shared styling comes from `base.css`**: use its CSS variables (`var(--font-heading)`, `var(--glass-bg)`…) and classes instead of repeating values.
-- **`.toy-container`** on the outermost div of every toy; **`.toy-btn`** on every interactive button, plus a modifier class for size and shape only (`.calc-btn`, `.clock-btn`, `.frac-btn`, `.color-btn`, `.quiz-pick`; the numpad's `.nb-btn` and `.pm-btn` live in `base.css`).
+- **`.toy-container`** on the outermost div of every toy, with **`.one-screen`** too if it has a numpad (and **`.display-card`** on its display, its height given as `--card-h`); **`.toy-btn`** on every interactive button, plus a modifier class for size and shape only (`.calc-btn`, `.clock-btn`, `.frac-btn`, `.color-btn`, `.quiz-pick`; the numpad's `.nb-btn` and `.pm-btn` live in `base.css`).
 - **`<Numpad />` with `useNumberInput`** wherever a number is typed; toy-specific keys are `<NumpadKey />`s.
 - **`<Toast />`** (or `<FunFact />`) for every pop-up message; **`<SettingsOverlay>`** for settings; **`useScrollLock`** under any full-screen overlay.
 - **Section delimiters**: `// ── Section Name ──` with box-drawing characters
@@ -183,7 +191,7 @@ The cache name is stamped at build time: `swCacheBustPlugin` in `vite.config.js`
 1. Create a folder at the project root (e.g. `my-new-toy/`) with an `index.html` — copy one from another toy and change the title and description. Keep `<script src="/pwa-init.js"></script>` in the `<head>`.
 2. Add `main.jsx` (`mountApp(App)`) and `App.jsx`.
 3. Add an entry to `TOYS` in `shared/toys.js`, at the end of its shelf. The home page tile is built from it, and the build stops if it's missing.
-4. Use `<StickyHeader />`, `.toy-container` and `.toy-btn`, and whatever else in `shared/` fits.
+4. Use `<StickyHeader />`, `.toy-container` and `.toy-btn`, and whatever else in `shared/` fits. A toy with a numpad also takes `.one-screen` and a `.display-card` (see "Number Toys").
 5. Put the logic in its own `.js` file, with a comment at the top.
 6. Add the toy's line to the list at the top of this file.
 

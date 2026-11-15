@@ -125,7 +125,7 @@ function useWorkerFactors(input, needed) {
 // The 25 primes under 100, shown before a number is typed.
 function PrimeKey({ onPick }) {
   return (
-    <div style={styles.key}>
+    <div className="fit-font" style={styles.key}>
       {PRIMES_UNDER_100.map((p) => (
         <NumberTile
           key={p} value={BigInt(p)} label={p}
@@ -356,7 +356,7 @@ export default function PrimeChecker() {
   const shortPrime = n !== null && n < 10_000_000n;
 
   return (
-    <div className="toy-container">
+    <div className="toy-container one-screen">
       <style>{`
         @keyframes blocksIn {
           0% { transform: scale(0.92); opacity: 0.4; }
@@ -392,7 +392,7 @@ export default function PrimeChecker() {
       />
 
       {/* Display Area */}
-      <div className="frosted-card" style={styles.displayCard}>
+      <div className="frosted-card display-card" style={styles.displayCard}>
         <div ref={numberOuterRef} style={styles.numberOuter}>
           <div ref={numberInnerRef} style={{
             ...styles.numberInner,
@@ -416,7 +416,7 @@ export default function PrimeChecker() {
             </span>
           )}
         </div>
-        <div style={styles.secondaryRow}>
+        <div className="tight-hide" style={styles.secondaryRow}>
           <span style={styles.secondaryLabel}>{secondaryText}</span>
         </div>
 
@@ -443,7 +443,7 @@ export default function PrimeChecker() {
                 </div>
               </div>
               <div style={styles.caption}>{pictureCaption(n, rows, cols, prime, fmt)}</div>
-              {pictureHint && <div style={styles.pictureHint}>{pictureHint}</div>}
+              {pictureHint && <div className="tight-hide" style={styles.pictureHint}>{pictureHint}</div>}
             </>
           )}
         </div>
@@ -460,7 +460,7 @@ export default function PrimeChecker() {
           {isComposite && !factors && <span style={styles.partsHint}>Splitting it into primes…</span>}
           {tiles.length > 0 && (
             <div ref={partsInnerRef} style={{ ...styles.partsInner, fontSize: partsFontSize }}>
-              <div style={styles.partsLabel}>made from primes</div>
+              <div className="tight-hide" style={styles.partsLabel}>made from primes</div>
               <div style={styles.tileRow}>
                 {tiles.map((t, i) => (
                   <span key={i} style={styles.tileGroup}>
@@ -508,12 +508,14 @@ export default function PrimeChecker() {
 const styles = {
   displayCard: {
     padding: "12px 14px",
-    width: "100%", maxWidth: 380, height: 392,
+    width: "100%", maxWidth: 380, "--card-h": "392px",
     position: "relative", zIndex: 1,
     display: "flex", flexDirection: "column",
   },
+  // When the card is short (--tight, see base.css) the rows give up a little
+  // height each and the small labels drop out, so the blocks keep their room.
   numberOuter: {
-    height: 46, flexShrink: 0, overflow: "hidden",
+    height: "calc(46px - var(--tight) * 4px)", flexShrink: 0, overflow: "hidden",
     display: "flex", alignItems: "center", justifyContent: "center",
   },
   numberInner: {
@@ -521,7 +523,7 @@ const styles = {
     wordBreak: "break-all", maxWidth: "100%",
   },
   verdictRow: {
-    height: 42, flexShrink: 0,
+    height: "calc(42px - var(--tight) * 2px)", flexShrink: 0,
     display: "flex", alignItems: "center", justifyContent: "center",
   },
   verdictAsk: {
@@ -555,10 +557,10 @@ const styles = {
   pictureOuter: {
     flex: 1, minHeight: 0,
     background: "rgba(0,0,0,0.15)", borderRadius: 10,
-    marginBottom: 8, overflow: "hidden",
+    marginBottom: 8, overflow: "hidden", containerType: "size",
     display: "flex", flexDirection: "column",
     alignItems: "center", justifyContent: "center",
-    padding: "10px 10px 6px",
+    padding: "calc(10px - var(--tight) * 6px) 10px calc(6px - var(--tight) * 2px)",
   },
   pictureShake: {
     flex: 1, minHeight: 0, width: "100%", display: "flex",
@@ -582,15 +584,18 @@ const styles = {
     fontSize: 12, color: "rgba(255,255,255,0.45)",
     fontFamily: "var(--font-body)", textAlign: "center",
   },
+  // Seven to a row makes four rows, 7.7em tall and 18em wide — the font
+  // shrinks until that fits the picture box (.fit-font, see base.css).
   key: {
+    "--fit-max": "16px", "--fit-font": "min(12.8cqh, 5.4cqw)",
     display: "flex", flexWrap: "wrap", justifyContent: "center",
-    gap: 6, maxWidth: 320,
+    gap: "0.375em", width: "18.2em",
   },
-  keyTile: { minWidth: 36, fontSize: 16, padding: "5px 0" },
+  keyTile: { width: "2.25em", fontSize: "1em", padding: "0.3125em 0" },
   partsOuter: {
-    height: 80, flexShrink: 0,
+    height: "calc(80px - var(--tight) * 32px)", flexShrink: 0,
     background: "rgba(255,255,255,0.05)", borderRadius: 10,
-    overflowX: "hidden", overflowY: "auto", padding: "6px 8px",
+    overflowX: "hidden", overflowY: "auto", padding: "calc(6px - var(--tight) * 2px) 8px",
     display: "flex", flexDirection: "column",
   },
   partsHint: {

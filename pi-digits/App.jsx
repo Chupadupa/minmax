@@ -134,7 +134,7 @@ function PiGrid({ value, count, colorize, group }) {
 
 function FullNumberDisplay({ count, value, ready, colorize, group }) {
   return (
-    <div className="frosted-card" style={styles.displayCard}>
+    <div className="frosted-card display-card" style={styles.displayCard}>
       <div style={styles.fullHeader}>
         <span style={styles.headLabel}>π to</span>
         <span style={styles.headCount}>{count.toLocaleString()}</span>
@@ -273,7 +273,7 @@ export default function PiDigits() {
   }, [count, piCache.count]);
 
   return (
-    <div className="toy-container" style={{ justifyContent: "flex-start" }}>
+    <div className="toy-container one-screen" style={{ justifyContent: "flex-start" }}>
       <style>{`
         @keyframes softPulse { 0%,100% { opacity: 0.45; } 50% { opacity: 1; } }
       `}</style>
@@ -307,13 +307,13 @@ export default function PiDigits() {
 
 const styles = {
   displayCard: {
-    width: "100%", maxWidth: 460,
+    width: "100%", maxWidth: 460, "--card-h": "370px", "--card-min": "220px",
     padding: "12px 14px", position: "relative", zIndex: 1,
     display: "flex", flexDirection: "column",
   },
   fullHeader: {
     display: "flex", alignItems: "baseline", justifyContent: "center",
-    marginBottom: 10, gap: 10,
+    marginBottom: 10, gap: 10, flexShrink: 0,
   },
   headLabel: {
     fontSize: 13, textTransform: "uppercase", letterSpacing: 1.5,
@@ -326,7 +326,7 @@ const styles = {
     WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
   },
   fullEmpty: {
-    height: 300, borderRadius: 10, background: "rgba(0,0,0,0.18)",
+    flex: 1, minHeight: 0, borderRadius: 10, background: "rgba(0,0,0,0.18)",
     display: "flex", flexDirection: "column",
     alignItems: "center", justifyContent: "center", gap: 14,
   },
@@ -342,7 +342,7 @@ const styles = {
 
 const grid = {
   scroller: {
-    width: "100%", height: 300,
+    width: "100%", flex: 1, minHeight: 0,
     overflowY: "auto", overflowX: "hidden",
     background: "rgba(0,0,0,0.18)", borderRadius: 10,
     padding: "4px 0",

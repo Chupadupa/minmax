@@ -170,7 +170,7 @@ function CharacterKey({ colorize, showPinyin, traditional, groupSize }) {
     );
   };
   return (
-    <div style={styles.key}>
+    <div className="fit-font" style={styles.key}>
       <div style={{ ...styles.keyRow, gridTemplateColumns: "repeat(10, 1fr)" }}>{digitItems.map(renderItem)}</div>
       <div style={{ ...styles.keyRow, gridTemplateColumns: "repeat(5, 1fr)" }}>{wordItems.map(renderItem)}</div>
     </div>
@@ -343,7 +343,7 @@ export default function ChineseNumbers() {
   useEffect(() => { stop(); }, [input, traditional, useLiang, stop]);
 
   return (
-    <div className="toy-container">
+    <div className="toy-container one-screen">
       <BackgroundDots count={20} />
 
       {/* Header */}
@@ -426,26 +426,29 @@ const styles = {
   hanzi: {
     fontFamily: HANZI_FONT, fontWeight: 700, lineHeight: 1.15,
   },
+  // Two rows, 5.1em tall — the font shrinks until that fits the reading box
+  // (.fit-font, see base.css).
   key: {
+    "--fit-max": "26px", "--fit-font": "19.6cqh",
     margin: "auto 0", width: "100%",
-    display: "flex", flexDirection: "column", gap: 14,
+    display: "flex", flexDirection: "column", gap: "0.5385em",
   },
   keyRow: { display: "grid", gap: 2 },
   keyItem: {
-    display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
+    display: "flex", flexDirection: "column", alignItems: "center", gap: "0.1154em",
   },
   keyPinyin: {
-    fontFamily: PINYIN_FONT, fontWeight: 700, fontSize: 11, lineHeight: 1,
+    fontFamily: PINYIN_FONT, fontWeight: 700, fontSize: "0.4231em", lineHeight: 1,
   },
   keyHanzi: {
-    fontFamily: HANZI_FONT, fontWeight: 700, fontSize: 26, lineHeight: 1.1,
+    fontFamily: HANZI_FONT, fontWeight: 700, fontSize: "1em", lineHeight: 1.1,
   },
   keyUnitPill: {
     ...UNIT_PILL,
     borderRadius: 6, padding: "0 3px",
   },
   keyValue: {
-    fontSize: 11, color: "rgba(255,255,255,0.55)",
+    fontSize: "0.4231em", color: "rgba(255,255,255,0.55)",
     fontFamily: "var(--font-body)", fontWeight: 500, whiteSpace: "nowrap",
   },
   readingGaps: { rowGap: "0.14em" },

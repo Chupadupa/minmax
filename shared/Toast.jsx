@@ -80,19 +80,22 @@ export function Toast({
 // ── Fun Fact ─────────────────────────────────────────────────────────────────
 // A toast in its own slim strip of the page: put it between a number toy's
 // display card and its numpad, and the fact pops up over the gap whenever
-// `text` is set.
+// `text` is set. The strip's height is .fun-fact-strip in base.css; the toast
+// stays centered on it however slim it gets.
 
 export function FunFact({ text }) {
   return (
-    <div style={FUN_FACT_STRIP}>
-      <Toast text={text} />
+    <div className="fun-fact-strip">
+      <div style={FUN_FACT_ANCHOR}>
+        <Toast text={text} />
+      </div>
     </div>
   );
 }
 
-const FUN_FACT_STRIP = {
-  width: "100%", maxWidth: 380, height: 20,
-  position: "relative", zIndex: 2,
+const FUN_FACT_ANCHOR = {
+  position: "absolute", left: 0, right: 0,
+  top: "calc(50% - 10px)", height: 20,
 };
 
 // ── Floating Toast ───────────────────────────────────────────────────────────

@@ -54,7 +54,7 @@ function getFunFact(input, n, even) {
 // 1–20 in two rows, odds over evens, shown before a number is typed.
 function CountingKey({ onPick }) {
   return (
-    <div style={styles.key}>
+    <div className="fit-font" style={styles.key}>
       {["odd", "even"].map((kind) => (
         <div key={kind} style={{ ...styles.keyRow, ...tintStyle(KIND_COLOR[kind]) }}>
           {Array.from({ length: 10 }, (_, i) => 2 * i + (kind === "odd" ? 1 : 2)).map((k) => (
@@ -299,7 +299,7 @@ export default function OddOrEven() {
   const last = numberText.slice(-1);
 
   return (
-    <div className="toy-container">
+    <div className="toy-container one-screen">
       <style>{`
         @keyframes blocksIn {
           0% { transform: scale(0.92); opacity: 0.4; }
@@ -331,7 +331,7 @@ export default function OddOrEven() {
       />
 
       {/* Display Area */}
-      <div className="frosted-card" style={styles.displayCard}>
+      <div className="frosted-card display-card" style={styles.displayCard}>
         <div ref={numberOuterRef} style={styles.numberOuter}>
           <div ref={numberInnerRef} style={{
             ...styles.numberInner,
@@ -375,7 +375,7 @@ export default function OddOrEven() {
                 <PairsPicture towers={towersFor(n)} />
               </div>
               <div style={styles.caption}>{pictureCaption(pairs, leftover, fmt)}</div>
-              {n > BLOCK_LIMIT && <div style={styles.pictureHint}>Too many blocks to draw them all!</div>}
+              {n > BLOCK_LIMIT && <div className="tight-hide" style={styles.pictureHint}>Too many blocks to draw them all!</div>}
             </>
           )}
         </div>
@@ -386,7 +386,7 @@ export default function OddOrEven() {
           {n === 1n && <span style={styles.splitHint}>1 can’t be shared between two — it’s left over!</span>}
           {n !== null && n > 1n && (
             <div ref={splitInnerRef} style={{ ...styles.splitInner, fontSize: splitFontSize }}>
-              <div style={styles.splitLabel}>
+              <div className="tight-hide" style={styles.splitLabel}>
                 {leftover ? "shared between two, 1 left over" : "shared fairly between two"}
               </div>
               <div style={styles.tileRow}>
@@ -436,12 +436,14 @@ export default function OddOrEven() {
 const styles = {
   displayCard: {
     padding: "12px 14px",
-    width: "100%", maxWidth: 380, height: 404,
+    width: "100%", maxWidth: 380, "--card-h": "404px",
     position: "relative", zIndex: 1,
     display: "flex", flexDirection: "column",
   },
+  // When the card is short (--tight, see base.css) the rows give up a little
+  // height each and the small labels drop out, so the blocks keep their room.
   numberOuter: {
-    height: 56, flexShrink: 0, overflow: "hidden",
+    height: "calc(56px - var(--tight) * 12px)", flexShrink: 0, overflow: "hidden",
     display: "flex", alignItems: "center", justifyContent: "center",
   },
   numberInner: {
@@ -455,15 +457,15 @@ const styles = {
     animation: "popIn 0.3s ease-out",
   },
   verdictRow: {
-    height: 46, flexShrink: 0,
+    height: "calc(46px - var(--tight) * 10px)", flexShrink: 0,
     display: "flex", alignItems: "center", justifyContent: "center",
   },
   verdictAsk: {
     fontSize: 22, fontWeight: 600, color: "rgba(255,255,255,0.3)",
   },
   verdict: {
-    fontSize: 22, fontWeight: 700, letterSpacing: 3,
-    padding: "5px 26px", borderRadius: 999, lineHeight: 1.2,
+    fontSize: "calc(22px - var(--tight) * 3px)", fontWeight: 700, letterSpacing: 3,
+    padding: "calc(5px - var(--tight) * 2px) 26px", borderRadius: 999, lineHeight: 1.2,
     color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.3)",
     animation: "popIn 0.35s ease-out",
   },
@@ -496,10 +498,10 @@ const styles = {
   pictureOuter: {
     flex: 1, minHeight: 0,
     background: "rgba(0,0,0,0.15)", borderRadius: 10,
-    marginBottom: 8, overflow: "hidden",
+    marginBottom: 8, overflow: "hidden", containerType: "size",
     display: "flex", flexDirection: "column",
     alignItems: "center", justifyContent: "center",
-    padding: "10px 10px 6px",
+    padding: "calc(10px - var(--tight) * 6px) 10px calc(6px - var(--tight) * 2px)",
   },
   picture: {
     flex: 1, minWidth: 0, minHeight: 0, width: "100%",
@@ -520,22 +522,25 @@ const styles = {
     fontSize: 12, color: "rgba(255,255,255,0.45)",
     fontFamily: "var(--font-body)", textAlign: "center",
   },
+  // Two rows, 5.7em tall — the font shrinks until that fits the picture box
+  // (.fit-font, see base.css).
   key: {
-    display: "flex", flexDirection: "column", gap: 8,
+    "--fit-max": "14px", "--fit-font": "17cqh",
+    display: "flex", flexDirection: "column", gap: "0.5714em",
     width: "100%", maxWidth: 340,
   },
   keyRow: {
-    display: "flex", gap: 4, padding: 4, borderRadius: 12,
+    display: "flex", gap: "0.2857em", padding: "0.2857em", borderRadius: 12,
   },
-  keyTile: { flex: 1, minWidth: 0, fontSize: 14, padding: "7px 0" },
+  keyTile: { flex: 1, minWidth: 0, fontSize: "1em", padding: "0.5em 0" },
   leftoverTile: {
     background: ODD_COLOR, color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.4)",
     boxShadow: "0 0 8px rgba(255,140,26,0.6)",
   },
   splitOuter: {
-    height: 76, flexShrink: 0,
+    height: "calc(76px - var(--tight) * 28px)", flexShrink: 0,
     background: "rgba(255,255,255,0.05)", borderRadius: 10,
-    overflowX: "hidden", overflowY: "auto", padding: "6px 8px",
+    overflowX: "hidden", overflowY: "auto", padding: "calc(6px - var(--tight) * 2px) 8px",
     display: "flex", flexDirection: "column",
   },
   splitHint: {
