@@ -23,6 +23,7 @@ export const TOYS = [
   { id: "odd-or-even", name: "Odd or Even", picture: "🧦", shelf: "numbers", colors: ["#F26A1B", "#F98F2B"] },
   { id: "prime-checker", name: "Prime Checker", picture: "🔍", shelf: "numbers", colors: ["#F0920F", "#F7B32B"] },
   { id: "pi-digits", name: "Pi Digits", picture: "π", textPicture: true, shelf: "numbers", colors: ["#E3AE0B", "#F5CF3A"] },
+  { id: "math-quiz", name: "Math Quiz", picture: "❓", shelf: "numbers", colors: ["#B9B80F", "#DCDA3C"] },
 
   { id: "roman-numerals", name: "Roman Numerals", picture: "🏛️", shelf: "words", colors: ["#6BA81E", "#94CC3A"] },
   { id: "chinese-numbers", name: "Chinese Numbers", picture: "🀄", shelf: "words", colors: ["#2E9E4F", "#4FC26B"] },

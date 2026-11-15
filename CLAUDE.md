@@ -11,6 +11,7 @@ The toys, as named on screen (two folders keep older names):
 - **Odd or Even** (`odd-or-even/`) — is a number odd or even? Blocks lined up in pairs, up to 30 digits
 - **Prime Checker** (`prime-checker/`) — is a number prime? Rows of blocks and prime factors, up to 24 digits
 - **Pi Digits** (`pi-digits/`) — as many digits of π as you ask for, up to a million
+- **Math Quiz** (`math-quiz/`) — pick + − × ÷ or a mix, then tap the right answer out of four; nothing goes past 100
 - **Roman Numerals** (`roman-numerals/`) — any number in Roman numerals, up to 3,999,999,999,999 using stacked bars
 - **Chinese Numbers** (`chinese-numbers/`) — any number in Chinese characters with pinyin, spoken aloud, up to 68 digits
 - **Spanish Numbers** (`spanish-numbers/`) — any number in Spanish words with a say-it guide, spoken aloud, up to 66 digits
@@ -75,7 +76,7 @@ Each file opens with a comment saying what it holds and what it exports. Read th
 
 The home page is plain HTML with no JavaScript: `hubPlugin` in `vite.config.js` fills the `<!-- toys -->` marker in the root `index.html` with a shelf per entry in `SHELVES` and a picture tile per toy, in list order (dev server and build alike). The tile styles live in the root `index.html`. The config also checks the list against the toy folders and stops with "Toy list out of step" if a folder has no entry or an entry has no folder.
 
-The home page is built for a child who can't read yet: big picture tiles (three across on a phone, five on a tablet, so every shelf is one row and the whole page fits one iPad screen), no descriptions, and no tabs, search, menus or "recently played" row. Tiles should never move — a toy is found by remembering where its picture was — so add new toys at the end of their shelf.
+The home page is built for a child who can't read yet: big picture tiles (three across on a phone, six on a tablet, so every shelf is one row and the whole page fits one iPad screen — a shelf is full at six toys), no descriptions, and no tabs, search, menus or "recently played" row. Tiles should never move — a toy is found by remembering where its picture was — so add new toys at the end of their shelf.
 
 ### Number Toys
 
@@ -90,6 +91,10 @@ Seven toys (Big Number Namer, Pi Digits, Roman Numerals, Chinese Numbers, Spanis
 Tablets keep the roomy layout exactly as it was, and a screen too short even for `--card-min` (a phone under about 590 px tall) just scrolls. The Calculator does the same job its own way: its round keys shrink until five rows fit.
 
 Chinese Numbers and Spanish Numbers are the same toy in two languages. Their display is the shared `ReadingCard`, which does the sizing and scrolling; each toy supplies only its language: the pure reading logic, how a word is drawn, the key shown before a number is typed, and its settings. A third language should be built the same way.
+
+### Math Quiz
+
+The one toy that asks instead of answers. It opens on a menu of five buttons (+ − × ÷ and 🎲 for a mix); the same five sit small above every question for swapping. Answers are tapped from four tiles, not typed, so a round can be played without reading or a numpad. The "biggest number" level (10, 20, 50 or 100, in settings) caps every number in a question, its answer and the answers offered; `MAX_TOTAL` in `quiz.js` is the ceiling for all of it.
 
 ### Space Toys
 
@@ -125,7 +130,7 @@ Look here before writing anything a second toy might want.
   - `NumpadKey({ pad, id, disabled?, label?, style?, onClick, children })` is one extra key for the digit grid: it dims when disabled and bounces when `pad.bounce === id`.
   - `NumpadSpeakKey({ speech, disabled?, getText })` is the 🔊 key for `middleKey`: it says `getText()` and turns into ⏹ while talking.
 - **`ReadingCard.jsx`** — the display of a toy that writes a number out in a language: `ReadingCard({ pad, number, colorize, emptyLabel, countLabel, zeroHint, wordKey, reading, readingFit, readingStyle?, parts, partsFit, chipStyle?, chipWordsStyle? })`. It fits the number, the reading and the parts chips to their boxes (refitting when a web font arrives) and scrolls what won't fit. It is a `.display-card`, so its height follows the screen on a phone. Also exports `PLAIN_COLOR` and `UNIT_PILL` (the gold pill round a big word).
-- **`NumberTile.jsx`** — `NumberTile({ value, label, style?, onClick? })`: a number in a rounded tile, colored like its Numberblock up to 100 and gold beyond; `NUMBER_TILE_SHAPE` is the tile without its colors
+- **`NumberTile.jsx`** — `NumberTile({ value, label, style?, onClick?, disabled? })`: a number in a rounded tile, colored like its Numberblock up to 100 (0 is white and red, like the numpad's) and gold beyond; with `onClick` it's a button; `NUMBER_TILE_SHAPE` is the tile without its colors
 - **`numberblockColors.js`** — the Numberblocks palette: `NB_COLORS` (fills, `"1"`–`"100"`), `NB_SOLID` (solid colors for shadows), `NB_OUTLINE` (borders for the tens), `NB_DIGIT_TEXT` (text colors for digits 0–9), `NB7_STOPS` / `NB7_GRADIENT` (Seven's rainbow), `getNumberBlockStyle(n)` → `{ background, border }`
 - **`formatUtils.js`** — `formatNumber(n, useCommas)` (numbers and BigInts), `formatDays`, `formatHours`, `formatTemp`, `ordinal`, `plural(n, unit)`, `trimTo`
 - **`mathUtils.js`** — `gcd(a, b)`, `simplify(num, den)`
@@ -152,7 +157,7 @@ Look here before writing anything a second toy might want.
 - **Open each file with a comment** saying what it holds and what it exports. That comment is the documentation.
 - **Toy-specific styling is inline**, as JavaScript style objects in a `styles` constant at the bottom of the file. Toy-specific `@keyframes` go in a `<style>` tag in the component.
 - **Shared styling comes from `base.css`**: use its CSS variables (`var(--font-heading)`, `var(--glass-bg)`…) and classes instead of repeating values.
-- **`.toy-container`** on the outermost div of every toy, with **`.one-screen`** too if it has a numpad (and **`.display-card`** on its display, its height given as `--card-h`); **`.toy-btn`** on every interactive button, plus a modifier class for size and shape only (`.calc-btn`, `.clock-btn`, `.frac-btn`, `.color-btn`; the numpad's `.nb-btn` and `.pm-btn` live in `base.css`).
+- **`.toy-container`** on the outermost div of every toy, with **`.one-screen`** too if it has a numpad (and **`.display-card`** on its display, its height given as `--card-h`); **`.toy-btn`** on every interactive button, plus a modifier class for size and shape only (`.calc-btn`, `.clock-btn`, `.frac-btn`, `.color-btn`, `.quiz-pick`; the numpad's `.nb-btn` and `.pm-btn` live in `base.css`).
 - **`<Numpad />` with `useNumberInput`** wherever a number is typed; toy-specific keys are `<NumpadKey />`s.
 - **`<Toast />`** (or `<FunFact />`) for every pop-up message; **`<SettingsOverlay>`** for settings; **`useScrollLock`** under any full-screen overlay.
 - **Section delimiters**: `// ── Section Name ──` with box-drawing characters
@@ -197,8 +202,8 @@ It is built and deployed automatically on the next push to `main`.
 Low-priority items to consider as the project grows:
 
 - [ ] **Add minimal ESLint config** — `eslint` + `eslint-plugin-react-hooks` for correctness checks only (no style rules, no Prettier).
-- [ ] **A few tests for the pure logic** — `primes.js`, `spanishNumbers.js`, `chineseNumbers.js` and `romanNumerals.js` are plain functions with exact right answers; `node --test` would cover them with no new dependencies.
+- [ ] **A few tests for the pure logic** — `primes.js`, `spanishNumbers.js`, `chineseNumbers.js` and `romanNumerals.js` are plain functions with exact right answers, and `math-quiz/quiz.js` has rules that must always hold (nothing below 0 or above the level, four different answers); `node --test` would cover them with no new dependencies.
 - [ ] **Extract Fraction Fitter's SVG math** — move `polarToXY`, `arcPath` and the color constants out of `fraction-combiner/App.jsx` into a `fractionUtils.js`.
-- [ ] **Generate each toy's `index.html`** — the 14 files differ only in title, description and extra fonts, which could move into `shared/toys.js`.
+- [ ] **Generate each toy's `index.html`** — the 15 files differ only in title, description and extra fonts, which could move into `shared/toys.js`.
 - [ ] **Remember settings between visits** — every toggle resets when the page reloads.
 - [ ] **Offline from the first visit** — the service worker only caches a toy once it has been opened.
