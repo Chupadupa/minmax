@@ -93,7 +93,7 @@ export default function BigNumberNamer() {
   const zerosFontSize = useAutoFitFontSize(zerosOuterRef, zerosInnerRef, displayCharCount);
 
   return (
-    <div className="toy-container">
+    <div className="toy-container one-screen">
 
       <BackgroundDots count={20} />
 
@@ -115,7 +115,7 @@ export default function BigNumberNamer() {
       />
 
       {/* Display Area */}
-      <div className="frosted-card" style={styles.displayCard}>
+      <div className="frosted-card display-card" style={styles.displayCard}>
         <div style={{
           ...styles.bigNumber,
           fontSize: zeros.toLocaleString().length <= 5 ? 42 : zeros.toLocaleString().length <= 9 ? 32 : zeros.toLocaleString().length <= 13 ? 24 : 18,
@@ -162,7 +162,7 @@ export default function BigNumberNamer() {
 const styles = {
   displayCard: {
     padding: "14px 16px",
-    width: "100%", maxWidth: 380, height: 260,
+    width: "100%", maxWidth: 380, "--card-h": "260px", "--card-min": "220px",
     position: "relative", zIndex: 1,
     display: "flex", flexDirection: "column",
   },

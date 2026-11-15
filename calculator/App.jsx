@@ -344,8 +344,12 @@ export default function Calculator() {
   // ── Render ──
 
   return (
-    <div className="toy-container" style={{ gap: 12 }}>
+    <div className="toy-container one-screen calc">
       <style>{`
+        .calc { gap: 12px; --calc-w: 340px; }
+        .calc-display, .calc-grid { width: 100%; max-width: var(--calc-w); }
+        .calc-display { padding: 20px 24px; min-height: 140px; margin-top: auto; }
+        .calc-grid { gap: 12px; }
         .calc-btn {
           width: 100%; aspect-ratio: 1;
           border-radius: 50%; font-size: 28px;
@@ -353,6 +357,19 @@ export default function Calculator() {
         .calc-btn[data-span="2"] {
           aspect-ratio: auto;
           border-radius: 999px;
+        }
+        /* On a phone the keys stay round but get as small as they must for all
+           five rows to fit under the header and a display of at least 126px
+           (266px is everything on the screen that isn't a key), and the
+           display takes any height left over. */
+        @media (max-width: 600px) {
+          .calc {
+            gap: 10px;
+            --calc-key: calc((var(--usable-h) - 266px) / 5);
+            --calc-w: min(340px, calc(var(--calc-key) * 4 + 30px));
+          }
+          .calc-display { padding: 12px 20px; min-height: 0; flex: 1 0 126px; max-height: 200px; }
+          .calc-grid { gap: 10px; }
         }
       `}</style>
 
@@ -362,7 +379,7 @@ export default function Calculator() {
       <StickyHeader title="Calculator" subtitle="Tap away!" />
 
       {/* Display */}
-      <div className="frosted-card" style={{ ...styles.displayCard, marginTop: "auto" }}>
+      <div className="frosted-card calc-display" style={styles.displayCard}>
         {historyEquation && (
           <div style={styles.historyText}>{historyEquation}</div>
         )}
@@ -377,7 +394,7 @@ export default function Calculator() {
       </div>
 
       {/* Button Grid */}
-      <div style={styles.buttonGrid}>
+      <div className="calc-grid" style={styles.buttonGrid}>
         {BUTTONS.map((btn, i) => (
           <button
             key={i}
@@ -398,9 +415,6 @@ export default function Calculator() {
 
 const styles = {
   displayCard: {
-    padding: "20px 24px",
-    width: "100%", maxWidth: 340,
-    minHeight: 140,
     display: "flex", flexDirection: "column", justifyContent: "flex-end",
   },
   historyText: {
@@ -429,8 +443,6 @@ const styles = {
   },
   buttonGrid: {
     display: "grid", gridTemplateColumns: "repeat(4, 1fr)",
-    gap: 12,
-    width: "100%", maxWidth: 340,
     position: "relative", zIndex: 1,
   },
 };

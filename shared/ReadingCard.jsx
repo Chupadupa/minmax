@@ -23,7 +23,9 @@ import { plural } from "./formatUtils.js";
 // emptyLabel   the line under "?" before anything is typed
 // countLabel   how long the reading is ("4 words"), beside the digit count
 // zeroHint     what the parts row says for zero
-// wordKey      shown in the reading box before anything is typed
+// wordKey      shown in the reading box before anything is typed. The box's
+//              height depends on the screen: size the key in em and give its
+//              root .fit-font (see base.css) so it shrinks to fit
 // reading      the reading itself. Its size is em-based: the card sets the font
 //              size. `readingFit` says how much there is to fit (`count`, in
 //              rough characters), the biggest and smallest font, and a `fitKey`
@@ -102,7 +104,7 @@ export function ReadingCard({
   }, [input]);
 
   return (
-    <div className="frosted-card" style={styles.card}>
+    <div className="frosted-card display-card" style={styles.card}>
       <div ref={numberOuterRef} style={styles.numberOuter}>
         <div ref={numberInnerRef} style={{
           ...styles.numberInner,
@@ -112,7 +114,7 @@ export function ReadingCard({
           {isEmpty ? numberText : <Digits text={numberText} colorize={colorize} />}
         </div>
       </div>
-      <div style={styles.countRow}>
+      <div className="tight-hide" style={styles.countRow}>
         {isEmpty && <span style={styles.countLabel}>{emptyLabel}</span>}
         {isZero && <span style={styles.countLabel}>zero</span>}
         {hasValue && (
@@ -162,12 +164,14 @@ export function ReadingCard({
 const styles = {
   card: {
     padding: "12px 14px",
-    width: "100%", maxWidth: 380, height: 380,
+    width: "100%", maxWidth: 380, "--card-h": "380px",
     position: "relative", zIndex: 1,
     display: "flex", flexDirection: "column",
   },
+  // The heights give a little when the card is short (--tight, see base.css),
+  // and the count line drops out, so the reading keeps most of the room.
   numberOuter: {
-    height: 52, flexShrink: 0, overflow: "hidden",
+    height: "calc(52px - var(--tight) * 4px)", flexShrink: 0, overflow: "hidden",
     display: "flex", alignItems: "center", justifyContent: "center",
   },
   numberInner: {
@@ -184,8 +188,9 @@ const styles = {
     color: "rgba(255,255,255,0.4)", fontFamily: "var(--font-body)",
   },
   countDot: { color: "rgba(255,255,255,0.2)", fontSize: 12 },
+  // A size container, so a toy's wordKey can fit itself to the box (.fit-font)
   readingOuter: {
-    flex: 1, minHeight: 0,
+    flex: 1, minHeight: 0, containerType: "size",
     background: "rgba(0,0,0,0.15)", borderRadius: 10,
     marginBottom: 8, overflowX: "hidden", overflowY: "auto",
     display: "flex", flexDirection: "column",
@@ -199,7 +204,7 @@ const styles = {
     alignItems: "flex-end", justifyContent: "center",
   },
   partsOuter: {
-    height: 92, flexShrink: 0,
+    height: "calc(92px - var(--tight) * 30px)", flexShrink: 0,
     background: "rgba(255,255,255,0.05)", borderRadius: 10,
     overflowX: "hidden", overflowY: "auto", padding: "5px 6px",
     display: "flex", flexDirection: "column",

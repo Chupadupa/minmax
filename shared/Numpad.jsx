@@ -3,13 +3,14 @@ import { NB_COLORS, NB_SOLID } from "./numberblockColors.js";
 // ── Numpad ──
 // The keys every number toy shares: − 1 and + 1, CLR and ←, then the digits in
 // their Numberblocks colors. It's driven by a `pad` from useNumberInput, and its
-// sizes come from .nb-btn and .pm-btn in base.css.
+// layout and sizes come from base.css (.numpad…, .nb-btn, .pm-btn) — which also
+// folds the two top rows into one on a phone, inside a .one-screen toy.
 //
 //   <Numpad pad={pad} />
 //
 // Optional extras:
 //   middleKey          goes between − 1 and + 1 (a 🔊 button, say) — give it the
-//                      classes "toy-btn pm-btn"
+//                      classes "toy-btn pm-btn numpad-speak"
 //   leftKey, rightKey  go either side of 0 — make them with <NumpadKey />
 //
 // <NumpadSpeakKey /> is the ready-made 🔊 button for middleKey.
@@ -44,7 +45,7 @@ export function NumpadKey({ pad, id, disabled = false, label, style, onClick, ch
 export function NumpadSpeakKey({ speech, disabled = false, getText }) {
   return (
     <button
-      className="toy-btn pm-btn"
+      className="toy-btn pm-btn numpad-speak"
       disabled={disabled}
       aria-label="Say it"
       style={{
@@ -81,13 +82,13 @@ function StepKey({ pad, step, style, children }) {
   );
 }
 
-function GrayKey({ pad, style, onClick, children }) {
+function GrayKey({ pad, name, onClick, children }) {
   return (
     <button
-      className="toy-btn pm-btn"
+      className={`toy-btn pm-btn numpad-${name}`}
       disabled={pad.isEmpty}
       style={{
-        ...styles.grayKey, ...style,
+        ...styles.grayKey,
         color: pad.isEmpty ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.85)",
       }}
       onClick={onClick}
@@ -99,19 +100,20 @@ function GrayKey({ pad, style, onClick, children }) {
 
 export function Numpad({ pad, middleKey, leftKey, rightKey }) {
   return (
-    <>
-      <div style={styles.row}>
-        <StepKey pad={pad} step={-1n} style={styles.minusKey}>− 1</StepKey>
-        {middleKey}
-        <StepKey pad={pad} step={1n} style={styles.plusKey}>+ 1</StepKey>
+    <div className="numpad">
+      <div className="numpad-actions">
+        <div className="numpad-row">
+          <StepKey pad={pad} step={-1n} style={styles.minusKey}>− 1</StepKey>
+          {middleKey}
+          <StepKey pad={pad} step={1n} style={styles.plusKey}>+ 1</StepKey>
+        </div>
+        <div className="numpad-row">
+          <GrayKey pad={pad} name="clear" onClick={pad.clear}>CLR</GrayKey>
+          <GrayKey pad={pad} name="back" onClick={pad.backspace}>←</GrayKey>
+        </div>
       </div>
 
-      <div style={{ ...styles.row, marginTop: 10 }}>
-        <GrayKey pad={pad} style={styles.clearKey} onClick={pad.clear}>CLR</GrayKey>
-        <GrayKey pad={pad} style={styles.backspaceKey} onClick={pad.backspace}>←</GrayKey>
-      </div>
-
-      <div style={styles.grid}>
+      <div className="numpad-grid">
         {DIGIT_ROWS.map((digit) => (
           <DigitKey key={digit} pad={pad} digit={digit} style={{
             background: NB_COLORS[digit],
@@ -122,44 +124,28 @@ export function Numpad({ pad, middleKey, leftKey, rightKey }) {
         <DigitKey pad={pad} digit="0" style={styles.zeroKey} />
         {rightKey}
       </div>
-    </>
+    </div>
   );
 }
 
 const styles = {
-  row: {
-    display: "flex", gap: 10,
-    width: "100%", maxWidth: 300,
-    position: "relative", zIndex: 1,
-  },
-  grid: {
-    display: "grid", gridTemplateColumns: "repeat(3, 1fr)",
-    gap: 10, width: "100%", maxWidth: 300, marginTop: 10,
-    position: "relative", zIndex: 1,
-  },
   minusKey: {
     background: "linear-gradient(135deg, #E41E20, #FF8C1A)",
     boxShadow: "0 4px 12px rgba(228,30,32,0.3), inset 0 2px 0 rgba(255,255,255,0.2)",
-    flex: 1,
   },
   plusKey: {
     background: "linear-gradient(135deg, #3A8FDE, #9B59B6)",
     boxShadow: "0 4px 12px rgba(58,143,222,0.3), inset 0 2px 0 rgba(255,255,255,0.2)",
-    flex: 1,
   },
   grayKey: {
     background: "rgba(255,255,255,0.18)",
     boxShadow: "0 4px 10px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.15)",
     border: "1px solid rgba(255,255,255,0.12)",
-    flex: 1,
   },
   speakKey: {
     background: "linear-gradient(135deg, #FFD030, #FF8C1A)",
     boxShadow: "0 4px 12px rgba(255,140,26,0.3), inset 0 2px 0 rgba(255,255,255,0.3)",
-    width: 72, flexShrink: 0, fontSize: 24,
   },
-  clearKey: { fontSize: 16, letterSpacing: 1 },
-  backspaceKey: { fontSize: 26 },
   // Zero has no Numberblocks color of its own, so it borrows Ten's white and red.
   // It always sits in the middle column, with or without keys beside it.
   zeroKey: {

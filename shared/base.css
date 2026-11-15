@@ -300,9 +300,34 @@ body::before {
   50%      { transform: scale(1.08); }
 }
 
-/* ── Numpad Keys ─────────────────────────────────────────────────────────── */
-/* Sizes for the shared number pad (shared/Numpad.jsx): .nb-btn for the keys in
-   the digit grid, .pm-btn for the wide keys in the rows above it. */
+/* ── Numpad ──────────────────────────────────────────────────────────────── */
+/* The shared number pad (shared/Numpad.jsx): two rows of wide keys (.pm-btn)
+   over the digit grid (.nb-btn). On a phone the two rows become one — see
+   "One-Screen Toys" below. */
+.numpad {
+  width: 100%;
+  max-width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+.numpad-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.numpad-row {
+  display: flex;
+  gap: 10px;
+}
+.numpad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
 .nb-btn {
   width: 100%;
   aspect-ratio: 1.4;
@@ -310,8 +335,108 @@ body::before {
   font-size: 30px;
 }
 .pm-btn {
+  flex: 1;
   font-size: 26px;
   padding: 12px 0;
+}
+.pm-btn.numpad-speak { flex: none; width: 72px; font-size: 24px; }
+.pm-btn.numpad-clear { font-size: 16px; letter-spacing: 1px; }
+
+/* ── Fun-Fact Strip ──────────────────────────────────────────────────────── */
+/* The gap between a number toy's display and its numpad, where <FunFact />
+   pops up (shared/Toast.jsx). */
+.fun-fact-strip {
+  width: 100%;
+  max-width: 380px;
+  height: 20px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+}
+
+/* ── Display Card ────────────────────────────────────────────────────────── */
+/* A number toy's display. The toy gives its height as --card-h; on a phone the
+   card stretches or shrinks to fill what the header and numpad leave instead
+   (see "One-Screen Toys"). When that leaves it short, --tight turns from 0 to 1
+   for everything inside, so a toy can write its heights as
+   calc(56px - var(--tight) * 10px), and .tight-hide drops out altogether —
+   for labels a small screen can do without. */
+.display-card {
+  height: var(--card-h);
+  flex-shrink: 0;
+}
+.display-card > * { --tight: 0; }
+
+/* ── Utility: Font That Fits Its Box ─────────────────────────────────────── */
+/* For a fixed block of content (the keys a toy shows before a number is typed)
+   in a box whose height changes with the screen. Give the box
+   container-type: size, write the content's sizes in em, and give its root
+   .fit-font with --fit-max (its font size when there's room) and --fit-font
+   (the size that just fills the box, in cqh / cqw). Browsers without
+   container units keep --fit-max. */
+.fit-font { font-size: var(--fit-max); }
+@supports (width: 1cqh) {
+  .fit-font { font-size: min(var(--fit-max), var(--fit-font)); }
+}
+
+/* ── One-Screen Toys ─────────────────────────────────────────────────────── */
+/* Add .one-screen to a toy's .toy-container and, on a phone, the whole toy
+   fits the screen with nothing to scroll: a one-line header, slimmer edges,
+   numpad keys whose height follows the screen's, and a .display-card that
+   takes whatever is left. Wider screens keep the roomy layout. If a screen is
+   too short even for the card's smallest size (--card-min), the page scrolls
+   as it always did. */
+@media (max-width: 600px) {
+  .one-screen {
+    /* The screen's height, less the status bar and the home indicator */
+    --usable-h: calc(var(--app-height, 100dvh) - var(--safe-top) - var(--safe-bottom));
+    --key-h: clamp(44px, calc(var(--usable-h) * 0.08), 64px);
+    --btn-size: 36px;
+    padding: calc(8px + var(--safe-top)) calc(12px + var(--safe-right))
+             max(12px, var(--safe-bottom)) calc(12px + var(--safe-left));
+  }
+
+  .one-screen .sticky-header {
+    top: calc(4px + var(--safe-top));
+    padding: 6px 12px;
+    margin-bottom: 8px;
+  }
+  .one-screen .page-header h1 { font-size: 22px; }
+  .one-screen .page-header .subtitle { display: none; }
+
+  .one-screen .display-card {
+    height: auto;
+    flex: 1 0 var(--card-min, 250px);
+    min-height: 0;
+    container: display-card / size;
+  }
+
+  .one-screen .fun-fact-strip { height: 10px; }
+
+  /* The numpad: as wide as the card, its five wide keys in one row
+     (− 1, + 1, 🔊, CLR, ←), and every key's height set by the screen's. */
+  .one-screen .numpad { max-width: 380px; gap: 8px; }
+  .one-screen .numpad-actions { flex-direction: row; gap: 8px; }
+  .one-screen .numpad-row { display: contents; }
+  .one-screen .numpad-grid { gap: 8px; }
+  .one-screen .nb-btn { aspect-ratio: auto; height: var(--key-h); }
+  .one-screen .pm-btn {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    padding: 0;
+    height: calc(var(--key-h) * 0.88);
+    font-size: 21px;
+    white-space: nowrap;
+  }
+  .one-screen .pm-btn.numpad-speak { order: 1; }
+  .one-screen .pm-btn.numpad-clear { order: 2; font-size: 14px; letter-spacing: 0; }
+  .one-screen .pm-btn.numpad-back { order: 2; }
+}
+
+@container display-card (max-height: 340px) {
+  .display-card > * { --tight: 1; }
+  .tight-hide { display: none !important; }
 }
 
 /* ── Global: Prevent Text Selection ────────────────────────────────────────── */

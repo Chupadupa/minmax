@@ -139,7 +139,7 @@ function WordKey({ colorize, showSay, spain, separator }) {
     ...keyWords(),
   ];
   return (
-    <div style={styles.key}>
+    <div className="fit-font" style={styles.key}>
       {items.map(({ word, value }) => (
         <div key={word.text} style={styles.keyItem}>
           {showSay && <span style={styles.keySay}>{sayOf(word, spain)}</span>}
@@ -314,7 +314,7 @@ export default function SpanishNumbers() {
   useEffect(() => { stop(); }, [input, spain, stop]);
 
   return (
-    <div className="toy-container">
+    <div className="toy-container one-screen">
       <BackgroundDots count={20} />
 
       {/* Header */}
@@ -390,20 +390,23 @@ const styles = {
   wordText: {
     fontFamily: WORD_FONT, fontWeight: 700, lineHeight: 1.15, whiteSpace: "nowrap",
   },
+  // Three rows, 9.7em tall — the font shrinks until that fits the reading box
+  // (.fit-font, see base.css).
   key: {
+    "--fit-max": "17px", "--fit-font": "10.4cqh",
     margin: "auto 0", width: "100%",
     display: "grid", gridTemplateColumns: "repeat(5, 1fr)",
-    columnGap: 2, rowGap: 12,
+    columnGap: 2, rowGap: "0.706em",
   },
   keyItem: {
-    display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
+    display: "flex", flexDirection: "column", alignItems: "center", gap: "0.1176em",
   },
   keySay: {
-    fontFamily: "var(--font-body)", fontWeight: 600, fontSize: 9, lineHeight: 1,
+    fontFamily: "var(--font-body)", fontWeight: 600, fontSize: "0.5294em", lineHeight: 1,
     color: SAY_COLOR, whiteSpace: "nowrap",
   },
   keyWord: {
-    fontFamily: WORD_FONT, fontWeight: 700, fontSize: 17, lineHeight: 1.15,
+    fontFamily: WORD_FONT, fontWeight: 700, fontSize: "1em", lineHeight: 1.15,
     whiteSpace: "nowrap",
   },
   keyUnitPill: {
@@ -411,7 +414,7 @@ const styles = {
     borderRadius: 6, padding: "0 3px",
   },
   keyValue: {
-    fontSize: 11, color: "rgba(255,255,255,0.55)",
+    fontSize: "0.647em", color: "rgba(255,255,255,0.55)",
     fontFamily: "var(--font-body)", fontWeight: 500, whiteSpace: "nowrap",
   },
   readingGaps: { columnGap: "0.3em", rowGap: "0.12em" },

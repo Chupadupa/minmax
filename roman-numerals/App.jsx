@@ -225,7 +225,7 @@ export default function RomanNumerals() {
   const letterCountText = `${letters.length} ${letters.length === 1 ? "letter" : "letters"}`;
 
   return (
-    <div className="toy-container">
+    <div className="toy-container one-screen">
 
       <BackgroundDots count={20} />
 
@@ -247,7 +247,7 @@ export default function RomanNumerals() {
       />
 
       {/* Display Area */}
-      <div className="frosted-card" style={styles.displayCard}>
+      <div className="frosted-card display-card" style={styles.displayCard}>
         <div style={{
           ...styles.arabicNumber,
           color: isEmpty ? "rgba(255,255,255,0.3)" : "#FFD030",
@@ -311,7 +311,7 @@ export default function RomanNumerals() {
 const styles = {
   displayCard: {
     padding: "14px 16px",
-    width: "100%", maxWidth: 380, height: 320,
+    width: "100%", maxWidth: 380, "--card-h": "320px",
     position: "relative", zIndex: 1,
     display: "flex", flexDirection: "column",
   },
